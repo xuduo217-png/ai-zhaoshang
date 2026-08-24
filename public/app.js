@@ -11,6 +11,7 @@
     'page-workmgr-config': 'workStages',
   };
   let SCHEMA = {}, TOKEN = localStorage.getItem('zs_token') || '', USER = null;
+  window.ZS = window.ZS || {};
 
   const el = (id) => document.getElementById(id);
   const q = (s) => document.querySelector(s);
@@ -29,14 +30,15 @@
   const apiPost = (p, b) => req('POST', p, b);
   const apiPut = (p, b) => req('PUT', p, b);
   const apiDel = (p) => req('DELETE', p);
-  const fmt = (v) => (v === undefined || v === null || v === '' ? '—' : v);
+  const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (v) => (v === undefined || v === null || v === '' ? '—' : escapeHtml(v));
 
   async function init() {
     if (TOKEN) { try { const me = await apiGet('/me'); if (me.user) { USER = me.user; enter(); return; } } catch (e) {} }
     showLogin();
   }
-  function showLogin() { el('loginMask').style.display = 'flex'; }
-  function hideLogin() { el('loginMask').style.display = 'none'; }
+  function showLogin() { document.body.classList.add('auth-pending'); el('loginMask').style.display = 'flex'; }
+  function hideLogin() { document.body.classList.remove('auth-pending'); el('loginMask').style.display = 'none'; }
   async function doLogin() {
     const u = el('loginUser').value.trim(), p = el('loginPass').value;
     if (!u || !p) { showToast('请输入账号和密码'); return; }
@@ -47,10 +49,23 @@
 
   function enter() {
     hideLogin();
+    setupMobileNav();
     setupCreateBtns();
     bindNav();
     apiGet('/schema').then((s) => { SCHEMA = s.schema; renderCurrent(); }).catch(() => renderCurrent());
     loadMessages();
+  }
+  function setupMobileNav() {
+    if (el('mobileMenuBtn')) return;
+    const header = q('.topbar') || q('header');
+    const sidebar = q('.sidebar');
+    if (!header || !sidebar) return;
+    const button = document.createElement('button');
+    button.id = 'mobileMenuBtn'; button.type = 'button'; button.className = 'mobile-menu-btn';
+    button.setAttribute('aria-label', '打开导航菜单'); button.textContent = '☰';
+    button.onclick = () => sidebar.classList.toggle('mobile-open');
+    header.insertBefore(button, header.firstChild);
+    qa('.nav-item').forEach((item) => item.addEventListener('click', () => sidebar.classList.remove('mobile-open')));
   }
   /* ---------- 站内信消息中心（零第三方依赖，真实送达） ---------- */
   async function loadMessages() {
@@ -95,6 +110,7 @@
   function renderCurrent() {
     const p = q('.page.active'); if (!p) return; const pid = p.id;
     if (pid === 'page-data-ds') return renderNews();
+    if (pid === 'page-bid-config') return renderBidConfig();
     if (PAGE_RES[pid]) return renderTable(pid, PAGE_RES[pid]);
     if (pid === 'page-overview') return renderOverview();
     if (pid === 'page-data-api') return renderApiCards();
@@ -127,6 +143,28 @@
     }).join('') : '<tr><td colspan="' + (sc.columns.length + 1) + '" style="text-align:center;color:var(--txt-3);padding:24px">暂无数据，点击右上角“新增”添加</td></tr>');
   }
 
+  async function renderBidConfig() {
+    await renderTable('page-bid-config', 'bidKeywords');
+    const page = el('page-bid-config');
+    let box = el('bidCollectedBox');
+    if (!box) {
+      box = document.createElement('div'); box.id = 'bidCollectedBox'; box.style.marginTop = '18px';
+      page.appendChild(box);
+    }
+    const response = await apiGet('/bids'); const rows = response.data || [];
+    box.innerHTML = '<div class="section-title"><h3>测试采集结果</h3><span class="tag">公开公告 · 最多保留500条</span><div class="line"></div><button type="button" class="btn btn-red btn-sm" id="collectBidsBtn">立即采集</button></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>日期</th><th>类型</th><th>公告标题</th><th>匹配关键词</th><th>来源</th><th>链接</th></tr></thead><tbody>' +
+      (rows.length ? rows.slice(0, 100).map((b) => '<tr><td>' + fmt(b.date) + '</td><td>' + fmt(b.noticeType) + '</td><td>' + fmt(b.title) + '</td><td>' + fmt(b.matchedKeywords) + '</td><td>' + fmt(b.source) + '</td><td><a href="' + encodeURI(String(b.url || '')) + '" target="_blank" rel="noopener noreferrer">查看原文</a></td></tr>').join('') : '<tr><td colspan="6" style="text-align:center;color:var(--txt-3);padding:24px">暂无数据，点击“立即采集”获取公开测试公告</td></tr>') + '</tbody></table></div>';
+    el('collectBidsBtn').onclick = async () => {
+      const btn = el('collectBidsBtn'); btn.disabled = true; btn.textContent = '采集中…';
+      try {
+        const result = await apiPost('/bids/collect');
+        showToast(result.success ? ('采集完成：新增 ' + result.added + ' 条，关键词匹配 ' + result.matched + ' 条') : ('采集失败：' + ((result.errors || []).join('；') || result.error || '来源暂不可用')));
+        await renderBidConfig(); await loadMessages();
+      } catch (e) { showToast('采集请求失败'); btn.disabled = false; btn.textContent = '立即采集'; }
+    };
+  }
+
   function setupCreateBtns() {
     qa('button').forEach((b) => {
       const t = b.textContent.trim();
@@ -145,7 +183,7 @@
       let input;
       if (c.type === 'textarea') input = '<textarea data-key="' + c.key + '" rows="4" style="width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--txt-0);border-radius:8px;padding:9px 11px;font-size:13px;resize:vertical">' + String(val).replace(/</g, '&lt;') + '</textarea>';
       else if (c.type === 'select') input = '<select data-key="' + c.key + '">' + c.options.map((o) => '<option' + (o == val ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>';
-      else { const ty = c.type === 'number' ? 'number' : 'text'; input = '<input data-key="' + c.key + '" type="' + ty + '" value="' + String(val).replace(/"/g, '&quot;') + '"' + (c.required ? ' required' : '') + '>'; }
+      else { const ty = c.type === 'number' ? 'number' : (c.type === 'password' ? 'password' : 'text'); input = '<input data-key="' + c.key + '" type="' + ty + '" value="' + (ty === 'password' ? '' : String(val).replace(/"/g, '&quot;')) + '"' + (c.required && !item ? ' required' : '') + '>'; }
       return '<div class="form-row"><label>' + c.label + (c.required ? ' *' : '') + '</label>' + input + '</div>';
     }).join('');
     el('crudModal').dataset.res = res;
@@ -160,7 +198,7 @@
     if (r.data) { showToast('保存成功'); closeCrud(); const pid = Object.keys(PAGE_RES).find((k) => PAGE_RES[k] === res); renderCurrent(); }
     else showToast('保存失败');
   }
-  window.ZS = {
+  Object.assign(window.ZS, {
     login: doLogin,
     close: closeCrud,
     save: saveCrud,
@@ -172,7 +210,7 @@
       const r = await apiPost('/push/test', { event: rule.event });
       if (r.success) showToast('测试推送已送达（' + rule.event + '）：命中 ' + r.hit + ' 条启用规则，详见「接入日志」'); else showToast('测试推送失败');
     },
-  };
+  });
 
   /* ---------- 总览 ---------- */
   async function renderOverview() {
@@ -209,6 +247,18 @@
     }).join('');
     grid.querySelectorAll('[data-test]').forEach((btn) => { btn.onclick = async () => { const r = await apiPost('/external/test', { source: btn.dataset.test }); showToast(btn.dataset.test + (r.configured ? '：Key 已配置，可真实调用' : '：未配置 Key，当前演示模式')); }; });
     const page = el('page-data-api');
+    let testBar = el('companyTestImportBar');
+    if (!testBar) {
+      testBar = document.createElement('div'); testBar.id = 'companyTestImportBar'; testBar.style.margin = '14px 0';
+      testBar.innerHTML = '<button type="button" class="btn btn-blue btn-sm" id="importCompanyTestBtn">导入公开企业测试数据</button> <span style="font-size:12px;color:var(--txt-3)">用于联调；正式上线替换为客户授权 API</span>';
+      grid.parentNode.insertBefore(testBar, grid.nextSibling);
+      el('importCompanyTestBtn').onclick = async () => {
+        const btn = el('importCompanyTestBtn'); btn.disabled = true; btn.textContent = '导入中…';
+        const r = await apiPost('/external/company/import-test');
+        showToast(r.success ? ('已导入 ' + r.total + ' 条：新增 ' + r.added + '，更新 ' + r.updated) : (r.error || '导入失败'));
+        btn.disabled = false; btn.textContent = '导入公开企业测试数据';
+      };
+    }
     const syncBtn = Array.from(page.querySelectorAll('button')).find((b) => /立即同步/.test(b.textContent));
     if (syncBtn) syncBtn.onclick = async () => { await apiPost('/audit/log', { kind: 'api', text: '企业工商变更同步任务已触发', tag: '外部API' }); showToast('已触发工商变更同步任务'); };
   }
@@ -310,11 +360,15 @@
   let settingsBound = false;
   async function renderSettings() {
     const { data } = await apiGet('/settings');
-    const keys = ['platformName', 'domain', 'deepseekKey', 'tianyanchaKey', 'qccKey'];
+    const keys = ['platformName', 'domain'];
     const fields = qa('#page-setting .field-list .field');
-    fields.slice(0, 5).forEach((f, i) => {
+    fields.slice(0, 2).forEach((f, i) => {
       const fv = f.querySelector('.fv');
       if (fv && !fv.querySelector('input')) fv.innerHTML = '<input data-key="' + keys[i] + '" value="' + String(data[keys[i]] || '').replace(/"/g, '&quot;') + '" style="width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--txt-0);border-radius:8px;padding:8px 10px;font-size:13px">';
+    });
+    fields.slice(2, 5).forEach((f) => {
+      const fv = f.querySelector('.fv');
+      if (fv) fv.textContent = '由服务器环境变量配置';
     });
     if (!settingsBound) {
       settingsBound = true;

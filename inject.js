@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = __dirname;
-const SRC = '/Users/a-6/Desktop/AI招商智能体管理端.html';
+const SRC = process.env.PROTOTYPE_HTML || path.join(ROOT, 'prototype.html');
 const OUT = path.join(ROOT, 'public', 'index.html');
 
 let html = fs.readFileSync(SRC, 'utf8');
@@ -26,10 +26,9 @@ const style = `<style>
 const login = `<div id="loginMask" class="modal-mask" style="display:none">
   <div class="modal-card" style="width:360px">
     <div class="logo-text" style="margin-bottom:18px"><span class="lt1">AI招商智能体平台</span><span class="lt2">管理端登录</span></div>
-    <div class="form-row"><label>账号</label><input id="loginUser" type="text" placeholder="admin" autocomplete="username"></div>
-    <div class="form-row"><label>密码</label><input id="loginPass" type="password" placeholder="123456" autocomplete="current-password"></div>
+    <div class="form-row"><label>账号</label><input id="loginUser" type="text" placeholder="请输入账号" autocomplete="username"></div>
+    <div class="form-row"><label>密码</label><input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password"></div>
     <button class="btn btn-blue" style="width:100%;margin-top:10px;padding:11px" onclick="ZS.login()">登 录</button>
-    <div style="font-size:11px;color:var(--txt-3);margin-top:12px;text-align:center">演示账号 admin / 123456</div>
   </div>
 </div>`;
 

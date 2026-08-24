@@ -4,8 +4,11 @@
   "description": "AI招商智能体平台 · 管理端（大合产业发展集团）",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js",
+    "seed": "node server.js --seed"
   },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "xlsx": "^0.18.5"
   }

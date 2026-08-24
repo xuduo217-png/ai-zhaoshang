@@ -14,6 +14,14 @@ let XLSX = null;
 try { XLSX = require('xlsx'); } catch (e) { XLSX = null; }
 
 const PORT = process.env.PORT || 8765;
+const HOST = process.env.HOST || '127.0.0.1';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const BODY_LIMIT = Number(process.env.BODY_LIMIT_BYTES || 2 * 1024 * 1024);
+const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 8 * 60 * 60 * 1000);
+const INITIAL_ADMIN_PASSWORD = process.env.INITIAL_ADMIN_PASSWORD || (IS_PRODUCTION ? '' : 'ChangeMe123!');
+if (IS_PRODUCTION && !INITIAL_ADMIN_PASSWORD) {
+  throw new Error('生产环境必须配置 INITIAL_ADMIN_PASSWORD');
+}
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const DATA = path.join(ROOT, 'data');
@@ -31,6 +39,19 @@ function loadRes(name) {
 }
 function saveRes(name, data) { fs.writeFileSync(fileOf(name), JSON.stringify(data, null, 2)); }
 function nextId(arr) { return arr.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1; }
+function hashPassword(password, salt) {
+  const actualSalt = salt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), actualSalt, 64).toString('hex');
+  return 'scrypt$' + actualSalt + '$' + hash;
+}
+function verifyPassword(password, encoded) {
+  if (!encoded || !encoded.startsWith('scrypt$')) return false;
+  const parts = encoded.split('$');
+  if (parts.length !== 3) return false;
+  const actual = Buffer.from(parts[2], 'hex');
+  const candidate = crypto.scryptSync(String(password), parts[1], actual.length);
+  return actual.length === candidate.length && crypto.timingSafeEqual(actual, candidate);
+}
 
 /* ---------- 资源元数据 + 种子数据 ---------- */
 const RESOURCES = {
@@ -42,12 +63,10 @@ const RESOURCES = {
       { key: 'role', label: '角色', type: 'select', options: ['超级管理员', '招商专员', '招商主管', '只读用户'] },
       { key: 'dept', label: '部门', type: 'text' },
       { key: 'status', label: '状态', type: 'select', options: ['启用', '停用'] },
+      { key: 'password', label: '初始密码/新密码', type: 'password', required: true },
     ],
     seed: [
-      { id: 1, username: 'admin', name: '系统管理员', role: '超级管理员', dept: '信息技术部', lastLogin: '2026-08-08 15:42', status: '启用', password: '123456' },
-      { id: 2, username: 'zhaoshang1', name: '招商专员', role: '招商专员', dept: '招商一部', lastLogin: '2026-08-08 14:20', status: '启用', password: '123456' },
-      { id: 3, username: 'zhaoshang2', name: '招商主管', role: '招商主管', dept: '招商二部', lastLogin: '2026-08-08 10:15', status: '启用', password: '123456' },
-      { id: 4, username: 'viewer', name: '领导查看', role: '只读用户', dept: '领导层', lastLogin: '2026-08-07 16:30', status: '停用', password: '123456' },
+      { id: 1, username: 'admin', name: '系统管理员', role: '超级管理员', dept: '信息技术部', lastLogin: '', status: '启用', passwordHash: hashPassword(INITIAL_ADMIN_PASSWORD) },
     ],
   },
   apiSources: {
@@ -121,6 +140,18 @@ const RESOURCES = {
       { id: 5, keyword: '数据中心', rule: '模糊匹配', region: '成都', matched30: 12, status: '暂停' },
     ],
   },
+  bids: {
+    label: '招投标公告',
+    columns: [
+      { key: 'title', label: '公告标题', type: 'text', required: true },
+      { key: 'noticeType', label: '公告类型', type: 'text' },
+      { key: 'source', label: '来源', type: 'text' },
+      { key: 'date', label: '发布日期', type: 'text' },
+      { key: 'matchedKeywords', label: '匹配关键词', type: 'text' },
+      { key: 'url', label: '公开链接', type: 'text' },
+    ],
+    seed: [],
+  },
   pushRules: {
     label: '推送触发规则',
     columns: [
@@ -183,12 +214,9 @@ const RESOURCES = {
     columns: [
       { key: 'platformName', label: '平台名称', type: 'text' },
       { key: 'domain', label: '平台域名', type: 'text' },
-      { key: 'deepseekKey', label: 'DeepSeek Key', type: 'text' },
-      { key: 'tianyanchaKey', label: '天眼查 Key', type: 'text' },
-      { key: 'qccKey', label: '企查查 Key', type: 'text' },
     ],
     seed: [
-      { id: 1, platformName: '大合产业发展集团 · AI招商智能体平台', domain: 'ai.dahe.cn', deepseekKey: 'sk-5b2b633602b24493b285fd1b4ac23166', tianyanchaKey: 'tyc-****************************9e2c', qccKey: 'qcc-****************************7b4d' },
+      { id: 1, platformName: '大合产业发展集团 · AI招商智能体平台', domain: 'ai.dahe.cn' },
     ],
   },
   /* ---------- 第二批新增资源 ---------- */
@@ -434,23 +462,28 @@ function loadTokens() {
   if (!fs.existsSync(TOKENS_FILE)) return;
   try {
     const list = JSON.parse(fs.readFileSync(TOKENS_FILE, 'utf8'));
-    if (Array.isArray(list)) list.forEach((t) => { if (t && t.token && t.user) TOKENS.set(t.token, t.user); });
+    if (Array.isArray(list)) list.forEach((t) => {
+      if (t && t.token && t.user && Number(t.expiresAt) > Date.now()) TOKENS.set(t.token, { user: t.user, expiresAt: Number(t.expiresAt) });
+    });
   } catch (e) {}
 }
 function saveTokens() {
   const list = [];
-  TOKENS.forEach((user, token) => list.push({ token, user, time: new Date().toISOString() }));
+  TOKENS.forEach((session, token) => list.push({ token, user: session.user, expiresAt: session.expiresAt }));
   fs.writeFileSync(TOKENS_FILE, JSON.stringify(list, null, 2));
 }
 function makeToken() { return crypto.randomBytes(16).toString('hex'); }
 loadTokens();
 
+function serviceKey(source) {
+  const envMap = { 天眼查: 'TIANYANCHA_API_KEY', 企查查: 'QCC_API_KEY', DeepSeek: 'DEEPSEEK_API_KEY' };
+  return process.env[envMap[source]] || '';
+}
+
 /* ---------- 外部 API 适配器（填 key 即真，无网/无key 回退 mock） ---------- */
 function externalQuery(source, q) {
-  const settings = loadRes('settings')[0] || {};
-  const keyMap = { 天眼查: 'tianyanchaKey', 企查查: 'qccKey', DeepSeek: 'deepseekKey' };
-  const key = keyMap[source] ? settings[keyMap[source]] : '';
-  const hasKey = !!(key && key.indexOf('*') < 0); // 含掩码(*)视为未配置（演示模式）
+  const key = serviceKey(source);
+  const hasKey = !!key;
   if (!hasKey) {
     // 本地 mock：从 companies 命中则返回，否则构造通用占位
     const hit = loadRes('companies').find((c) => c.name.indexOf(q) >= 0);
@@ -470,9 +503,7 @@ function externalQuery(source, q) {
 /* ---------- 企业评分维度补全（打通工商源 + 规则，消除"待分析"） ---------- */
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (h % 1000) / 1000; }
 async function enrichCompany(c) {
-  const settings = loadRes('settings')[0] || {};
-  const source = (settings.tianyanchaKey && settings.tianyanchaKey.indexOf('*') < 0) ? '天眼查'
-    : (settings.qccKey && settings.qccKey.indexOf('*') < 0) ? '企查查' : null;
+  const source = serviceKey('天眼查') ? '天眼查' : (serviceKey('企查查') ? '企查查' : null);
   let live = false;
   if (source) {
     try {
@@ -564,9 +595,80 @@ async function fetchSina(url) {
   } catch (e) { return []; } finally { clearTimeout(t); }
 }
 
+const BID_TEST_SOURCES = [
+  { name: '中国政府采购网', type: '公开招标公告', url: 'https://www.ccgp.gov.cn/cggg/dfgg/gkzb/' },
+  { name: '中国政府采购网', type: '中标公告', url: 'https://www.ccgp.gov.cn/cggg/dfgg/zbgg/' },
+];
+const COMPANY_TEST_FIXTURES = [
+  { name: '四川长虹电子控股集团有限公司', legalPerson: '柳江', registerCapital: 300000, foundedDate: '1995-06-16', region: '绵阳', address: '绵阳市高新技术产业开发区', industry: '电子信息', dataSource: '企查查公开索引页', sourceUrl: 'https://top.qcc.com/tc/69d71497f5d0.html' },
+  { name: '通威股份有限公司', legalPerson: '刘舒琪', registerCapital: 450198.5691, foundedDate: '1995-12-08', region: '成都', address: '中国（四川）自由贸易试验区成都市高新区天府大道中段588号', industry: '新能源/农业', dataSource: '企查查公开索引页', sourceUrl: 'https://top.qcc.com/tc/8839acc22cac.html' },
+  { name: '宜宾五粮液股份有限公司', legalPerson: '邓敏', registerCapital: 388160.8005, foundedDate: '1998-04-21', region: '宜宾', address: '四川省宜宾市翠屏区岷江西路150号', industry: '食品饮料', dataSource: '企查查公开索引页', sourceUrl: 'https://top.qcc.com/tc/656ae6a633d0.html' },
+  { name: '北京百度网讯科技有限公司', legalPerson: '梁志祥', registerCapital: 1342128, foundedDate: '2001-06-05', region: '北京', industry: '互联网/人工智能', creditCode: '91110000802100433B', dataSource: '天眼查开放平台文档示例', sourceUrl: 'https://open.tianyancha.com/open/776' },
+];
+function importCompanyTestFixtures() {
+  const companies = loadRes('companies'); let added = 0, updated = 0;
+  for (const fixture of COMPANY_TEST_FIXTURES) {
+    const existing = companies.find((c) => c.name === fixture.name || c.name.replace(/有限责任公司|有限公司/g, '') === fixture.name.replace(/有限责任公司|有限公司/g, ''));
+    const record = { ...fixture, foundedYear: Number(fixture.foundedDate.slice(0, 4)), dataMode: 'public-test', importedAt: now() };
+    if (existing) { Object.assign(existing, record); updated++; }
+    else { companies.push({ id: nextId(companies), ...record }); added++; }
+  }
+  saveRes('companies', companies); computeScores(); computeSignals();
+  return { added, updated, total: COMPANY_TEST_FIXTURES.length, data: COMPANY_TEST_FIXTURES };
+}
+function decodeHtml(s) {
+  return String(s || '').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+function extractCcgpNotices(html, source) {
+  const out = []; const seen = new Set();
+  const re = /href=["']([^"']*\/t(\d{8})_\d+\.htm)["'][^>]*title=["']([^"']+)["']/gi;
+  let match;
+  while ((match = re.exec(html))) {
+    const href = new URL(match[1], source.url).href;
+    if (seen.has(href) || !href.includes('/cggg/')) continue;
+    seen.add(href);
+    const d = match[2];
+    out.push({
+      id: hashId(href), title: decodeHtml(match[3]), noticeType: source.type,
+      source: source.name, date: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8),
+      url: href, collectedAt: now(),
+    });
+    if (out.length >= 30) break;
+  }
+  return out;
+}
+async function collectTestBids() {
+  const keywords = loadRes('bidKeywords').filter((k) => k.status === '启用').map((k) => String(k.keyword || '').trim()).filter(Boolean);
+  const existing = loadRes('bids'); const byUrl = new Map(existing.map((b) => [b.url, b]));
+  let fetched = 0, added = 0, matched = 0; const errors = [];
+  for (const source of BID_TEST_SOURCES) {
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const response = await fetch(source.url, { headers: { 'User-Agent': 'AI-Zhaoshang-TestCollector/1.0' }, signal: ctrl.signal });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const notices = extractCcgpNotices(await response.text(), source); fetched += notices.length;
+      for (const notice of notices) {
+        const hits = keywords.filter((k) => notice.title.includes(k));
+        notice.matchedKeywords = hits.join('、');
+        if (hits.length) matched++;
+        const old = byUrl.get(notice.url);
+        if (old) Object.assign(old, notice); else { existing.push(notice); byUrl.set(notice.url, notice); added++; }
+      }
+    } catch (error) { errors.push(source.type + ': ' + error.message); }
+    finally { clearTimeout(timer); }
+  }
+  existing.sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.collectedAt).localeCompare(String(a.collectedAt)));
+  saveRes('bids', existing.slice(0, 500));
+  if (matched) {
+    const messages = loadRes('messages');
+    messages.push({ id: nextId(messages), to: '全体', title: '招投标关键词匹配 ' + matched + ' 条', content: '测试采集发现 ' + matched + ' 条匹配公告，请到招投标采集配置查看。', event: '新招投标匹配', method: '站内', time: now(), read: false, source: '测试采集器' });
+    saveRes('messages', messages);
+  }
+  return { mode: 'test-scrape', fetched, added, matched, total: existing.length, errors };
+}
+
 async function fetchNews() {
-  const settings = loadRes('settings')[0] || {};
-  const key = settings.deepseekKey && !settings.deepseekKey.includes('*') ? settings.deepseekKey : '';
+  const key = serviceKey('DeepSeek');
   const news = loadRes('news');
   const map = {}; news.forEach((n) => (map[n.id] = n));
   const stat = { total: 0, perCat: {}, aiCount: 0, cacheHit: 0, token: 0, cost: 0 };
@@ -625,27 +727,75 @@ function mapCompanyRow(row) {
 
 /* ---------- 工具 ---------- */
 function send(res, code, obj) {
-  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+  res.writeHead(code, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+  });
   res.end(JSON.stringify(obj));
 }
-function readBody(req) {
-  return new Promise((resolve) => {
+function readBody(req, res) {
+  return new Promise((resolve, reject) => {
     let d = '';
-    req.on('data', (c) => (d += c));
-    req.on('end', () => { try { resolve(d ? JSON.parse(d) : {}); } catch (e) { resolve({}); } });
+    req.on('data', (c) => {
+      d += c;
+      if (Buffer.byteLength(d) > BODY_LIMIT) {
+        req.destroy();
+        reject(Object.assign(new Error('请求体过大'), { statusCode: 413 }));
+      }
+    });
+    req.on('end', () => {
+      try { resolve(d ? JSON.parse(d) : {}); }
+      catch (e) { reject(Object.assign(new Error('JSON 格式错误'), { statusCode: 400 })); }
+    });
+    req.on('error', reject);
   });
 }
 function authUser(req) {
   const h = req.headers['authorization'] || '';
   const t = h.startsWith('Bearer ') ? h.slice(7) : '';
-  return TOKENS.get(t);
+  const session = TOKENS.get(t);
+  if (!session || session.expiresAt <= Date.now()) {
+    if (session) { TOKENS.delete(t); saveTokens(); }
+    return '';
+  }
+  return session.user;
+}
+function safeUser(user) {
+  if (!user) return null;
+  const { password, passwordHash, ...safe } = user;
+  return safe;
+}
+function currentUser(req) {
+  const username = authUser(req);
+  if (!username) return null;
+  return loadRes('users').find((u) => u.username === username && u.status === '启用') || null;
+}
+function canWrite(user, resource) {
+  if (!user || user.role === '只读用户') return false;
+  if (['users', 'settings', 'models', 'prompts'].includes(resource)) return user.role === '超级管理员';
+  return true;
+}
+
+const LOGIN_ATTEMPTS = new Map();
+function loginAllowed(ip) {
+  const nowMs = Date.now();
+  const state = LOGIN_ATTEMPTS.get(ip) || { count: 0, resetAt: nowMs + 15 * 60 * 1000 };
+  if (state.resetAt <= nowMs) { state.count = 0; state.resetAt = nowMs + 15 * 60 * 1000; }
+  LOGIN_ATTEMPTS.set(ip, state);
+  return state.count < 8;
 }
 
 /* ---------- 路由 ---------- */
 const server = http.createServer(async (req, res) => {
+ try {
   const u = new URL(req.url, 'http://localhost');
   const p = u.pathname;
   const method = req.method;
+
+  if (p === '/api/health' && method === 'GET') return send(res, 200, { status: 'ok', time: new Date().toISOString() });
 
   if (method === 'GET' && !p.startsWith('/api/')) {
     let fp = path.join(PUBLIC, p === '/' ? 'index.html' : p);
@@ -654,24 +804,38 @@ const server = http.createServer(async (req, res) => {
       if (err) { res.writeHead(404); res.end('Not found'); return; }
       const ext = path.extname(fp);
       const ct = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json' }[ext] || 'text/plain';
-      res.writeHead(200, { 'Content-Type': ct + '; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': ct + '; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      });
       res.end(buf);
     });
     return;
   }
 
   if (p === '/api/login' && method === 'POST') {
-    const b = await readBody(req);
+    const ip = req.socket.remoteAddress || 'unknown';
+    if (!loginAllowed(ip)) return send(res, 429, { error: '登录尝试过多，请稍后再试' });
+    const b = await readBody(req, res);
     const users = loadRes('users');
-    const user = users.find((x) => x.username === b.username && x.password === b.password);
-    if (!user) return send(res, 401, { error: '用户名或密码错误' });
+    const user = users.find((x) => x.username === String(b.username || '').trim() && x.status === '启用');
+    const valid = user && (verifyPassword(b.password, user.passwordHash) || (user.password && user.password === b.password));
+    if (!valid) {
+      LOGIN_ATTEMPTS.get(ip).count++;
+      return send(res, 401, { error: '用户名或密码错误' });
+    }
+    LOGIN_ATTEMPTS.delete(ip);
+    if (!user.passwordHash) user.passwordHash = hashPassword(b.password);
+    delete user.password;
     const token = makeToken();
-    TOKENS.set(token, user.username);
+    TOKENS.set(token, { user: user.username, expiresAt: Date.now() + SESSION_TTL_MS });
     saveTokens();
     user.lastLogin = now();
     saveRes('users', users);
-    const { password, ...safe } = user;
-    return send(res, 200, { token, user: safe });
+    return send(res, 200, { token, expiresIn: SESSION_TTL_MS / 1000, user: safeUser(user) });
   }
 
   if (p === '/api/me' && method === 'GET') {
@@ -679,11 +843,18 @@ const server = http.createServer(async (req, res) => {
     if (!uname) return send(res, 401, { error: '未登录' });
     const users = loadRes('users');
     const user = users.find((x) => x.username === uname);
-    const { password, ...safe } = user || {};
-    return send(res, 200, { user: safe });
+    return send(res, 200, { user: safeUser(user) });
+  }
+
+  if (p === '/api/logout' && method === 'POST') {
+    const h = req.headers.authorization || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : '';
+    if (token) { TOKENS.delete(token); saveTokens(); }
+    return send(res, 200, { ok: true });
   }
 
   if (p === '/api/schema' && method === 'GET') {
+    if (!authUser(req)) return send(res, 401, { error: '未登录' });
     const schema = {};
     for (const [k, v] of Object.entries(RESOURCES)) {
       if (v.isSingle && k !== 'settings') continue;
@@ -693,6 +864,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (p === '/api/stats/overview' && method === 'GET') {
+    if (!authUser(req)) return send(res, 401, { error: '未登录' });
     const knowledge = loadRes('knowledge');
     const pending = knowledge.filter((x) => x.status === '待审核').length;
     return send(res, 200, {
@@ -736,10 +908,7 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/external/test' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
-    const settings = loadRes('settings')[0] || {};
-    const keyMap = { 天眼查: 'tianyanchaKey', 企查查: 'qccKey', DeepSeek: 'deepseekKey' };
-    const key = keyMap[b.source] ? settings[keyMap[b.source]] : '';
-    const configured = !!(key && key.indexOf('*') < 0);
+    const configured = !!serviceKey(b.source);
     return send(res, 200, { source: b.source, configured });
   }
   if (p === '/api/external/company' && method === 'POST') {
@@ -748,6 +917,14 @@ const server = http.createServer(async (req, res) => {
     const r = await externalQuery(b.source || '天眼查', b.name || '');
     if (r.mode === 'mock') logAudit('api', '外部API查询（' + (b.source || '天眼查') + '·' + (b.name || '') + '）→ 演示数据', '外部API');
     return send(res, 200, r);
+  }
+  if (p === '/api/external/company/import-test' && method === 'POST') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    if (user.role === '只读用户') return send(res, 403, { error: '无权导入测试数据' });
+    const result = importCompanyTestFixtures();
+    logAudit('data', user.username + ' → 导入公开企业测试数据（新增' + result.added + ' / 更新' + result.updated + '）', '企业测试数据');
+    return send(res, 200, { success: true, ...result });
   }
 
   /* ---------- Excel 模板下载（真实生成 xlsx） ---------- */
@@ -825,9 +1002,8 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/knowledge/generate' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
-    const settings = loadRes('settings')[0] || {};
-    const key = settings.deepseekKey || '';
-    const hasKey = !!(key && key.indexOf('*') < 0);
+    const key = serviceKey('DeepSeek');
+    const hasKey = !!key;
     let content;
     const topic = b.topic || '未命名主题';
     const type = b.type || '产业';
@@ -925,27 +1101,47 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { data: { totalToday: todayItems.length, perCat, aiTotal: news.filter((n) => n.ai).length, tokenTotal: meta.tokenTotal || 0, costTotal: meta.costTotal || 0, cacheHitTotal: meta.cacheHitTotal || 0, lastFetch: meta.lastFetch || '-' } });
   }
 
+  /* 招投标测试采集：仅抓取无需登录的公开公告列表，不绕过验证码或反爬限制 */
+  if (p === '/api/bids/collect' && method === 'POST') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    if (user.role === '只读用户') return send(res, 403, { error: '无权执行采集' });
+    const result = await collectTestBids();
+    logAudit('api', user.username + ' → 招投标测试采集（获取' + result.fetched + ' / 新增' + result.added + ' / 匹配' + result.matched + '）', '招投标采集');
+    return send(res, result.errors.length && !result.fetched ? 502 : 200, { success: result.fetched > 0, ...result });
+  }
+
   /* 资源 CRUD: /api/:resource[/:id] */
   const m = p.match(/^\/api\/([a-zA-Z0-9_]+)(?:\/(\d+))?$/);
   if (m) {
     const name = m[1];
     const id = m[2] ? parseInt(m[2], 10) : null;
     if (!RESOURCES[name]) return send(res, 404, { error: '未知资源: ' + name });
-    const user = authUser(req);
-    if (!user) return send(res, 401, { error: '未登录' });
+    const userRecord = currentUser(req);
+    if (!userRecord) return send(res, 401, { error: '未登录或账号已停用' });
+    const user = userRecord.username;
 
     if (method === 'GET' && !id) {
       const data = loadRes(name);
+      if (name === 'users') return send(res, 200, { data: data.map(safeUser) });
       if (RESOURCES[name].isSingle) return send(res, 200, { data: data[0] || {} });
       return send(res, 200, { data });
     }
     if (method === 'GET' && id) {
       const data = loadRes(name);
       const item = data.find((x) => x.id === id);
-      return item ? send(res, 200, { data: item }) : send(res, 404, { error: '未找到' });
+      return item ? send(res, 200, { data: name === 'users' ? safeUser(item) : item }) : send(res, 404, { error: '未找到' });
     }
     if (method === 'POST') {
+      if (!canWrite(userRecord, name)) return send(res, 403, { error: '无权修改该资源' });
       const b = await readBody(req);
+      delete b.id;
+      delete b.passwordHash;
+      delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
+      if (name === 'users') {
+        if (!b.password || String(b.password).length < 12) return send(res, 400, { error: '新用户密码至少需要 12 位' });
+        b.passwordHash = hashPassword(b.password); delete b.password;
+      }
       const data = loadRes(name);
       if (RESOURCES[name].isSingle) {
         if (data[0]) { data[0] = { ...data[0], ...b, id: data[0].id }; }
@@ -959,7 +1155,15 @@ const server = http.createServer(async (req, res) => {
       return send(res, 201, { data: item });
     }
     if (method === 'PUT') {
+      if (!canWrite(userRecord, name)) return send(res, 403, { error: '无权修改该资源' });
       const b = await readBody(req);
+      delete b.id;
+      delete b.passwordHash;
+      delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
+      if (name === 'users' && Object.prototype.hasOwnProperty.call(b, 'password')) {
+        if (String(b.password).length < 12) return send(res, 400, { error: '密码至少需要 12 位' });
+        b.passwordHash = hashPassword(b.password); delete b.password;
+      }
       const data = loadRes(name);
       if (RESOURCES[name].isSingle) {
         if (data[0]) data[0] = { ...data[0], ...b, id: data[0].id }; else data[0] = { id: 1, ...b };
@@ -978,6 +1182,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { data: data[idx] });
     }
     if (method === 'DELETE' && id) {
+      if (!canWrite(userRecord, name)) return send(res, 403, { error: '无权修改该资源' });
       const data = loadRes(name);
       if (RESOURCES[name].isSingle) return send(res, 400, { error: '单条记录不可删除' });
       const target = data.find((x) => x.id === id);
@@ -989,6 +1194,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   send(res, 404, { error: 'not found' });
+ } catch (error) {
+   if (!res.headersSent) send(res, error.statusCode || 500, { error: error.statusCode ? error.message : '服务器内部错误' });
+   else res.end();
+ }
 });
 
 /* CRUD 自动写审计（操作日志） */
@@ -1060,7 +1269,7 @@ async function seedCompanies() {
 if (process.argv.includes('--seed')) {
   (async () => { await seedCompanies(); console.log('[seed] 示例企业数据已生成，评分/信号已重算'); process.exit(0); })();
 } else {
-  server.listen(PORT, '127.0.0.1', () => {
-    console.log('AI招商智能体管理端 已启动: http://127.0.0.1:' + PORT + '/');
+  server.listen(PORT, HOST, () => {
+    console.log('AI招商智能体管理端 已启动: http://' + HOST + ':' + PORT + '/');
   });
 }

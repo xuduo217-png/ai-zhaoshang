@@ -1,0 +1,12 @@
+{
+  "name": "ai-zhaoshang-admin",
+  "version": "1.0.0",
+  "description": "AI招商智能体平台 · 管理端（大合产业发展集团）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

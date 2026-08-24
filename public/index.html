@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大合产业发展集团 · AI招商智能体平台 · 管理端</title>
+<style>
+:root{
+  --dh-deep:#0f233f; --dh-blue:#1e40af; --dh-blue-2:#2563eb; --dh-cyan:#0891b2;
+  --dh-red:#dc2626; --dh-red-2:#ef4444; --dh-gold:#f59e0b; --dh-orange:#f97316; --dh-green:#16a34a; --dh-purple:#7c3aed;
+  --bg-0:#eef1f6; --bg-1:#e7ecf3; --bg-2:#ffffff;
+  --panel:#ffffff; --panel-2:#eaeef4;
+  --border:#e2e8f0; --border-2:#cbd5e1;
+  --txt-0:#0f172a; --txt-1:#334155; --txt-2:#64748b; --txt-3:#94a3b8;
+  --grad-blue:linear-gradient(135deg,#1e40af,#0891b2);
+  --grad-red:linear-gradient(135deg,#dc2626,#ef4444);
+  --grad-brand:linear-gradient(135deg,#1e40af,#dc2626 60%,#0891b2);
+  --shadow:0 6px 24px rgba(15,23,42,.06); --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg-0);color:var(--txt-1);overflow:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1000px 700px at 12% -5%,rgba(37,99,235,.06),transparent 55%),radial-gradient(700px 500px at 95% 105%,rgba(220,38,38,.04),transparent 60%)}
+body::after{display:none}
+@keyframes starMove{0%{transform:translateY(0)}100%{transform:translateY(-100px)}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:rgba(15,23,42,.18);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(15,23,42,.28)}
+
+.app{display:flex;height:100vh;position:relative;z-index:1}
+.sidebar{width:248px;flex-shrink:0;background:#ffffff;border-right:1px solid var(--border);display:flex;flex-direction:column;box-shadow:2px 0 12px rgba(15,23,42,.05);position:relative}
+.sidebar::before{display:none}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.content{flex:1;overflow-y:auto;padding:24px 32px}
+
+.logo-area{padding:0 18px;height:60px;display:flex;align-items:center;border-bottom:1px solid var(--border);background:var(--panel);box-sizing:border-box}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:42px;height:42px;border-radius:10px;background:#ffffff;border:1px solid var(--border-2);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,.08);position:relative;overflow:hidden}
+.logo-mark::before{content:'';position:absolute;width:16px;height:16px;background:var(--dh-red);transform:rotate(45deg);border-radius:2px;opacity:.9}
+.logo-mark::after{content:'';position:absolute;width:8px;height:8px;background:var(--dh-blue);border-radius:50%;top:8px;right:8px;opacity:.85}
+.logo-text{display:flex;flex-direction:column;line-height:1.25;flex:1;min-width:0}
+.logo-text .lt1{font-size:15px;font-weight:800;color:var(--txt-0);letter-spacing:.2px}
+.logo-text .lt2{font-size:10px;color:var(--txt-2);letter-spacing:.8px;margin-top:2px;font-weight:500}
+
+.nav{padding:14px 12px;flex:1;overflow-y:auto}
+.nav-label{font-size:10px;color:var(--txt-3);letter-spacing:1.5px;padding:10px 12px 6px;text-transform:uppercase;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:10px;cursor:pointer;color:var(--txt-2);font-size:13.5px;transition:all .25s;position:relative;margin-bottom:2px;font-weight:500}
+.nav-item:hover{background:var(--panel-2);color:var(--txt-1)}
+.nav-item.active{background:rgba(30,64,175,.08);color:var(--dh-blue);font-weight:600}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--dh-red);border-radius:0 3px 3px 0}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9.5px;background:rgba(30,64,175,.1);color:var(--dh-blue);padding:2px 7px;border-radius:8px;font-weight:600}
+
+.user-area{padding:13px 15px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--panel-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--dh-blue)}
+.user-info{flex:1;min-width:0}
+.user-info .un{font-size:12.5px;color:var(--txt-1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-info .ur{font-size:10px;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+
+.topbar{height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid var(--border);background:#ffffff;position:relative}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--border)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.page-title{font-size:17px;font-weight:700;color:var(--txt-0)}
+.breadcrumb{font-size:11.5px;color:var(--txt-3)}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.msg-badge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 4px;background:var(--dh-red-2);color:#fff;border-radius:9px;font-size:10px;display:none;align-items:center;justify-content:center;font-weight:700}
+.msg-panel{position:absolute;top:54px;right:24px;width:340px;max-height:420px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 60px rgba(15,23,42,.18);z-index:50;padding:8px}
+.mp-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;color:var(--txt-0)}
+.mp-item{padding:10px;border-bottom:1px solid var(--border);cursor:pointer}
+.mp-item.unread{background:rgba(30,64,175,.05)}
+.mp-item:hover{background:rgba(30,64,175,.09)}
+.mp-title{font-size:13px;font-weight:600;color:var(--txt-0)}
+.mp-meta{font-size:11px;color:var(--txt-3);margin:3px 0}
+.mp-content{font-size:12px;color:var(--txt-2);line-height:1.5}
+.mp-empty{padding:24px;text-align:center;color:var(--txt-3);font-size:13px}
+.topbar-tag{font-size:10.5px;color:var(--dh-cyan);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);padding:4px 12px;border-radius:14px;display:flex;align-items:center;gap:6px;font-weight:600}
+.topbar-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--dh-green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.icon-btn{width:34px;height:34px;border-radius:10px;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt-2);transition:all .25s;position:relative}
+.icon-btn:hover{background:var(--panel-2);color:var(--txt-0)}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;background:var(--dh-red);border-radius:50%;border:2px solid var(--bg-1);box-shadow:0 0 8px rgba(220,38,38,.6)}
+
+.page{display:none;animation:fadeUp .4s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.section-title{display:flex;align-items:center;gap:10px;margin:24px 0 14px}
+.section-title h3{font-size:15px;font-weight:600;color:var(--txt-0)}
+.section-title .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.section-title .tag{font-size:11px;color:var(--dh-blue-2);padding:3px 10px;background:rgba(30,64,175,.12);border:1px solid rgba(30,64,175,.25);border-radius:12px}
+
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all .25s;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.card:hover{border-color:var(--border-2);box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--txt-0)}
+.card-title svg{width:15px;height:15px;color:var(--dh-blue-2)}
+.source-tag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.tag-blue{background:rgba(30,64,175,.15);color:var(--dh-blue-2)}
+.tag-red{background:rgba(220,38,38,.15);color:var(--dh-red-2)}
+.tag-gold{background:rgba(245,158,11,.15);color:var(--dh-gold)}
+.tag-green{background:rgba(16,185,129,.15);color:var(--dh-green)}
+.tag-purple{background:rgba(139,92,246,.15);color:#a78bfa}
+.tag-cyan{background:rgba(6,182,212,.15);color:var(--dh-cyan)}
+.tag-gray{background:rgba(100,116,139,.15);color:var(--txt-2)}
+
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+.stat-card.s1::before{background:var(--grad-blue)}
+.stat-card.s2::before{background:var(--grad-red)}
+.stat-card.s3::before{background:linear-gradient(180deg,#8b5cf6,#06b6d4)}
+.stat-card.s4::before{background:linear-gradient(180deg,#10b981,#06b6d4)}
+.stat-card .ds-lbl{font-size:11.5px;color:var(--txt-3);margin-bottom:8px}
+.stat-card .ds-num{font-size:26px;font-weight:800;color:var(--txt-0)}
+.stat-card .ds-sub{font-size:11px;color:var(--txt-3);margin-top:6px}
+
+table{width:100%;border-collapse:collapse}
+.table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+th{background:#f1f5f9;padding:11px 15px;text-align:left;font-size:11.5px;color:var(--txt-2);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 15px;font-size:12.5px;color:var(--txt-1);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(30,64,175,.05)}
+
+.status-badge{font-size:10.5px;padding:2px 9px;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.sb-success{background:rgba(16,185,129,.12);color:var(--dh-green)}
+.sb-running{background:rgba(245,158,11,.12);color:var(--dh-gold)}
+sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
+.sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
+.sb-normal{background:rgba(6,182,212,.12);color:var(--dh-cyan)}
+.sb-new{background:rgba(139,92,246,.12);color:#a78bfa}
+.sb-aging{background:rgba(245,158,11,.12);color:var(--dh-gold)}
+.sb-disabled{background:rgba(100,116,139,.12);color:var(--txt-2)}
+.sb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:14px;width:fit-content}
+.tab{padding:7px 16px;border-radius:8px;font-size:12.5px;color:var(--txt-2);cursor:pointer;transition:all .2s;font-weight:500}
+.tab:hover{color:var(--txt-1)}
+.tab.active{background:rgba(30,64,175,.08);color:var(--dh-blue);font-weight:600}
+
+.field-list{display:flex;flex-direction:column;gap:8px}
+.field{display:flex;font-size:12.5px;line-height:1.5}
+.field .fk{color:var(--txt-3);width:90px;flex-shrink:0}
+.field .fv{color:var(--txt-1);flex:1}
+.field .fv .hl{color:var(--dh-red-2);font-weight:600}
+
+.weight-row{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--panel-2);border-radius:10px;margin-bottom:8px}
+.weight-row .wr-name{font-size:13px;color:var(--txt-0);font-weight:500;width:90px;flex-shrink:0}
+.weight-row .wr-bar{flex:1;height:8px;background:#e5e9f0;border-radius:4px;overflow:hidden;position:relative}
+.weight-row .wr-bar i{display:block;height:100%;border-radius:4px;transition:width .4s}
+.weight-row .wr-val{font-size:14px;font-weight:700;color:var(--dh-gold);width:50px;text-align:right}
+.weight-row .wr-slider{flex:1;-webkit-appearance:none;height:6px;background:#e5e9f0;border-radius:3px;outline:none}
+.weight-row .wr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--dh-red-2);cursor:pointer;box-shadow:0 0 8px rgba(220,38,38,.4)}
+
+.kb-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all .25s;cursor:pointer}
+.kb-card:hover{border-color:var(--border-2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.kb-card .kb-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.kb-card .kb-icon svg{width:21px;height:21px}
+.kb-card .kb-t{font-size:14px;font-weight:600;color:var(--txt-0);margin-bottom:4px}
+.kb-card .kb-d{font-size:11.5px;color:var(--txt-3);line-height:1.5;margin-bottom:10px}
+.kb-card .kb-stat{display:flex;gap:16px;font-size:11px;color:var(--txt-2)}
+.kb-card .kb-stat b{color:var(--txt-0);font-size:14px;font-weight:700}
+
+.review-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--panel-2);border-radius:10px;margin-bottom:10px;border-left:3px solid var(--dh-gold)}
+.review-item .ri-info{flex:1}
+.review-item .ri-cat{font-size:10px;color:var(--dh-gold);font-weight:600;margin-bottom:4px}
+.review-item .ri-title{font-size:13px;color:var(--txt-0);font-weight:500;margin-bottom:4px}
+.review-item .ri-summary{font-size:11.5px;color:var(--txt-2);line-height:1.5}
+.review-item .ri-actions{display:flex;gap:6px;flex-shrink:0}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s;font-weight:500;border:none}
+.btn-sm{padding:5px 11px;font-size:11.5px;border-radius:7px}
+.btn-blue{background:rgba(30,64,175,.15);color:var(--dh-blue-2);border:1px solid rgba(30,64,175,.3)}
+.btn-blue:hover{background:rgba(30,64,175,.25)}
+.btn-green{background:rgba(16,185,129,.15);color:var(--dh-green);border:1px solid rgba(16,185,129,.3)}
+.btn-green:hover{background:rgba(16,185,129,.25)}
+.btn-red{background:rgba(220,38,38,.15);color:var(--dh-red-2);border:1px solid rgba(220,38,38,.3)}
+.btn-red:hover{background:rgba(220,38,38,.25)}
+.btn-gold{background:rgba(245,158,11,.15);color:var(--dh-gold);border:1px solid rgba(245,158,11,.3)}
+.btn-gold:hover{background:rgba(245,158,11,.25)}
+.btn-ghost{background:var(--panel-2);color:var(--txt-2);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--txt-0)}
+.btn svg{width:13px;height:13px}
+
+.progress-bar{height:6px;background:#e5e9f0;border-radius:3px;overflow:hidden}
+.progress-bar i{display:block;height:100%;border-radius:3px;background:var(--grad-blue);transition:width .5s}
+.progress-bar.gold i{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.progress-bar.green i{background:linear-gradient(90deg,#10b981,#34d399)}
+
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--dh-blue),var(--dh-red),var(--dh-gold))}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg-1)}
+.tl-dot.blue{background:var(--dh-blue-2);box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+.tl-dot.gold{background:var(--dh-gold);box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+.tl-dot.green{background:var(--dh-green);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.tl-dot.red{background:var(--dh-red-2);box-shadow:0 0 0 3px rgba(220,38,38,.2)}
+.tl-date{font-size:10.5px;color:var(--txt-3);margin-bottom:3px}
+.tl-title{font-size:12.5px;color:var(--txt-0);font-weight:500;margin-bottom:3px}
+.tl-desc{font-size:11.5px;color:var(--txt-2);line-height:1.5}
+
+.toggle{position:relative;width:38px;height:20px;background:#e5e9f0;border-radius:10px;cursor:pointer;transition:all .25s}
+.toggle.on{background:var(--dh-blue-2)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:all .25s}
+.toggle.on::after{left:20px}
+
+.ai-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:14px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);font-size:11px;color:var(--dh-red-2);font-weight:500}
+.ai-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--dh-red);animation:pulse 2s infinite}
+
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg-2);border:1px solid var(--border-2);border-radius:12px;padding:13px 22px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--txt-0);box-shadow:var(--shadow);z-index:999;opacity:0;transition:all .4s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast svg{width:17px;height:17px;color:var(--dh-green)}
+
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-chip{padding:7px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--border);font-size:12px;color:var(--txt-2);cursor:pointer;transition:all .2s}
+.filter-chip:hover{border-color:var(--border-2);color:var(--txt-1)}
+.filter-chip.active{background:rgba(30,64,175,.2);border-color:rgba(30,64,175,.4);color:#fff}
+
+.chart-box{width:100%;height:180px}
+.log-line{padding:10px 14px;background:var(--panel-2);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--txt-1);display:flex;align-items:center;gap:12px;font-family:monospace}
+.log-line .lt{color:var(--txt-3);font-size:11px;flex-shrink:0;width:130px}
+.log-line .lm{flex:1}
+.log-line.success{border-left:3px solid var(--dh-green)}
+.log-line.fail{border-left:3px solid var(--dh-red-2)}
+.log-line.warn{border-left:3px solid var(--dh-gold)}
+
+@media(max-width:1200px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">
+        <div class="logo-mark"></div>
+        <div class="logo-text"><span class="lt1">大合产业发展集团</span><span class="lt2">DAHE · 管理端</span></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">系统总览</div>
+      <div class="nav-item active" data-page="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>系统总览
+      </div>
+      <div class="nav-label">数据接入与管理</div>
+      <div class="nav-item" data-page="data-api">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>企业API对接
+      </div>
+      <div class="nav-item" data-page="data-ds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>DeepSeek资讯获取
+      </div>
+      <div class="nav-item" data-page="data-excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Excel数据上传
+      </div>
+      <div class="nav-item" data-page="data-cache">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>数据校验与缓存
+      </div>
+      <div class="nav-item" data-page="data-log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/></svg>接入记录与监控
+      </div>
+      <div class="nav-item" data-page="bid-config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>招投标采集配置
+      </div>
+      <div class="nav-label">知识管理</div>
+      <div class="nav-item" data-page="kb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>四大知识库
+      </div>
+      <div class="nav-item" data-page="kb-review">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>知识更新审核
+      </div>
+      <div class="nav-label">AI分析引擎</div>
+      <div class="nav-item" data-page="engine-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>企业画像生成
+      </div>
+      <div class="nav-item" data-page="engine-score">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>招商价值评分
+      </div>
+      <div class="nav-item" data-page="engine-signal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>招商机会发现
+      </div>
+      <div class="nav-item" data-page="engine-industry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>产业分析
+      </div>
+      <div class="nav-label">AI模型与规则</div>
+      <div class="nav-item" data-page="model">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>AI模型管理
+      </div>
+      <div class="nav-item" data-page="rule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>招商规则配置
+      </div>
+      <div class="nav-item" data-page="push-config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>推送规则配置
+      </div>
+      <div class="nav-label">系统管理</div>
+      <div class="nav-item" data-page="user">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>用户与权限
+      </div>
+      <div class="nav-item" data-page="audit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>审计与日志
+      </div>
+      <div class="nav-item" data-page="workmgr-config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>工作管理配置
+      </div>
+      <div class="nav-item" data-page="setting">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>系统设置
+      </div>
+    </nav>
+    <div class="user-area">
+      <div class="avatar">管</div>
+      <div class="user-info"><div class="un">系统管理员</div><div class="ur">大合产业发展集团</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="page-title" id="pageTitle">系统总览</span>
+        <span class="breadcrumb" id="breadcrumb">管理端 / 系统总览</span>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-tag"><span class="dot"></span>DeepSeek API 正常 · 余额 ¥48,520</div>
+        <div class="icon-btn" id="msgBell" title="站内信" onclick="ZS.toggleMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="msg-panel" id="msgPanel" style="display:none"></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- ===== 系统总览 ===== -->
+      <div class="page active" id="page-overview">
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="stat-card s1"><div class="ds-lbl">知识库总量</div><div class="ds-num">86,420</div><div class="ds-sub">企业 12,580 / 产业 3,200 / 案例 860 / 政策 1,780</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">今日AI调用</div><div class="ds-num">2,386</div><div class="ds-sub">Token消耗 1.28M · 成本 ¥186</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">缓存命中率</div><div class="ds-num">73.2%</div><div class="ds-sub">节省调用 1,748 次 · 节省 ¥132</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">待审核知识</div><div class="ds-num">42</div><div class="ds-sub">DeepSeek摘要 28 / Excel上传 14</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>6类智能体运行状态</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">数据处理智能体</span><span style="font-size:11px;color:var(--txt-3)">今日处理 1,286 条</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">知识更新智能体</span><span style="font-size:11px;color:var(--txt-3)">待审核 42 条</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">企业画像智能体</span><span style="font-size:11px;color:var(--txt-3)">模型 v2.3</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">招商价值评分智能体</span><span style="font-size:11px;color:var(--txt-3)">规则 r1.6</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">招商机会发现智能体</span><span style="font-size:11px;color:var(--txt-3)">今日信号 128</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">智能问答智能体</span><span style="font-size:11px;color:var(--txt-3)">今日问答 486</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>数据接入与成本趋势</div></div>
+            <svg class="chart-box" id="overviewChart" viewBox="0 0 400 180" preserveAspectRatio="none"></svg>
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--txt-3)">
+              <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1e40af;margin-right:5px"></span>数据接入量</span>
+              <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626;margin-right:5px"></span>AI成本(元)</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-title"><h3>最近系统活动</h3><div class="line"></div></div>
+        <div class="card">
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot green"></div><div class="tl-date">2026-08-08 15:42</div><div class="tl-title">企业画像智能体完成 186 家企业画像更新</div><div class="tl-desc">模型版本 v2.3，处理耗时 8 分钟，平均置信度 92%</div></div>
+            <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-date">2026-08-08 14:30</div><div class="tl-title">DeepSeek 资讯获取任务完成</div><div class="tl-desc">获取新闻 286 条 / 投融资 42 条 / 招投标 168 条 / 政策 12 条，Token消耗 0.86M</div></div>
+            <div class="tl-item"><div class="tl-dot gold"></div><div class="tl-date">2026-08-08 13:15</div><div class="tl-title">招商规则配置已更新</div><div class="tl-desc">融资信号权重调整为 25，评分权重合同到期调整为 30，操作人：系统管理员</div></div>
+            <div class="tl-item"><div class="tl-dot red"></div><div class="tl-date">2026-08-08 11:08</div><div class="tl-title">爱企查API额度预警</div><div class="tl-desc">剩余调用额度 1,236 次（低于预警阈值 2,000），建议尽快补充额度</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 企业API对接 ===== -->
+      <div class="page" id="page-data-api">
+        <div class="grid-3" style="margin-bottom:18px">
+          <div class="card"><div class="card-head"><div class="card-title">天眼查 API</div><span class="status-badge sb-success"><span class="sb-dot"></span>已连接</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">1,286 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">8,720 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">工商、股东、对外投资、风险信息</span></div></div><div style="margin-top:12px"><div class="progress-bar"><i style="width:62%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">额度使用 62%</div></div></div>
+          <div class="card"><div class="card-head"><div class="card-title">企查查 API</div><span class="status-badge sb-success"><span class="sb-dot"></span>已连接</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">892 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">15,360 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">企业关系图谱、司法风险</span></div></div><div style="margin-top:12px"><div class="progress-bar green"><i style="width:38%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">额度使用 38%</div></div></div>
+          <div class="card"><div class="card-head"><div class="card-title">爱企查 API</div><span class="status-badge sb-fail"><span class="sb-dot"></span>额度预警</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">568 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">1,236 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">企业基础信息补充</span></div></div><div style="margin-top:12px"><div class="progress-bar gold"><i style="width:92%"></i></div><div style="font-size:11px;color:var(--dh-gold);margin-top:5px">额度使用 92% · 低于预警阈值</div></div></div>
+        </div>
+        <div class="section-title"><h3>企业工商变更同步</h3><span class="tag">每日自动</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('已触发工商变更同步任务')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>立即同步</button></div>
+        <div class="table-wrap"><table><thead><tr><th>企业名称</th><th>变更类型</th><th>变更内容</th><th>同步时间</th><th>状态</th></tr></thead><tbody>
+          <tr><td>四川长虹电子控股集团</td><td>注册资本变更</td><td>90亿 → 100亿元</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已同步</span></td></tr>
+          <tr><td>通威股份有限公司</td><td>股东变更</td><td>新增股东：某产业基金</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已同步</span></td></tr>
+          <tr><td>宜宾五粮液股份</td><td>经营范围变更</td><td>新增：新能源相关业务</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已同步</span></td></tr>
+          <tr><td>攀钢集团有限公司</td><td>法人变更</td><td>张某某 → 李某某</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-running"><span class="sb-dot"></span>处理中</span></td></tr>
+        </tbody></table></div>
+      </div>
+
+      <!-- ===== DeepSeek资讯获取 ===== -->
+      <div class="page" id="page-data-ds">
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="stat-card s1"><div class="ds-lbl">今日获取总量</div><div class="ds-num" id="news-total">0</div><div class="ds-sub">条资讯（真实抓取）</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">Token消耗</div><div class="ds-num" id="news-token">0</div><div class="ds-sub" id="news-cost">成本 ¥0</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">AI摘要生成</div><div class="ds-num" id="news-ai">0</div><div class="ds-sub">真实DeepSeek摘要</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">缓存命中</div><div class="ds-num" id="news-cache">0</div><div class="ds-sub" id="news-cache-rate">命中率 0%</div></div>
+        </div>
+        <div class="section-title"><h3>资讯获取任务</h3><span class="tag">真实抓取 · DeepSeek摘要</span><div class="line"></div><button class="btn btn-red btn-sm" id="news-fetch-btn" onclick="fetchNewsStandalone()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>立即获取</button></div>
+        <div class="table-wrap"><table><thead><tr><th>数据类型</th><th>获取渠道</th><th>今日获取</th><th>更新频率</th><th>AI摘要</th><th>Token消耗</th><th>状态</th></tr></thead><tbody id="news-tbody">
+          <tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:24px">尚未获取资讯，点击右上角「立即获取」从公开源真实抓取</td></tr>
+        </tbody></table></div>
+      </div>
+
+      <!-- ===== Excel数据上传 ===== -->
+      <div class="page" id="page-data-excel">
+        <div class="grid-3" style="margin-bottom:18px">
+          <div class="card" style="text-align:center;padding:30px 20px;cursor:pointer" onclick="showToast('请选择Excel文件上传')">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(30,64,175,.15);color:var(--dh-blue-2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div style="font-size:14px;font-weight:600;color:var(--txt-0);margin-bottom:5px">企业信息上传</div><div style="font-size:11.5px;color:var(--txt-3)">批量上传企业基础信息</div>
+          </div>
+          <div class="card" style="text-align:center;padding:30px 20px;cursor:pointer" onclick="showToast('请选择Excel文件上传')">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(220,38,38,.15);color:var(--dh-red-2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div style="font-size:14px;font-weight:600;color:var(--txt-0);margin-bottom:5px">招商案例上传</div><div style="font-size:11.5px;color:var(--txt-3)">成功/失败招商案例</div>
+          </div>
+          <div class="card" style="text-align:center;padding:30px 20px;cursor:pointer" onclick="showToast('请选择Excel文件上传')">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(245,158,11,.15);color:var(--dh-gold);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div style="font-size:14px;font-weight:600;color:var(--txt-0);margin-bottom:5px">内部数据上传</div><div style="font-size:11.5px;color:var(--txt-3)">内部台账、存量数据</div>
+          </div>
+        </div>
+        <div class="section-title"><h3>标准模板下载</h3><span class="tag">含字段说明与示例</span><div class="line"></div></div>
+        <div class="grid-3">
+          <div class="card"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(16,185,129,.15);color:var(--dh-green);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">企业信息模板.xlsx</div><div style="font-size:11px;color:var(--txt-3)">12个字段 · 含示例</div></div><button class="btn btn-green btn-sm" onclick="showToast('模板下载中...')">下载</button></div></div>
+          <div class="card"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(16,185,129,.15);color:var(--dh-green);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">招商案例模板.xlsx</div><div style="font-size:11px;color:var(--txt-3)">8个字段 · 含示例</div></div><button class="btn btn-green btn-sm" onclick="showToast('模板下载中...')">下载</button></div></div>
+          <div class="card"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(16,185,129,.15);color:var(--dh-green);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">内部数据模板.xlsx</div><div style="font-size:11px;color:var(--txt-3)">10个字段 · 含示例</div></div><button class="btn btn-green btn-sm" onclick="showToast('模板下载中...')">下载</button></div></div>
+        </div>
+        <div class="section-title"><h3>上传记录</h3><div class="line"></div></div>
+        <div class="table-wrap"><table><thead><tr><th>文件名</th><th>类型</th><th>上传人</th><th>总行数</th><th>成功</th><th>失败</th><th>上传时间</th><th>状态</th></tr></thead><tbody>
+          <tr><td>2026年8月新增企业.xlsx</td><td>企业信息</td><td>招商专员</td><td>236</td><td>232</td><td>4</td><td>2026-08-07 14:20</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+          <tr><td>上半年招商案例汇总.xlsx</td><td>招商案例</td><td>招商主管</td><td>86</td><td>86</td><td>0</td><td>2026-08-05 10:30</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+          <tr><td>存量企业台账.xlsx</td><td>内部数据</td><td>系统管理员</td><td>1280</td><td>1268</td><td>12</td><td>2026-08-03 09:15</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+        </tbody></table></div>
+      </div>
+
+      <!-- ===== 数据校验与缓存 ===== -->
+      <div class="page" id="page-data-cache">
+        <div class="section-title"><h3>数据校验与处理</h3><span class="tag">规则+AI</span><div class="line"></div></div>
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="stat-card s1"><div class="ds-lbl">今日校验数据</div><div class="ds-num">1,794</div><div class="ds-sub">通过 1,726 / 退回 68</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">实体识别抽取</div><div class="ds-num">3,842</div><div class="ds-sub">企业名/金额/时间/地址</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">内容指纹去重</div><div class="ds-num">312</div><div class="ds-sub">重复数据已拦截</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">字段标准化</div><div class="ds-num">1,726</div><div class="ds-sub">统一行业/地域/时间</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div class="card-title">异常数据标记</div><span class="status-badge sb-fail"><span class="sb-dot"></span>68条</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="padding:10px 12px;background:var(--panel-2);border-radius:10px;border-left:3px solid var(--dh-red-2)"><div style="font-size:12px;color:var(--txt-0);margin-bottom:3px">企业名缺失</div><div style="font-size:11px;color:var(--txt-3)">28条 · 来源：Excel上传</div></div>
+              <div style="padding:10px 12px;background:var(--panel-2);border-radius:10px;border-left:3px solid var(--dh-gold)"><div style="font-size:12px;color:var(--txt-0);margin-bottom:3px">统一信用代码格式错误</div><div style="font-size:11px;color:var(--txt-3)">16条 · 来源：企查查API</div></div>
+              <div style="padding:10px 12px;background:var(--panel-2);border-radius:10px;border-left:3px solid var(--dh-gold)"><div style="font-size:12px;color:var(--txt-0);margin-bottom:3px">注册资本字段冲突</div><div style="font-size:11px;color:var(--txt-3)">14条 · 来源：多源校验冲突</div></div>
+              <div style="padding:10px 12px;background:var(--panel-2);border-radius:10px;border-left:3px solid var(--dh-blue-2)"><div style="font-size:12px;color:var(--txt-0);margin-bottom:3px">行业分类无法匹配</div><div style="font-size:11px;color:var(--txt-3)">10条 · 来源：DeepSeek</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">数据状态管理</div><span class="tag tag-cyan">7种状态</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-new"><span class="sb-dot"></span>NEW</span><span style="flex:1;font-size:12px;color:var(--txt-1)">新增数据</span><span style="font-size:11px;color:var(--txt-3)">286条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-normal"><span class="sb-dot"></span>NORMAL</span><span style="flex:1;font-size:12px;color:var(--txt-1)">正常数据</span><span style="font-size:11px;color:var(--txt-3)">82,160条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>UPDATED</span><span style="flex:1;font-size:12px;color:var(--txt-1)">已更新</span><span style="font-size:11px;color:var(--txt-3)">1,286条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-aging"><span class="sb-dot"></span>AGING</span><span style="flex:1;font-size:12px;color:var(--txt-1)">老化中</span><span style="font-size:11px;color:var(--txt-3)">1,820条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-fail"><span class="sb-dot"></span>EXPIRED</span><span style="flex:1;font-size:12px;color:var(--txt-1)">已过期</span><span style="font-size:11px;color:var(--txt-3)">686条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-disabled"><span class="sb-dot"></span>DISABLED</span><span style="flex:1;font-size:12px;color:var(--txt-1)">已停用</span><span style="font-size:11px;color:var(--txt-3)">124条</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-fail"><span class="sb-dot"></span>FAILED</span><span style="flex:1;font-size:12px;color:var(--txt-1)">处理失败</span><span style="font-size:11px;color:var(--txt-3)">68条</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-title"><h3>内容缓存与老化机制</h3><span class="tag">成本控制</span><div class="line"></div></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div class="card-title">缓存命中统计</div></div>
+            <div class="field-list">
+              <div class="field"><span class="fk">页面内容缓存</span><span class="fv"><span class="hl">73.2%</span> 命中率 · 节省 1,748 次调用</span></div>
+              <div class="field"><span class="fk">AI摘要缓存</span><span class="fv"><span class="hl">68.5%</span> 命中率 · 节省 ¥86</span></div>
+              <div class="field"><span class="fk">问答缓存</span><span class="fv"><span class="hl">82.1%</span> 命中率 · 节省 ¥46</span></div>
+              <div class="field"><span class="fk">总节省成本</span><span class="fv"><span class="hl">¥132</span> / 今日</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">老化规则</div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span style="font-size:12px;color:var(--txt-0);flex:1">新闻资讯</span><span style="font-size:11px;color:var(--txt-3)">有效期 30天</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span style="font-size:12px;color:var(--txt-0);flex:1">招投标数据</span><span style="font-size:11px;color:var(--txt-3)">有效期 90天</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span style="font-size:12px;color:var(--txt-0);flex:1">政策文件</span><span style="font-size:11px;color:var(--txt-3)">有效期 365天</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span style="font-size:12px;color:var(--txt-0);flex:1">企业工商信息</span><span style="font-size:11px;color:var(--txt-3)">有效期 7天</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span style="font-size:12px;color:var(--txt-0);flex:1">AI摘要结果</span><span style="font-size:11px;color:var(--txt-3)">有效期 60天</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 接入记录与监控 ===== -->
+      <div class="page" id="page-data-log">
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="stat-card s1"><div class="ds-lbl">今日API调用</div><div class="ds-num">2,746</div><div class="ds-sub">企业API 1,286 / DS 1,460</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">成功率</div><div class="ds-num">99.2%</div><div class="ds-sub">失败 22 次</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">Excel上传</div><div class="ds-num">3</div><div class="ds-sub">文件 · 共 1,602 行</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">异常告警</div><div class="ds-num">5</div><div class="ds-sub">额度预警 1 / 失败重试 4</div></div>
+        </div>
+        <div class="section-title"><h3>API调用记录</h3><div class="line"></div><button class="btn btn-ghost btn-sm" onclick="showToast('日志导出中...')">导出Excel</button></div>
+        <div class="table-wrap"><table><thead><tr><th>时间</th><th>API来源</th><th>数据类型</th><th>数据量</th><th>耗时</th><th>状态</th><th>详情</th></tr></thead><tbody>
+          <tr><td>15:42:18</td><td>天眼查</td><td>企业工商</td><td>1条</td><td>236ms</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>15:42:05</td><td>DeepSeek</td><td>新闻摘要</td><td>12条</td><td>3.2s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>15:41:52</td><td>企查查</td><td>股东信息</td><td>1条</td><td>512ms</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>15:41:30</td><td>爱企查</td><td>基础信息</td><td>1条</td><td>-</td><td><span class="status-badge sb-fail"><span class="sb-dot"></span>失败</span></td><td><button class="btn btn-red btn-sm">重试</button></td></tr>
+          <tr><td>15:40:18</td><td>DeepSeek</td><td>招投标摘要</td><td>8条</td><td>2.8s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>15:39:42</td><td>Excel上传</td><td>企业信息</td><td>236行</td><td>5.6s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>异常告警</h3><div class="line"></div></div>
+        <div class="card">
+          <div class="log-line warn"><span class="lt">15:41:30</span><span class="lm">爱企查API调用失败：额度不足（剩余1,236次），已自动重试2次</span><button class="btn btn-gold btn-sm">处理</button></div>
+          <div class="log-line fail"><span class="lt">14:20:15</span><span class="lm">Excel上传 4行数据校验失败：统一信用代码格式错误，已退回修正</span><button class="btn btn-red btn-sm">查看</button></div>
+          <div class="log-line warn"><span class="lt">11:08:00</span><span class="lm">爱企查API额度低于预警阈值（2,000次），当前剩余 1,236 次</span><button class="btn btn-gold btn-sm">充值</button></div>
+          <div class="log-line success"><span class="lt">06:00:00</span><span class="lm">每日工商变更同步任务完成，处理 186 家企业，成功 184 / 失败 2</span></div>
+        </div>
+      </div>
+
+      <!-- ===== 四大知识库 ===== -->
+      <div class="page" id="page-kb">
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="kb-card" onclick="showToast('进入企业知识库')">
+            <div class="kb-icon" style="background:rgba(30,64,175,.15);color:var(--dh-blue-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg></div>
+            <div class="kb-t">企业知识库</div><div class="kb-d">企业基础信息、画像标签、动态事件</div>
+            <div class="kb-stat"><span>文档 <b>12,580</b></span><span>待审 <b>18</b></span></div>
+          </div>
+          <div class="kb-card" onclick="showToast('进入产业知识库')">
+            <div class="kb-icon" style="background:rgba(139,92,246,.15);color:#a78bfa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="kb-t">产业知识库</div><div class="kb-d">产业链结构、重点企业名录、产业趋势</div>
+            <div class="kb-stat"><span>文档 <b>3,200</b></span><span>待审 <b>6</b></span></div>
+          </div>
+          <div class="kb-card" onclick="showToast('进入招商案例库')">
+            <div class="kb-icon" style="background:rgba(245,158,11,.15);color:var(--dh-gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+            <div class="kb-t">招商案例库</div><div class="kb-d">园区招商案例、成功/失败案例</div>
+            <div class="kb-stat"><span>文档 <b>860</b></span><span>待审 <b>4</b></span></div>
+          </div>
+          <div class="kb-card" onclick="showToast('进入政策知识库')">
+            <div class="kb-icon" style="background:rgba(220,38,38,.15);color:var(--dh-red-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="kb-t">政策知识库</div><div class="kb-d">国家/地方/惠企政策原文与结构化字段</div>
+            <div class="kb-stat"><span>文档 <b>1,780</b></span><span>待审 <b>14</b></span></div>
+          </div>
+        </div>
+        <div class="section-title"><h3>知识检索</h3><span class="tag">智能语义检索</span><div class="line"></div></div>
+        <div class="card" style="margin-bottom:18px">
+          <div style="display:flex;gap:10px"><div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt-3)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="kbSearch" placeholder="自然语言检索知识，如：新能源产业政策" style="flex:1;background:none;border:none;outline:none;color:var(--txt-0);font-size:13px"><button class="btn btn-blue btn-sm" onclick="showToast('检索中...')">检索</button></div></div>
+        </div>
+        <div class="section-title"><h3>知识关联图谱</h3><span class="tag">企业-产业-政策-案例</span><div class="line"></div></div>
+        <div class="card"><svg class="chart-box" id="kbGraph" viewBox="0 0 600 200" preserveAspectRatio="none" style="height:240px"></svg></div>
+      </div>
+
+      <!-- ===== 知识更新审核 ===== -->
+      <div class="page" id="page-kb-review">
+        <div class="grid-4" style="margin-bottom:18px">
+          <div class="stat-card s1"><div class="ds-lbl">待审核</div><div class="ds-num">42</div><div class="ds-sub">DeepSeek 28 / Excel 14</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">今日已审</div><div class="ds-num">186</div><div class="ds-sub">通过 182 / 驳回 4</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">审核通过率</div><div class="ds-num">97.8%</div><div class="ds-sub">AI摘要质量良好</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">版本管理</div><div class="ds-num">v8</div><div class="ds-sub">当前知识库版本</div></div>
+        </div>
+        <div class="filter-bar">
+          <span class="filter-chip active" onclick="filterReview(this,'all')">全部 42</span>
+          <span class="filter-chip" onclick="filterReview(this,'企业')">企业 18</span>
+          <span class="filter-chip" onclick="filterReview(this,'产业')">产业 6</span>
+          <span class="filter-chip" onclick="filterReview(this,'案例')">案例 4</span>
+          <span class="filter-chip" onclick="filterReview(this,'政策')">政策 14</span>
+        </div>
+        <div id="reviewList">
+          <div class="review-item"><div class="ri-info"><div class="ri-cat">企业知识库 · DeepSeek摘要</div><div class="ri-title">四川长虹电子控股集团 - 新能源融资动态</div><div class="ri-summary">AI摘要：长虹新能源板块完成10亿元战略融资，国家制造业基金领投，用于钠离子电池产线扩建。标签：融资/扩产/新能源。</div></div><div class="ri-actions"><button class="btn btn-green btn-sm" onclick="this.closest('.review-item').remove();showToast('已通过审核')">通过</button><button class="btn btn-red btn-sm" onclick="this.closest('.review-item').remove();showToast('已驳回')">驳回</button><button class="btn btn-ghost btn-sm">编辑</button></div></div>
+          <div class="review-item"><div class="ri-info"><div class="ri-cat">政策知识库 · DeepSeek摘要</div><div class="ri-title">四川省制造业高质量发展专项资金管理办法</div><div class="ri-summary">AI摘要：电子信息、新能源等战略性新兴产业可申请专项资金，最高奖补5000万元。申报截止2026-09-30。标签：制造业/奖补/省级。</div></div><div class="ri-actions"><button class="btn btn-green btn-sm" onclick="this.closest('.review-item').remove();showToast('已通过审核')">通过</button><button class="btn btn-red btn-sm" onclick="this.closest('.review-item').remove();showToast('已驳回')">驳回</button><button class="btn btn-ghost btn-sm">编辑</button></div></div>
+          <div class="review-item"><div class="ri-info"><div class="ri-cat">产业知识库 · DeepSeek摘要</div><div class="ri-title">钠离子电池产业链图谱更新</div><div class="ri-summary">AI摘要：钠离子电池产业链含上游材料（正极/负极/电解液）、中游电芯制造、下游储能/动力应用。本地薄弱环节：正极材料。标签：新能源/产业链/储能。</div></div><div class="ri-actions"><button class="btn btn-green btn-sm" onclick="this.closest('.review-item').remove();showToast('已通过审核')">通过</button><button class="btn btn-red btn-sm" onclick="this.closest('.review-item').remove();showToast('已驳回')">驳回</button><button class="btn btn-ghost btn-sm">编辑</button></div></div>
+          <div class="review-item"><div class="ri-info"><div class="ri-cat">企业知识库 · Excel上传</div><div class="ri-title">2026年8月新增企业 - 232条</div><div class="ri-summary">批量上传企业基础信息，含企业名称、统一信用代码、行业、注册资本等字段。字段校验通过率 98.3%。</div></div><div class="ri-actions"><button class="btn btn-green btn-sm" onclick="this.closest('.review-item').remove();showToast('已通过审核')">通过</button><button class="btn btn-red btn-sm" onclick="this.closest('.review-item').remove();showToast('已驳回')">驳回</button><button class="btn btn-ghost btn-sm">编辑</button></div></div>
+          <div class="review-item"><div class="ri-info"><div class="ri-cat">招商案例库 · Excel上传</div><div class="ri-title">上半年招商案例汇总 - 86条</div><div class="ri-summary">含成功案例 62 个（落地企业 48 家）、失败案例 24 个。失败原因 TOP3：政策不匹配、用地无法满足、产业链不完整。</div></div><div class="ri-actions"><button class="btn btn-green btn-sm" onclick="this.closest('.review-item').remove();showToast('已通过审核')">通过</button><button class="btn btn-red btn-sm" onclick="this.closest('.review-item').remove();showToast('已驳回')">驳回</button><button class="btn btn-ghost btn-sm">编辑</button></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 企业画像生成 ===== -->
+      <div class="page" id="page-engine-profile">
+        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 企业画像智能体 · 规则+LLM · 模型 v2.3</div>
+        <div class="section-title"><h3>7维画像标签生成</h3><span class="tag">核心能力</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('画像批量生成任务已启动')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>批量生成</button></div>
+        <div class="table-wrap" style="margin-bottom:18px"><table><thead><tr><th>画像维度</th><th>生成方式</th><th>数据来源</th><th>今日生成</th><th>置信度</th><th>状态</th></tr></thead><tbody>
+          <tr><td>规模标签</td><td>规则匹配</td><td>注册资本/员工数</td><td>186</td><td>98%</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>正常</span></td></tr>
+          <tr><td>行业与企业类型</td><td>规则+LLM</td><td>工商行业/资质</td><td>186</td><td>96%</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>正常</span></td></tr>
+          <tr><td>生命周期</td><td>规则匹配</td><td>成立时间/融资轮次</td><td>186</td><td>94%</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>正常</span></td></tr>
+          <tr><td>技术能力</td><td>LLM抽取</td><td>专利/高企/研发投入</td><td>186</td><td>91%</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>正常</span></td></tr>
+          <tr><td>成长能力</td><td>规则+LLM</td><td>融资/招聘/新闻热度</td><td>186</td><td>88%</td><td><span class="status-badge sb-running"><span class="sb-dot"></span>优化中</span></td></tr>
+          <tr><td>区域布局</td><td>规则匹配</td><td>分支机构/工厂地址</td><td>186</td><td>97%</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>正常</span></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>标签冲突校验</h3><div class="line"></div></div>
+        <div class="card">
+          <div class="log-line warn"><span class="lt">15:30</span><span class="lm">四川长虹：LLM判断生命周期为"成长期"，规则判断为"成熟期"，已标记待人工复核</span><button class="btn btn-gold btn-sm">复核</button></div>
+          <div class="log-line success"><span class="lt">14:20</span><span class="lm">通威股份：7维标签全部生成，无冲突，置信度 93%</span></div>
+          <div class="log-line warn"><span class="lt">13:45</span><span class="lm">攀钢集团：技术能力标签置信度 76%（低于阈值80%），已标记待复核</span><button class="btn btn-gold btn-sm">复核</button></div>
+        </div>
+      </div>
+
+      <!-- ===== 招商价值评分 ===== -->
+      <div class="page" id="page-engine-score">
+        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 招商价值评分智能体 · 评分模型 · 规则 r1.6</div>
+        <div class="section-title"><h3>6维评分权重配置</h3><span class="tag">后台可配·无需改代码</span><div class="line"></div><button class="btn btn-green btn-sm" onclick="showToast('权重配置已保存，将应用于新评分')">保存配置</button></div>
+        <div class="card" style="margin-bottom:18px">
+          <div class="weight-row"><span class="wr-name">合同到期</span><input type="range" class="wr-slider" min="0" max="100" value="30" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:30%;background:#dc2626"></i></div><span class="wr-val">30</span></div>
+          <div class="weight-row"><span class="wr-name">项目金额</span><input type="range" class="wr-slider" min="0" max="100" value="20" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:20%;background:#1e40af"></i></div><span class="wr-val">20</span></div>
+          <div class="weight-row"><span class="wr-name">续标</span><input type="range" class="wr-slider" min="0" max="100" value="15" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:15%;background:#06b6d4"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">外地企业</span><input type="range" class="wr-slider" min="0" max="100" value="15" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:15%;background:#8b5cf6"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">成长性</span><input type="range" class="wr-slider" min="0" max="100" value="10" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:10%;background:#10b981"></i></div><span class="wr-val">10</span></div>
+          <div class="weight-row"><span class="wr-name">产业匹配度</span><input type="range" class="wr-slider" min="0" max="100" value="10" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:10%;background:#f59e0b"></i></div><span class="wr-val">10</span></div>
+        </div>
+        <div class="section-title"><h3>评分阈值与晋级</h3><div class="line"></div></div>
+        <div class="grid-3">
+          <div class="card"><div class="card-title" style="margin-bottom:10px">A类重点对象</div><div style="font-size:28px;font-weight:800;color:var(--dh-red-2)">≥85</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">自动标记 · 主要领导对接</div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:10px">B类跟踪对象</div><div style="font-size:28px;font-weight:800;color:var(--dh-gold)">75-84</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">专员跟踪 · 定期回访</div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:10px">C类观察对象</div><div style="font-size:28px;font-weight:800;color:var(--txt-2)">60-74</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">纳入观察池</div></div>
+        </div>
+        <div class="section-title"><h3>评分历史留痕</h3><span class="tag">模型版本+规则版本</span><div class="line"></div></div>
+        <div class="table-wrap"><table><thead><tr><th>企业</th><th>综合分</th><th>模型版本</th><th>规则版本</th><th>评分时间</th><th>是否重点</th></tr></thead><tbody>
+          <tr><td>四川长虹电子控股集团</td><td style="color:var(--dh-red-2);font-weight:700">87</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
+          <tr><td>宜宾五粮液股份</td><td style="color:var(--dh-red-2);font-weight:700">91</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
+          <tr><td>通威股份</td><td style="color:var(--dh-red-2);font-weight:700">89</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
+          <tr><td>攀钢集团</td><td style="color:var(--dh-gold);font-weight:700">83</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-aging"><span class="sb-dot"></span>B类</span></td></tr>
+        </tbody></table></div>
+      </div>
+
+      <!-- ===== 招商机会发现 ===== -->
+      <div class="page" id="page-engine-signal">
+        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 招商机会发现智能体 · 规则引擎 · 8类信号</div>
+        <div class="section-title"><h3>8类招商信号权重配置</h3><span class="tag">可配置</span><div class="line"></div><button class="btn btn-green btn-sm" onclick="showToast('信号权重已保存')">保存配置</button></div>
+        <div class="card" style="margin-bottom:18px">
+          <div class="weight-row"><span class="wr-name">融资</span><input type="range" class="wr-slider" min="0" max="30" value="25" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:83%;background:#dc2626"></i></div><span class="wr-val">25</span></div>
+          <div class="weight-row"><span class="wr-name">扩产</span><input type="range" class="wr-slider" min="0" max="30" value="20" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:67%;background:#ef4444"></i></div><span class="wr-val">20</span></div>
+          <div class="weight-row"><span class="wr-name">招聘</span><input type="range" class="wr-slider" min="0" max="30" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#f59e0b"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">迁址</span><input type="range" class="wr-slider" min="0" max="30" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#8b5cf6"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">中标</span><input type="range" class="wr-slider" min="0" max="30" value="10" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:33%;background:#1e40af"></i></div><span class="wr-val">10</span></div>
+          <div class="weight-row"><span class="wr-name">投资</span><input type="range" class="wr-slider" min="0" max="30" value="5" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:17%;background:#06b6d4"></i></div><span class="wr-val">5</span></div>
+          <div class="weight-row"><span class="wr-name">合作</span><input type="range" class="wr-slider" min="0" max="30" value="5" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:17%;background:#10b981"></i></div><span class="wr-val">5</span></div>
+          <div class="weight-row"><span class="wr-name">获奖</span><input type="range" class="wr-slider" min="0" max="30" value="5" oninput="this.nextElement.firstElementChild.style.width=(this.value/30*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:17%;background:#a78bfa"></i></div><span class="wr-val">5</span></div>
+        </div>
+        <div class="section-title"><h3>高分企业自动标记</h3><span class="tag">信号分达阈值</span><div class="line"></div></div>
+        <div class="table-wrap"><table><thead><tr><th>企业</th><th>信号类型</th><th>信号分</th><th>事件</th><th>是否推荐</th><th>操作</th></tr></thead><tbody>
+          <tr><td>四川长虹电子控股集团</td><td>融资+扩产</td><td style="color:var(--dh-red-2);font-weight:700">45</td><td>10亿融资+产线扩建</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已推荐</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>通威股份</td><td>融资+扩产</td><td style="color:var(--dh-red-2);font-weight:700">45</td><td>定增50亿+扩产</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已推荐</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
+          <tr><td>二重重型装备</td><td>迁址+招聘</td><td style="color:var(--dh-gold);font-weight:700">30</td><td>研发中心迁址</td><td><span class="status-badge sb-aging"><span class="sb-dot"></span>待定</span></td><td><button class="btn btn-gold btn-sm">标记</button></td></tr>
+        </tbody></table></div>
+      </div>
+
+      <!-- ===== 产业分析 ===== -->
+      <div class="page" id="page-engine-industry">
+        <div class="section-title"><h3>本地产业画像</h3><span class="tag">AI生成</span><div class="line"></div></div>
+        <div class="grid-3" style="margin-bottom:18px">
+          <div class="card"><div class="card-title" style="margin-bottom:8px">主导产业</div><div style="font-size:13px;color:var(--dh-red-2);font-weight:600;margin-bottom:6px">电子信息 · 装备制造</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.5">企业占比 42%，产值占比 58%，产业链完整度 92%</div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:8px">潜力产业</div><div style="font-size:13px;color:var(--dh-gold);font-weight:600;margin-bottom:6px">新能源 · 新材料</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.5">企业增速 28%，近期融资事件 42 起，政策支持力度大</div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:8px">衰退产业</div><div style="font-size:13px;color:var(--txt-2);font-weight:600;margin-bottom:6px">传统纺织</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.5">企业数量 -15%，产值 -8%，建议转型升级或退出</div></div>
+        </div>
+        <div class="section-title"><h3>产业链图谱与薄弱环节</h3><span class="tag">新能源产业链</span><div class="line"></div></div>
+        <div class="card" style="margin-bottom:18px"><svg class="chart-box" id="chainChart" viewBox="0 0 600 180" preserveAspectRatio="none" style="height:200px"></svg></div>
+        <div class="section-title"><h3>产业趋势分析</h3><span class="tag">未来3-5年预测</span><div class="line"></div></div>
+        <div class="card">
+          <div class="field-list">
+            <div class="field"><span class="fk">电子信息</span><span class="fv">稳中向好，AI芯片/新型显示是增长点，年增速预计 12%</span></div>
+            <div class="field"><span class="fk">新能源</span><span class="fv">高速增长期，钠离子电池/光伏是重点，年增速预计 25%</span></div>
+            <div class="field"><span class="fk">装备制造</span><span class="fv">平稳发展，向高端化转型，年增速预计 8%</span></div>
+            <div class="field"><span class="fk">食品饮料</span><span class="fv">成熟稳定，品牌升级是关键，年增速预计 5%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== AI模型管理 ===== -->
+      <div class="page" id="page-model">
+        <div class="section-title"><h3>模型列表与版本</h3><span class="tag">主备切换</span><div class="line"></div></div>
+        <div class="table-wrap" style="margin-bottom:18px"><table><thead><tr><th>模型名称</th><th>类型</th><th>当前版本</th><th>状态</th><th>准确率</th><th>训练样本</th><th>操作</th></tr></thead><tbody>
+          <tr><td>企业画像模型</td><td>规则+LLM</td><td>v2.3</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>主模型</span></td><td>92.6%</td><td>3,860</td><td><button class="btn btn-ghost btn-sm">版本对比</button></td></tr>
+          <tr><td>企业画像模型</td><td>规则+LLM</td><td>v2.2</td><td><span class="status-badge sb-normal"><span class="sb-dot"></span>备模型</span></td><td>90.1%</td><td>3,200</td><td><button class="btn btn-blue btn-sm">切换为主</button></td></tr>
+          <tr><td>招商评分模型</td><td>评分模型</td><td>r1.6</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>主模型</span></td><td>89.3%</td><td>2,680</td><td><button class="btn btn-ghost btn-sm">版本对比</button></td></tr>
+          <tr><td>DeepSeek LLM</td><td>大语言模型</td><td>deepseek-v3</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span></td><td>-</td><td>-</td><td><button class="btn btn-ghost btn-sm">配置</button></td></tr>
+          <tr><td>Embedding</td><td>向量化</td><td>bge-large-zh</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span></td><td>-</td><td>-</td><td><button class="btn btn-ghost btn-sm">配置</button></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>训练闭环</h3><span class="tag">让AI越用越准</span><div class="line"></div></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div class="card-title">训练数据管理</div></div>
+            <div class="field-list">
+              <div class="field"><span class="fk">标注样本</span><span class="fv"><span class="hl">3,860</span> 条（画像 2,680 / 评分 1,180）</span></div>
+              <div class="field"><span class="fk">隐式反馈</span><span class="fv">用户查看行为已沉淀 12,580 条</span></div>
+              <div class="field"><span class="fk">显式反馈</span><span class="fv">人工标注 3,860 条</span></div>
+              <div class="field"><span class="fk">样本质量</span><span class="fv">高（人工审核通过率 96%）</span></div>
+            </div>
+            <button class="btn btn-blue btn-sm" style="margin-top:12px" onclick="showToast('训练任务已启动')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>发起训练任务</button>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">效果评估（A/B对比）</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="padding:12px;background:var(--panel-2);border-radius:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--txt-0)">画像模型 v2.3 vs v2.2</span><span style="font-size:11px;color:var(--dh-green)">↑ +2.5%</span></div><div class="progress-bar green"><i style="width:92.6%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">准确率 90.1% → 92.6%</div></div>
+              <div style="padding:12px;background:var(--panel-2);border-radius:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--txt-0)">评分模型 r1.6 vs r1.5</span><span style="font-size:11px;color:var(--dh-green)">↑ +3.1%</span></div><div class="progress-bar green"><i style="width:89.3%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">F1 86.2% → 89.3%</div></div>
+              <div style="padding:12px;background:var(--panel-2);border-radius:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--txt-0)">摘要提示词 v3 vs v2</span><span style="font-size:11px;color:var(--dh-green)">↑ +5.2%</span></div><div class="progress-bar green"><i style="width:88%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">人工审核通过率 82.8% → 88%</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-title"><h3>AI调用统计</h3><div class="line"></div></div>
+        <div class="grid-4">
+          <div class="stat-card s1"><div class="ds-lbl">今日调用</div><div class="ds-num">2,386</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">Token消耗</div><div class="ds-num">1.28M</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">成本估算</div><div class="ds-num">¥186</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">平均耗时</div><div class="ds-num">2.1s</div></div>
+        </div>
+      </div>
+
+      <!-- ===== 招商规则配置 ===== -->
+      <div class="page" id="page-rule">
+        <div class="section-title"><h3>提示词管理</h3><span class="tag">版本对比</span><div class="line"></div></div>
+        <div class="table-wrap" style="margin-bottom:18px"><table><thead><tr><th>场景</th><th>版本</th><th>最后更新</th><th>效果</th><th>操作</th></tr></thead><tbody>
+          <tr><td>画像提示词</td><td>v3</td><td>2026-08-05</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>准确率 92.6%</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-blue btn-sm">版本对比</button></td></tr>
+          <tr><td>摘要提示词</td><td>v3</td><td>2026-08-03</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>通过率 88%</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-blue btn-sm">版本对比</button></td></tr>
+          <tr><td>评分提示词</td><td>v2</td><td>2026-07-28</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>F1 89.3%</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-blue btn-sm">版本对比</button></td></tr>
+          <tr><td>问答提示词</td><td>v4</td><td>2026-08-06</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>满意度 94%</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-blue btn-sm">版本对比</button></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>成本优化配置</h3><span class="tag">场景化调用</span><div class="line"></div></div>
+        <div class="card">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">普通关键词检索不调用模型</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">仅摘要/研判/匹配场景调用大模型，降低成本</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">相同问题优先读缓存</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">问答缓存有效期 60 分钟，命中率 82%</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">数据先清洗去重再入库</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">减少模型输入 Token，今日拦截重复 312 条</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0);font-weight:500">报告生成复用已有摘要</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">复用项目摘要/企业画像/政策标签，减少重复调用</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 用户与权限 ===== -->
+      <div class="page" id="page-user">
+        <div class="section-title"><h3>管理员账户</h3><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('新增管理员弹窗')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增账户</button></div>
+        <div class="table-wrap" style="margin-bottom:18px"><table><thead><tr><th>账户</th><th>姓名</th><th>角色</th><th>部门</th><th>最后登录</th><th>状态</th><th>操作</th></tr></thead><tbody>
+          <tr><td>admin</td><td>系统管理员</td><td>超级管理员</td><td>信息技术部</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">重置密码</button></td></tr>
+          <tr><td>zhaoshang1</td><td>招商专员</td><td>招商专员</td><td>招商一部</td><td>2026-08-08 14:20</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">重置密码</button></td></tr>
+          <tr><td>zhaoshang2</td><td>招商主管</td><td>招商主管</td><td>招商二部</td><td>2026-08-08 10:15</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">重置密码</button></td></tr>
+          <tr><td>viewer</td><td>领导查看</td><td>只读用户</td><td>领导层</td><td>2026-08-07 16:30</td><td><span class="status-badge sb-disabled"><span class="sb-dot"></span>停用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-green btn-sm">启用</button></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>角色与权限</h3><div class="line"></div></div>
+        <div class="grid-3">
+          <div class="card"><div class="card-title" style="margin-bottom:10px">超级管理员</div><div style="font-size:11.5px;color:var(--txt-3);line-height:1.6">菜单权限：全部 · 数据权限：全部 · 字段权限：全部</div><div style="margin-top:10px"><span class="status-badge sb-normal"><span class="sb-dot"></span>2人</span></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:10px">招商专员</div><div style="font-size:11.5px;color:var(--txt-3);line-height:1.6">菜单权限：前端4模块 · 数据权限：本部门 · 字段权限：公开字段</div><div style="margin-top:10px"><span class="status-badge sb-normal"><span class="sb-dot"></span>8人</span></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:10px">只读用户</div><div style="font-size:11.5px;color:var(--txt-3);line-height:1.6">菜单权限：前端看板 · 数据权限：查看 · 字段权限：脱敏字段</div><div style="margin-top:10px"><span class="status-badge sb-normal"><span class="sb-dot"></span>3人</span></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 审计与日志 ===== -->
+      <div class="page" id="page-audit">
+        <div class="tabs">
+          <div class="tab active" onclick="switchLogTab(this,'log-op')">操作日志</div>
+          <div class="tab" onclick="switchLogTab(this,'log-data')">数据变更日志</div>
+          <div class="tab" onclick="switchLogTab(this,'log-ai')">AI调用日志</div>
+        </div>
+        <div id="log-op">
+          <div class="card">
+            <div class="log-line success"><span class="lt">15:42:18</span><span class="lm">系统管理员 → 修改评分权重配置（合同到期 28→30）</span><span class="status-badge sb-normal">规则配置</span></div>
+            <div class="log-line success"><span class="lt">14:20:05</span><span class="lm">招商专员 → 上传Excel（2026年8月新增企业.xlsx，236行）</span><span class="status-badge sb-normal">数据上传</span></div>
+            <div class="log-line success"><span class="lt">13:15:30</span><span class="lm">系统管理员 → 审核通过知识（钠离子电池产业链图谱更新）</span><span class="status-badge sb-normal">知识审核</span></div>
+            <div class="log-line warn"><span class="lt">11:08:00</span><span class="lm">系统 → 爱企查API额度预警（剩余1,236次）</span><span class="status-badge sb-aging">系统告警</span></div>
+            <div class="log-line success"><span class="lt">10:30:12</span><span class="lm">招商主管 → 导出报告（新能源产业链分析报告.pdf）</span><span class="status-badge sb-normal">报告导出</span></div>
+            <div class="log-line success"><span class="lt">09:15:00</span><span class="lm">系统管理员 → 新增用户账户（viewer）</span><span class="status-badge sb-normal">用户管理</span></div>
+          </div>
+        </div>
+        <div id="log-data" style="display:none">
+          <div class="card">
+            <div class="log-line success"><span class="lt">15:42:18</span><span class="lm">四川长虹电子控股集团 → 评分变更 84→87（模型v2.3/规则r1.6）</span><span class="status-badge sb-success">评分更新</span></div>
+            <div class="log-line success"><span class="lt">14:20:05</span><span class="lm">232家企业 → 基础信息新增（Excel批量导入）</span><span class="status-badge sb-new">数据新增</span></div>
+            <div class="log-line warn"><span class="lt">13:15:30</span><span class="lm">通威股份 → 画像标签变更（生命周期 成长期→成熟期）</span><span class="status-badge sb-aging">画像更新</span></div>
+            <div class="log-line success"><span class="lt">06:00:00</span><span class="lm">186家企业 → 工商变更同步（注册资本/法人/股东等）</span><span class="status-badge sb-normal">工商同步</span></div>
+          </div>
+        </div>
+        <div id="log-ai" style="display:none">
+          <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>输入Token</th><th>输出Token</th><th>耗时</th><th>成本</th><th>状态</th></tr></thead><tbody>
+            <tr><td>15:42:18</td><td>问答</td><td>deepseek-v3</td><td>1,286</td><td>568</td><td>2.3s</td><td>¥0.08</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+            <tr><td>15:41:05</td><td>摘要</td><td>deepseek-v3</td><td>2,680</td><td>320</td><td>3.2s</td><td>¥0.12</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+            <tr><td>15:40:30</td><td>画像</td><td>deepseek-v3</td><td>3,860</td><td>186</td><td>4.1s</td><td>¥0.16</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+            <tr><td>15:39:12</td><td>报告生成</td><td>deepseek-v3</td><td>5,820</td><td>2,680</td><td>8.6s</td><td>¥0.32</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td></tr>
+            <tr><td>15:38:00</td><td>问答（缓存命中）</td><td>-</td><td>-</td><td>-</td><td>12ms</td><td>¥0.00</td><td><span class="status-badge sb-normal"><span class="sb-dot"></span>缓存</span></td></tr>
+          </tbody></table></div>
+        </div>
+        <div style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="showToast('日志导出中...')">导出Excel</button></div>
+      </div>
+
+      <!-- ===== 系统设置 ===== -->
+      <div class="page" id="page-setting">
+        <div class="section-title"><h3>基础配置</h3><div class="line"></div></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><div class="card-title">系统参数</div></div>
+            <div class="field-list">
+              <div class="field"><span class="fk">平台名称</span><span class="fv">大合产业发展集团 · AI招商智能体平台</span></div>
+              <div class="field"><span class="fk">平台域名</span><span class="fv">ai.dahe.cn</span></div>
+              <div class="field"><span class="fk">DeepSeek Key</span><span class="fv">sk-****************************a8f3</span></div>
+              <div class="field"><span class="fk">天眼查 Key</span><span class="fv">tyc-****************************9e2c</span></div>
+              <div class="field"><span class="fk">企查查 Key</span><span class="fv">qcc-****************************7b4d</span></div>
+            </div>
+            <button class="btn btn-blue btn-sm" style="margin-top:12px" onclick="showToast('参数已保存')">保存</button>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">安全策略</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0)">密码强度要求</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">至少8位，含大小写+数字</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0)">登录锁定</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">5次失败锁定30分钟</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel-2);border-radius:10px"><div style="flex:1"><div style="font-size:13px;color:var(--txt-0)">IP白名单</div><div style="font-size:11px;color:var(--txt-3);margin-top:3px">仅允许 10.0.0.0/8 网段访问</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-title"><h3>数据字典</h3><span class="tag">标准化映射</span><div class="line"></div></div>
+        <div class="table-wrap"><table><thead><tr><th>字典类型</th><th>枚举值</th><th>标准映射</th><th>操作</th></tr></thead><tbody>
+          <tr><td>行业分类</td><td>电子信息/新能源/装备制造...</td><td>国民经济行业分类GB/T 4754</td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+          <tr><td>企业类型</td><td>国企/民营/上市/外资/专精特新</td><td>工商企业类型标准</td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+          <tr><td>企业规模</td><td>大/中/小/微</td><td>工信部划型标准</td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+          <tr><td>区域编码</td><td>省/市/区</td><td>行政区划代码GB/T 2260</td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+        </tbody></table></div>
+        <div class="section-title"><h3>版本与更新</h3><div class="line"></div></div>
+        <div class="card">
+          <div class="field-list">
+            <div class="field"><span class="fk">当前版本</span><span class="fv"><span class="hl">v1.0.0</span> · 2026-08-01 发布</span></div>
+            <div class="field"><span class="fk">发布说明</span><span class="fv">首版上线：121项功能全量交付，6类智能体上线</span></div>
+            <div class="field"><span class="fk">下次更新</span><span class="fv">预计 2026-09-01（画像模型 v2.4 + 评分规则 r1.7）</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 招投标采集配置页 ===== -->
+      <div class="page" id="page-bid-config">
+        <div class="section-title"><h3>招投标关键词订阅</h3><span class="tag">自动搜集匹配的招投标信息</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('已添加关键词')">+ 添加关键词</button></div>
+        <div class="card">
+          <table><thead><tr><th>关键词</th><th>匹配规则</th><th>订阅地区</th><th>近30天匹配</th><th>状态</th><th>操作</th></tr></thead><tbody>
+            <tr><td>智慧城市</td><td>模糊匹配</td><td>全川</td><td>23条</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">暂停</button></td></tr>
+            <tr><td>新能源电池</td><td>模糊匹配</td><td>成都/宜宾</td><td>15条</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">暂停</button></td></tr>
+            <tr><td>智能制造</td><td>模糊匹配</td><td>全川</td><td>31条</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">暂停</button></td></tr>
+            <tr><td>钒钛</td><td>精确匹配</td><td>攀枝花</td><td>8条</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">暂停</button></td></tr>
+            <tr><td>数据中心</td><td>模糊匹配</td><td>成都</td><td>12条</td><td><span class="status-badge sb-pause"><span class="sb-dot"></span>暂停</span></td><td><button class="btn btn-ghost btn-sm">编辑</button> <button class="btn btn-ghost btn-sm">启用</button></td></tr>
+          </tbody></table>
+        </div>
+        <div class="section-title"><h3>采集来源配置</h3><span class="tag">招投标信息来源</span><div class="line"></div></div>
+        <div class="info-grid">
+          <div class="card"><div class="card-title">四川省公共资源交易服务中心</div><div class="field-list"><div class="field"><span class="fk">采集频率</span><span class="fv">每2小时</span></div><div class="field"><span class="fk">最近采集</span><span class="fv">2026-08-12 08:00</span></div><div class="field"><span class="fk">状态</span><span class="fv"><span class="status-badge sb-ok"><span class="sb-dot"></span>正常</span></span></div></div></div>
+          <div class="card"><div class="card-title">各市州公共资源交易中心</div><div class="field-list"><div class="field"><span class="fk">覆盖市州</span><span class="fv">21个市州</span></div><div class="field"><span class="fk">采集频率</span><span class="fv">每4小时</span></div><div class="field"><span class="fk">状态</span><span class="fv"><span class="status-badge sb-ok"><span class="sb-dot"></span>正常</span></span></div></div></div>
+        </div>
+        <div class="section-title"><h3>采集规则</h3><span class="tag">去重+过滤+分类</span><div class="line"></div></div>
+        <div class="card"><div class="field-list">
+          <div class="field"><span class="fk">去重规则</span><span class="fv">项目名称+招标单位联合去重，保留最新发布</span></div>
+          <div class="field"><span class="fk">过滤规则</span><span class="fv">过滤预算金额<10万的小型采购；过滤非制造业相关项目</span></div>
+          <div class="field"><span class="fk">自动分类</span><span class="fv">AI根据项目内容自动归类到电子信息/新能源/装备制造/材料/航空航天/食品饮料</span></div>
+          <div class="field"><span class="fk">推送触发</span><span class="fv">新招投标匹配已订阅关键词时，自动推送到前端通知</span></div>
+        </div></div>
+      </div>
+
+      <!-- ===== 推送规则配置页 ===== -->
+      <div class="page" id="page-push-config">
+        <div class="section-title"><h3>推送触发规则</h3><span class="tag">什么信息触发推送</span><div class="line"></div><button class="btn btn-green btn-sm" onclick="showToast('推送规则已保存')">保存配置</button></div>
+        <div class="card">
+          <table><thead><tr><th>事件类型</th><th>触发条件</th><th>推送内容</th><th>推送对象</th><th>推送方式</th><th>状态</th></tr></thead><tbody>
+            <tr><td>企业评分更新</td><td>评分变化≥3分 或 等级变化</td><td>企业名+新评分+变化原因</td><td>关注该企业的用户</td><td>站内+弹窗</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+            <tr><td>新招投标匹配</td><td>匹配已订阅关键词</td><td>项目名+金额+截止日期</td><td>订阅该关键词的用户</td><td>站内+弹窗</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+            <tr><td>企业动态更新</td><td>融资/招投标/招聘/专利/新闻</td><td>动态类型+标题+摘要</td><td>关注该企业的用户</td><td>站内</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+            <tr><td>AI推荐线索</td><td>每日凌晨AI跑推荐算法</td><td>推荐企业+匹配原因+评分</td><td>全体招商人员</td><td>站内</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+            <tr><td>跟进到期提醒</td><td>下次跟进日期≤今天</td><td>企业名+待办事项+逾期天数</td><td>负责人</td><td>站内+弹窗</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+            <tr><td>风险信号触发</td><td>企业出现司法/经营异常</td><td>企业名+风险类型+风险描述</td><td>关注该企业的用户+管理员</td><td>站内+弹窗+短信</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td></tr>
+          </tbody></table>
+        </div>
+        <div class="section-title"><h3>推送方式配置</h3><div class="line"></div></div>
+        <div class="info-grid">
+          <div class="card"><div class="card-title">站内通知</div><div class="field-list"><div class="field"><span class="fk">展示位置</span><span class="fv">顶栏通知图标弹窗</span></div><div class="field"><span class="fk">保留时长</span><span class="fv">30天</span></div><div class="field"><span class="fk">状态</span><span class="fv"><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></span></div></div></div>
+          <div class="card"><div class="card-title">弹窗提示</div><div class="field-list"><div class="field"><span class="fk">触发条件</span><span class="fv">高优先级事件（评分更新/风险/跟进到期）</span></div><div class="field"><span class="fk">展示方式</span><span class="fv">右下角弹窗，5秒自动消失</span></div><div class="field"><span class="fk">状态</span><span class="fv"><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></span></div></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 工作管理配置页 ===== -->
+      <div class="page" id="page-workmgr-config">
+        <div class="section-title"><h3>跟进阶段配置</h3><span class="tag">招商跟进流程阶段</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('已添加阶段')">+ 添加阶段</button></div>
+        <div class="card">
+          <table><thead><tr><th>阶段名称</th><th>阶段顺序</th><th>建议周期</th><th>自动动作</th><th>状态</th><th>操作</th></tr></thead><tbody>
+            <tr><td>初次接触</td><td>1</td><td>7天</td><td>发送企业资料模板</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+            <tr><td>方案沟通</td><td>2</td><td>14天</td><td>生成招商建议报告</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+            <tr><td>深入对接</td><td>3</td><td>21天</td><td>升级为主要领导对接</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+            <tr><td>协议谈判</td><td>4</td><td>30天</td><td>法务介入审核协议</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+            <tr><td>落地签约</td><td>5</td><td>—</td><td>归档+转运营</td><td><span class="status-badge sb-ok"><span class="sb-dot"></span>启用</span></td><td><button class="btn btn-ghost btn-sm">编辑</button></td></tr>
+          </tbody></table>
+        </div>
+        <div class="section-title"><h3>提醒规则</h3><span class="tag">跟进到期提醒</span><div class="line"></div></div>
+        <div class="card"><div class="field-list">
+          <div class="field"><span class="fk">到期前提醒</span><span class="fv">跟进日期前1天站内提醒，当天弹窗提醒</span></div>
+          <div class="field"><span class="fk">逾期提醒</span><span class="fv">逾期1天弹窗+标红，逾期3天通知部门负责人</span></div>
+          <div class="field"><span class="fk">超期未跟进</span><span class="fv">超7天未跟进自动降级，超30天自动移出关注列表</span></div>
+          <div class="field"><span class="fk">周报推送</span><span class="fv">每周一早9点推送上周跟进统计+本周待办清单</span></div>
+        </div></div>
+        <div class="section-title"><h3>权限配置</h3><div class="line"></div></div>
+        <div class="card"><div class="field-list">
+          <div class="field"><span class="fk">数据可见范围</span><span class="fv">招商专员只看自己关注的企业；部门负责人看本部门全部；管理员看全部</span></div>
+          <div class="field"><span class="fk">跟进记录</span><span class="fv">只记录不删除，支持追加补充说明</span></div>
+          <div class="field"><span class="fk">阶段变更</span><span class="fv">需填写变更原因，留痕可追溯</span></div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg">操作成功</span></div>
+
+<script>
+const pageMap={overview:'系统总览','data-api':'企业API对接','data-ds':'DeepSeek资讯获取','data-excel':'Excel数据上传','data-cache':'数据校验与缓存','data-log':'接入记录与监控','bid-config':'招投标采集配置','kb':'四大知识库','kb-review':'知识更新审核','engine-profile':'企业画像生成','engine-score':'招商价值评分','engine-signal':'招商机会发现','engine-industry':'产业分析',model:'AI模型管理',rule:'招商规则配置','push-config':'推送规则配置',user:'用户与权限',audit:'审计与日志','workmgr-config':'工作管理配置',setting:'系统设置'};
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    const pg=item.dataset.page;if(!pg)return;
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+pg).classList.add('active');
+    document.getElementById('pageTitle').textContent=pageMap[pg];
+    document.getElementById('breadcrumb').textContent='管理端 / '+pageMap[pg];
+    if(pg==='overview')drawOverview();
+    if(pg==='kb')drawKbGraph();
+    if(pg==='engine-industry')drawChain();
+  });
+});
+function switchLogTab(el,id){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  ['log-op','log-data','log-ai'].forEach(t=>{document.getElementById(t).style.display=t===id?'block':'none';});
+}
+function filterReview(el,type){el.parentElement.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
+
+function drawOverview(){
+  const svg=document.getElementById('overviewChart');if(!svg)return;
+  const w=400,h=180;const days=['08-02','08-03','08-04','08-05','08-06','08-07','08-08'];
+  const data1=[1820,2150,1980,2360,2100,2480,2386];const data2=[142,168,156,186,172,198,186];
+  const max1=Math.max(...data1);const max2=Math.max(...data2);
+  let html='<defs><linearGradient id="og1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(30,64,175,.3)"/><stop offset="100%" stop-color="rgba(30,64,175,0)"/></linearGradient></defs>';
+  let p1='',a1='';data1.forEach((v,i)=>{const x=30+(w-50)*i/6;const y=h-25-(h-50)*v/max1;p1+=(i?'L':'M')+x+' '+y+' ';if(i===0)a1='M'+x+' '+(h-25)+' ';a1+='L'+x+' '+y+' ';});
+  a1+='L'+(30+(w-50))+' '+(h-25)+' Z';
+  html+='<path d="'+a1+'" fill="url(#og1)"/><path d="'+p1+'" fill="none" stroke="#1e40af" stroke-width="2.5"/>';
+  let p2='';data2.forEach((v,i)=>{const x=30+(w-50)*i/6;const y=h-25-(h-50)*v/max2;p2+=(i?'L':'M')+x+' '+y+' ';});
+  html+='<path d="'+p2+'" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4"/>';
+  data1.forEach((v,i)=>{const x=30+(w-50)*i/6;const y=h-25-(h-50)*v/max1;html+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="#1e40af"/>';});
+  days.forEach((d,i)=>{const x=30+(w-50)*i/6;html+='<text x="'+x+'" y="'+(h-8)+'" text-anchor="middle" fill="#64748b" font-size="9">'+d+'</text>';});
+  svg.innerHTML=html;
+}
+function drawKbGraph(){
+  const svg=document.getElementById('kbGraph');if(!svg)return;
+  const w=600,h=200;const nodes=[{n:'四川长虹',x:300,y:100,c:'#1e40af',r:32},{n:'新能源产业',x:120,y:60,c:'#8b5cf6',r:24},{n:'制造业政策',x:480,y:60,c:'#dc2626',r:24},{n:'长虹案例',x:120,y:150,c:'#f59e0b',r:22},{n:'通威股份',x:480,y:150,c:'#06b6d4',r:24}];
+  let html='';
+  [[0,1],[0,2],[0,3],[0,4],[1,4],[1,2]].forEach(p=>{html+='<line x1="'+nodes[p[0]].x+'" y1="'+nodes[p[0]].y+'" x2="'+nodes[p[1]].x+'" y2="'+nodes[p[1]].y+'" stroke="rgba(15,23,42,.12)" stroke-width="1.5"/>';});
+  nodes.forEach(d=>{html+='<circle cx="'+d.x+'" cy="'+d.y+'" r="'+d.r+'" fill="'+d.c+'" opacity="0.2" stroke="'+d.c+'" stroke-width="2"/>';html+='<text x="'+d.x+'" y="'+(d.y+4)+'" text-anchor="middle" fill="#475569" font-size="11" font-weight="500">'+d.n+'</text>';});
+  svg.innerHTML=html;
+}
+function drawChain(){
+  const svg=document.getElementById('chainChart');if(!svg)return;
+  const w=600,h=180;
+  const stages=[{n:'上游·材料',x:80,items:['正极材料⚠️','负极材料','电解液','隔膜']},{n:'中游·制造',x:300,items:['电芯制造','模组封装','电池系统']},{n:'下游·应用',x:520,items:['储能','动力电池','两轮车']}];
+  let html='';
+  stages.forEach((s,i)=>{html+='<rect x="'+(s.x-60)+'" y="20" width="120" height="140" rx="10" fill="rgba(30,64,175,.06)" stroke="rgba(30,64,175,.2)" />';html+='<text x="'+s.x+'" y="40" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="600">'+s.n+'</text>';s.items.forEach((it,j)=>{const weak=it.includes('⚠️');html+='<rect x="'+(s.x-50)+'" y="'+(55+j*24)+'" width="100" height="20" rx="6" fill="'+(weak?'rgba(220,38,38,.15)':'rgba(15,23,42,.04)')+'" stroke="'+(weak?'rgba(220,38,38,.4)':'rgba(15,23,42,.12)')+'"/>';html+='<text x="'+s.x+'" y="'+(68+j*24)+'" text-anchor="middle" fill="'+(weak?'#ef4444':'#475569')+'" font-size="11">'+it.replace('⚠️','')+'</text>';if(weak)html+='<circle cx="'+(s.x+42)+'" cy="'+(65+j*24)+'" r="3" fill="#ef4444"/>';});});
+  html+='<line x1="140" y1="90" x2="240" y2="90" stroke="rgba(6,182,212,.4)" stroke-width="2" marker-end="url(#arrow)"/>';
+  html+='<line x1="360" y1="90" x2="460" y2="90" stroke="rgba(6,182,212,.4)" stroke-width="2" marker-end="url(#arrow)"/>';
+  html+='<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="rgba(6,182,212,.6)"/></marker></defs>';
+  svg.innerHTML=html;
+}
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+setTimeout(drawOverview,100);
+</script>
+<style>
+.modal-mask{position:fixed;inset:0;background:rgba(2,8,20,.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9999}
+.modal-card{background:#ffffff;border:1px solid var(--border);border-radius:16px;padding:22px;width:460px;max-width:92vw;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(15,23,42,.18)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600;color:var(--txt-0);margin-bottom:14px}
+.modal-close{cursor:pointer;font-size:22px;color:var(--txt-3);line-height:1}
+.modal-body{display:flex;flex-direction:column;gap:12px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.form-row{display:flex;flex-direction:column;gap:5px}
+.form-row label{font-size:12px;color:var(--txt-2)}
+.form-row input,.form-row select{background:var(--panel-2);border:1px solid var(--border);color:var(--txt-0);border-radius:8px;padding:9px 11px;font-size:13px;width:100%;outline:none}
+.form-row input:focus,.form-row select:focus{border-color:var(--dh-blue-2)}
+#loginMask .logo-text{margin-bottom:6px}
+</style>
+<div id="loginMask" class="modal-mask" style="display:none">
+  <div class="modal-card" style="width:360px">
+    <div class="logo-text" style="margin-bottom:18px"><span class="lt1">AI招商智能体平台</span><span class="lt2">管理端登录</span></div>
+    <div class="form-row"><label>账号</label><input id="loginUser" type="text" placeholder="admin" autocomplete="username"></div>
+    <div class="form-row"><label>密码</label><input id="loginPass" type="password" placeholder="123456" autocomplete="current-password"></div>
+    <button class="btn btn-blue" style="width:100%;margin-top:10px;padding:11px" onclick="doLoginStandalone()">登 录</button>
+    <div style="font-size:11px;color:var(--txt-3);margin-top:12px;text-align:center">演示账号 admin / 123456</div>
+  </div>
+</div>
+<div id="crudModal" class="modal-mask" style="display:none">
+  <div class="modal-card">
+    <div class="modal-head"><span id="crudTitle">新增</span><span class="modal-close" onclick="ZS.close()">×</span></div>
+    <div id="crudForm" class="modal-body"></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="ZS.close()">取消</button><button class="btn btn-blue" onclick="ZS.save()">保存</button></div>
+  </div>
+</div>
+<script src="app.js?v=2.7"></script>
+<script>
+/* 备用：即使 app.js 加载异常，登录/获取也能直接调用后端 */
+async function doLoginStandalone() {
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  if (!u || !p) { showToast('请输入账号和密码'); return; }
+  try {
+    var r = await fetch('api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    var j = await r.json();
+    if (j.token) {
+      localStorage.setItem('zs_token', j.token);
+      location.reload();
+    } else {
+      showToast(j.error || '登录失败');
+    }
+  } catch (e) { showToast('登录异常：' + e.message); }
+}
+async function renderNewsInline() {
+  var token = localStorage.getItem('zs_token') || '';
+  try {
+    var rs = await fetch('api/news/stats', { headers: { 'Authorization': 'Bearer ' + token } });
+    var rn = await fetch('api/news', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (rs.status === 401 || rn.status === 401) { localStorage.removeItem('zs_token'); var m = document.getElementById('loginMask'); if (m) m.style.display = 'flex'; return; }
+    var sj = await rs.json().catch(function() { return {}; });
+    var nj = await rn.json().catch(function() { return {}; });
+    var stats = sj.data || {};
+    var news = nj.data || [];
+    function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+    set('news-total', stats.totalToday != null ? stats.totalToday : 0);
+    set('news-token', stats.tokenTotal >= 1000 ? (stats.tokenTotal / 1000).toFixed(1) + 'K' : (stats.tokenTotal || 0));
+    set('news-cost', '成本 ¥' + ((stats.costTotal || 0).toFixed(2)));
+    set('news-ai', stats.aiTotal != null ? stats.aiTotal : 0);
+    set('news-cache', stats.cacheHitTotal != null ? stats.cacheHitTotal : 0);
+    set('news-cache-rate', '累计缓存命中');
+    var agg = {};
+    news.forEach(function(n) {
+      var a = agg[n.cat] || (agg[n.cat] = { source: n.source, count: 0, ai: 0 });
+      a.count++; if (n.ai) a.ai++;
+    });
+    var OFFLINE = [
+      { cat: '招投标数据', source: '各省公共资源交易中心', freq: '每日' },
+      { cat: '企业官网动态', source: '重点企业官网', freq: '每周' }
+    ];
+    var rows = [];
+    Object.keys(agg).forEach(function(cat) {
+      var a = agg[cat];
+      var aiBadge = a.ai > 0 ? '<span class="status-badge sb-success"><span class="sb-dot"></span>已生成(' + a.ai + ')</span>' : '<span class="status-badge sb-normal"><span class="sb-dot"></span>未摘要</span>';
+      rows.push('<tr><td>' + cat + '</td><td>' + a.source + '</td><td>' + a.count + '</td><td>每日</td><td>' + aiBadge + '</td><td>-</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>完成</span></td></tr>');
+    });
+    OFFLINE.forEach(function(o) {
+      rows.push('<tr><td>' + o.cat + '</td><td>' + o.source + '</td><td>0</td><td>' + o.freq + '</td><td>-</td><td>-</td><td><span class="status-badge sb-normal"><span class="sb-dot"></span>待接入</span></td></tr>');
+    });
+    var tb = document.getElementById('news-tbody');
+    if (tb) tb.innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:24px">暂无数据</td></tr>';
+  } catch (e) { console.error('[inline] renderNewsInline error', e); }
+}
+async function fetchNewsStandalone() {
+  var btn = document.getElementById('news-fetch-btn');
+  if (!btn) { showToast('找不到按钮'); return; }
+  var old = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '获取中…';
+  try {
+    var token = localStorage.getItem('zs_token') || '';
+    var r = await fetch('api/news/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+    });
+    if (r.status === 401) {
+      localStorage.removeItem('zs_token');
+      var mask = document.getElementById('loginMask');
+      if (mask) { mask.style.display = 'flex'; }
+      else { showToast('登录已过期，请刷新页面重新登录'); }
+      btn.disabled = false; btn.innerHTML = old;
+      return;
+    }
+    var j = await r.json();
+    if (j.success) {
+      showToast('真实抓取 ' + j.total + ' 条（新增 ' + (j.total - j.cacheHit) + ' / 缓存 ' + j.cacheHit + ' / AI摘要 ' + j.aiCount + '）');
+      await renderNewsInline();
+    } else {
+      showToast('获取失败：' + (j.error || '未知错误'));
+      await renderNewsInline();
+    }
+  } catch (e) { showToast('请求异常：' + e.message); }
+  btn.disabled = false; btn.innerHTML = old;
+}
+// 页面进入资讯页时自动渲染已有数据
+setTimeout(renderNewsInline, 300);
+</script>
+</body>
+</html>

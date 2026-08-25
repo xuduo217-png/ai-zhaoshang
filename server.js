@@ -399,6 +399,7 @@ const RESOURCES = {
       { key: 'highlights', label: '核心亮点', type: 'textarea' },
       { key: 'policy', label: '配套政策', type: 'text' },
       { key: 'status', label: '状态', type: 'select', options: ['招商中', '即将开放', '已满'] },
+      { key: 'published', label: '门户发布', type: 'select', options: ['是', '否'] },
     ],
     seed: [
       { id: 1, category: '投资载体', title: '成都高新区智能制造产业园', region: '成都高新区', industry: '智能制造/电子信息', scale: '占地 1200 亩 · 标准厂房 80 万㎡', highlights: '拎包入驻标准厂房，配套人才公寓与政务服务大厅，已落地龙头企业 12 家，产业链配套完善。', policy: '前三年租金减免，设备投资按 15% 奖补，最高 2000 万。', status: '招商中' },
@@ -822,6 +823,17 @@ function canWrite(user, resource) {
 }
 
 const LOGIN_ATTEMPTS = new Map();
+const PORTAL_LIMITS = new Map();
+function portalAllowed(ip, action, max, windowMs) {
+  const key = action + ':' + ip;
+  const nowMs = Date.now();
+  let state = PORTAL_LIMITS.get(key);
+  if (!state || state.resetAt <= nowMs) state = { count: 0, resetAt: nowMs + windowMs };
+  if (state.count >= max) { PORTAL_LIMITS.set(key, state); return false; }
+  state.count++;
+  PORTAL_LIMITS.set(key, state);
+  return true;
+}
 function loginAllowed(ip) {
   const nowMs = Date.now();
   const state = LOGIN_ATTEMPTS.get(ip) || { count: 0, resetAt: nowMs + 15 * 60 * 1000 };
@@ -860,17 +872,21 @@ const server = http.createServer(async (req, res) => {
 
   /* ---------- 投资客商自助门户（公开，无需登录） ---------- */
   if (p.startsWith('/api/portal/')) {
+    const portalIp = req.socket.remoteAddress || 'unknown';
     if (p === '/api/portal/projects' && method === 'GET') {
       const projects = loadRes('projects');
       const cat = u.searchParams.get('category');
-      const list = cat ? projects.filter((x) => x.category === cat) : projects;
+      const published = projects.filter((x) => x.published !== '否' && x.status !== '已满');
+      const list = cat ? published.filter((x) => x.category === cat) : published;
       return send(res, 200, { data: list });
     }
     if (p === '/api/portal/match' && method === 'POST') {
+      if (!portalAllowed(portalIp, 'match', 12, 15 * 60 * 1000)) return send(res, 429, { error: '请求过于频繁，请稍后再试' });
       const b = await readBody(req);
       const message = String(b.message || '').trim();
       if (!message) return send(res, 400, { error: '请描述您的投资需求' });
-      const projects = loadRes('projects');
+      if (message.length > 1000) return send(res, 400, { error: '投资需求请控制在 1000 字以内' });
+      const projects = loadRes('projects').filter((x) => x.published !== '否' && x.status !== '已满');
       let need = { industries: [], regions: [], keywords: [], summary: '' };
       const key = serviceKey('DeepSeek');
       if (key) {
@@ -887,6 +903,8 @@ const server = http.createServer(async (req, res) => {
       const REGIONS = ['成都', '绵阳', '德阳', '宜宾', '泸州', '南充', '攀枝花', '四川', '高新区', '天府新区', '重庆', '长三角', '珠三角', '京津冀'];
       const hitReg = REGIONS.filter((k) => message.indexOf(k) >= 0);
       need.regions = Array.from(new Set([...(need.regions || []), ...hitReg]));
+      const keywordStop = new Set(['投资', '项目', '招商', '企业', '产业', '落地', '政策', '预算', '计划', '希望', '公司']);
+      need.keywords = Array.from(new Set((need.keywords || []).map((x) => String(x).trim()).filter((x) => x.length >= 2 && x.length <= 20 && !keywordStop.has(x)))).slice(0, 12);
       const scored = projects.map((pj) => {
         let score = 0;
         const blob = [pj.industry, pj.region, pj.title, pj.highlights, pj.policy].join(' ');
@@ -894,26 +912,38 @@ const server = http.createServer(async (req, res) => {
         (need.regions || []).forEach((k) => { if ((pj.region || '').indexOf(k) >= 0) score += 2; });
         (need.keywords || []).forEach((k) => { if (blob.indexOf(k) >= 0) score += 1; });
         return { project: pj, score };
-      }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
-      const matched = (scored.length ? scored.slice(0, 6) : projects.slice(0, 4)).map((x) => x.project);
+      }).filter((x) => x.score >= 2).sort((a, b) => b.score - a.score);
+      const matched = (scored.length ? scored.slice(0, 4) : projects.slice(0, 4)).map((x) => x.project);
       return send(res, 200, { need, matched });
     }
     if (p === '/api/portal/inquire' && method === 'POST') {
+      if (!portalAllowed(portalIp, 'inquire', 5, 60 * 60 * 1000)) return send(res, 429, { error: '提交过于频繁，请稍后再试' });
       const b = await readBody(req);
+      if (b.website) return send(res, 400, { error: '提交失败' });
       if (!b.name || !b.phone) return send(res, 400, { error: '请填写联系人姓名与联系电话' });
+      if (b.consent !== true) return send(res, 400, { error: '请先确认个人信息使用说明' });
+      const phone = String(b.phone).trim();
+      const email = String(b.email || '').trim();
+      if (!/^\+?[0-9\s-]{7,20}$/.test(phone)) return send(res, 400, { error: '联系电话格式不正确' });
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: '邮箱格式不正确' });
       const leads = loadRes('leads');
+      const recentDuplicate = leads.find((x) => x.phone === phone && Date.now() - new Date(String(x.createdAt || '').replace(' ', 'T')).getTime() < 10 * 60 * 1000);
+      if (recentDuplicate) return send(res, 409, { error: '该联系方式刚刚提交过，请勿重复提交' });
+      const publicProjects = loadRes('projects').filter((x) => x.published !== '否');
+      const publicTitles = new Set(publicProjects.map((x) => String(x.title || '')));
+      const matchedProjects = (Array.isArray(b.matchedProjects) ? b.matchedProjects : []).map(String).filter((x) => publicTitles.has(x)).slice(0, 10).join('、').slice(0, 500);
       const item = {
         id: nextId(leads),
         name: String(b.name).slice(0, 40),
         company: String(b.company || '').slice(0, 80),
-        phone: String(b.phone).slice(0, 40),
-        email: String(b.email || '').slice(0, 80),
+        phone,
+        email: email.slice(0, 80),
         industry: String(b.industry || '').slice(0, 40),
         budget: String(b.budget || '').slice(0, 40),
         region: String(b.region || '').slice(0, 40),
         intention: String(b.intention || '').slice(0, 1000),
         source: String(b.source || '前台门户').slice(0, 40),
-        matchedProjects: Array.isArray(b.matchedProjects) ? b.matchedProjects.join('、') : String(b.matchedProjects || ''),
+        matchedProjects,
         status: '新线索',
         createdAt: now(),
       };

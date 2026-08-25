@@ -130,6 +130,9 @@ a{color:inherit;text-decoration:none}
 /* Toast */
 .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:var(--dh-deep);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:.3s;z-index:60}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.privacy-consent{display:flex;align-items:flex-start;gap:8px;margin-top:16px;color:var(--txt-2);font-size:12.5px;line-height:1.6}
+.privacy-consent input{margin-top:3px}
+.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}
 
 @media(max-width:860px){.grid{grid-template-columns:1fr 1fr}.hero h1{font-size:30px}.form-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.nav-link{display:none}}
@@ -147,7 +150,7 @@ a{color:inherit;text-decoration:none}
         <span class="b2">投资客商自助门户</span>
       </div>
     </div>
-    <a class="nav-link" href="index.html">运营后台 →</a>
+    <span class="nav-link">投资咨询服务</span>
   </div>
 </nav>
 
@@ -192,7 +195,7 @@ a{color:inherit;text-decoration:none}
     <div class="section-head">
       <span class="tag">招商资源库</span>
       <h2>产业园区 · 招商项目 · 优惠政策</h2>
-      <p>真实可对接的招商资源，按类型筛选，一键提交合作意向</p>
+      <p>以下为联调演示数据，正式运营前须由项目方确认并替换</p>
     </div>
     <div class="tabs" id="tabs">
       <button class="tab-btn active" data-cat="全部" onclick="switchTab(this)">全部</button>
@@ -222,7 +225,9 @@ a{color:inherit;text-decoration:none}
           <div class="field"><label>投资预算</label><input id="f_budget" placeholder="如：5 亿元"></div>
           <div class="field"><label>意向来源</label><input id="f_source" value="前台门户" readonly style="background:#f1f5f9;color:#64748b"></div>
           <div class="field full"><label>需求描述</label><textarea id="f_intention" placeholder="请简要描述您的投资诉求、产能规划或政策期望"></textarea></div>
+          <div class="honeypot" aria-hidden="true"><label>网址<input id="f_website" tabindex="-1" autocomplete="off"></label></div>
         </div>
+        <label class="privacy-consent"><input type="checkbox" id="f_consent"> <span>我已知悉并同意平台为投资对接目的保存并使用上述联系方式。请勿填写与本次对接无关的敏感信息。</span></label>
         <button class="btn-submit" id="submitBtn" onclick="submitLead()">提交对接意向</button>
       </div>
       <div class="lead-success" id="leadSuccess">
@@ -257,7 +262,7 @@ const API = 'api';
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 function catClass(c){if(c==='投资载体')return 'cat-载体';if(c==='招商项目')return 'cat-项目';return 'cat-政策';}
-function stClass(s){return 'st-'+s;}
+function stClass(s){return ['招商中','即将开放','已满'].includes(s)?'st-'+s:'st-招商中';}
 
 let allProjects = [];
 let matchedTitles = [];
@@ -285,7 +290,7 @@ function renderProjects(cat){
       ${p.policy?`<div class="policy">政策：${esc(p.policy)}</div>`:''}
       <div class="foot">
         <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
-        <button class="btn-pick" onclick="pickProject('${esc(p.title).replace(/'/g,"\\'")}')">选此对接</button>
+        <button class="btn-pick" onclick="pickProjectById(${Number(p.id)||0})">选此对接</button>
       </div>
     </div>`).join('');
 }
@@ -301,6 +306,10 @@ function pickProject(title){
   showMatched();
   scrollToLead();
   toast('已加入意向：'+title);
+}
+function pickProjectById(id){
+  const project=allProjects.find(p=>Number(p.id)===Number(id));
+  if(project) pickProject(String(project.title||''));
 }
 
 function showMatched(){
@@ -336,7 +345,7 @@ async function doMatch(){
           <div class="hl">${esc(p.highlights||'')}</div>
           <div class="foot">
             <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
-            <button class="btn-pick" onclick="pickProject('${esc(p.title).replace(/'/g,"\\'")}')">选此对接</button>
+            <button class="btn-pick" onclick="pickProjectById(${Number(p.id)||0})">选此对接</button>
           </div>
         </div>`).join('');
     }
@@ -360,18 +369,24 @@ async function submitLead(){
   const name=document.getElementById('f_name').value.trim();
   const phone=document.getElementById('f_phone').value.trim();
   if(!name||!phone){ toast('请填写联系人与联系电话'); return; }
+  if(!/^\+?[0-9\s-]{7,20}$/.test(phone)){ toast('请填写有效的联系电话'); return; }
+  const email=document.getElementById('f_email').value.trim();
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('请填写有效的电子邮箱'); return; }
+  if(!document.getElementById('f_consent').checked){ toast('请先确认个人信息使用说明'); return; }
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.textContent='提交中…';
   const payload={
     name, phone,
     company:document.getElementById('f_company').value.trim(),
-    email:document.getElementById('f_email').value.trim(),
+    email,
     industry:document.getElementById('f_industry').value.trim(),
     region:document.getElementById('f_region').value.trim(),
     budget:document.getElementById('f_budget').value.trim(),
     source:document.getElementById('f_source').value.trim(),
     intention:document.getElementById('f_intention').value.trim(),
-    matchedProjects:matchedTitles
+    matchedProjects:matchedTitles,
+    consent:true,
+    website:document.getElementById('f_website').value
   };
   try{
     const r=await fetch(API+'/portal/inquire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});

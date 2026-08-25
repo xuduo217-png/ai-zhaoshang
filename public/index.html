@@ -318,6 +318,13 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
       <div class="nav-item" data-page="setting">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>系统设置
       </div>
+      <div class="nav-label">门户与客商</div>
+      <div class="nav-item" data-page="projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>招商项目库
+      </div>
+      <div class="nav-item" data-page="leads">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>客商线索
+      </div>
     </nav>
     <div class="user-area">
       <div class="avatar">管</div>
@@ -895,6 +902,18 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
         </div></div>
       </div>
 
+      <!-- ===== 招商项目库页（前台门户数据） ===== -->
+      <div class="page" id="page-projects">
+        <div class="section-title"><h3>招商项目库</h3><span class="tag">前台门户展示的产业园区 / 招商项目 / 优惠政策</span><div class="line"></div><button class="btn btn-blue btn-sm">+ 新增项目</button></div>
+        <div class="card"><table><thead><tr></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <!-- ===== 客商线索页（前台留资） ===== -->
+      <div class="page" id="page-leads">
+        <div class="section-title"><h3>客商线索</h3><span class="tag">前台门户提交的对接意向，实时推送站内信</span><div class="line"></div><button class="btn btn-blue btn-sm">+ 新增线索</button></div>
+        <div class="card"><table><thead><tr></tr></thead><tbody></tbody></table></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -902,7 +921,7 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg">操作成功</span></div>
 
 <script>
-const pageMap={overview:'系统总览','data-api':'企业API对接','data-ds':'DeepSeek资讯获取','data-excel':'Excel数据上传','data-cache':'数据校验与缓存','data-log':'接入记录与监控','bid-config':'招投标采集配置','kb':'四大知识库','kb-review':'知识更新审核','engine-profile':'企业画像生成','engine-score':'招商价值评分','engine-signal':'招商机会发现','engine-industry':'产业分析',model:'AI模型管理',rule:'招商规则配置','push-config':'推送规则配置',user:'用户与权限',audit:'审计与日志','workmgr-config':'工作管理配置',setting:'系统设置'};
+const pageMap={overview:'系统总览','data-api':'企业API对接','data-ds':'DeepSeek资讯获取','data-excel':'Excel数据上传','data-cache':'数据校验与缓存','data-log':'接入记录与监控','bid-config':'招投标采集配置','kb':'四大知识库','kb-review':'知识更新审核','engine-profile':'企业画像生成','engine-score':'招商价值评分','engine-signal':'招商机会发现','engine-industry':'产业分析',model:'AI模型管理',rule:'招商规则配置','push-config':'推送规则配置',user:'用户与权限',audit:'审计与日志','workmgr-config':'工作管理配置',setting:'系统设置',projects:'招商项目库',leads:'客商线索'};
 document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',()=>{
     const pg=item.dataset.page;if(!pg)return;

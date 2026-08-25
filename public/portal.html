@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投资客商门户 · AI招商智能体平台</title>
+<style>
+:root{
+  --dh-deep:#0f233f; --dh-blue:#1e40af; --dh-blue-2:#2563eb; --dh-cyan:#0891b2;
+  --dh-red:#dc2626; --dh-gold:#f59e0b; --dh-green:#16a34a;
+  --bg-0:#eef1f6; --bg-1:#e7ecf3; --bg-2:#ffffff;
+  --panel:#ffffff; --panel-2:#eaeef4;
+  --border:#e2e8f0; --border-2:#cbd5e1;
+  --txt-0:#0f172a; --txt-1:#334155; --txt-2:#64748b; --txt-3:#94a3b8;
+  --grad-brand:linear-gradient(135deg,#1e40af,#dc2626 60%,#0891b2);
+  --grad-blue:linear-gradient(135deg,#1e40af,#0891b2);
+  --shadow:0 8px 30px rgba(15,23,42,.08); --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg-0);color:var(--txt-1);-webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* 顶部导航 */
+.navbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:40px;height:40px;border-radius:10px;background:var(--grad-brand);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,64,175,.25);color:#fff;font-weight:800;font-size:18px}
+.brand-text{display:flex;flex-direction:column;line-height:1.2}
+.brand-text .b1{font-size:15px;font-weight:800;color:var(--txt-0)}
+.brand-text .b2{font-size:11px;color:var(--txt-2);letter-spacing:.5px}
+.nav-link{padding:8px 16px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--dh-blue);border:1px solid var(--border-2);transition:.2s}
+.nav-link:hover{background:rgba(30,64,175,.06);border-color:var(--dh-blue-2)}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#0f233f 0%,#16335c 45%,#1e40af 100%);color:#fff;padding:74px 0 86px}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(700px 400px at 85% 20%,rgba(8,145,178,.35),transparent 60%),radial-gradient(500px 300px at 10% 90%,rgba(220,38,38,.22),transparent 60%)}
+.hero .wrap{position:relative;z-index:2}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:1px;color:#bcd0ff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 14px;border-radius:99px;margin-bottom:18px}
+.hero h1{font-size:40px;line-height:1.18;font-weight:800;letter-spacing:.5px;margin-bottom:14px}
+.hero h1 span{background:linear-gradient(90deg,#7dd3fc,#fca5a5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.sub{font-size:16px;color:#cdd9f0;max-width:640px;margin-bottom:30px}
+.ai-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:18px;backdrop-filter:blur(6px);max-width:720px}
+.ai-box .row{display:flex;gap:12px;align-items:flex-end}
+.ai-box textarea{flex:1;min-height:64px;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.95);color:var(--txt-0);padding:12px 14px;font-size:14.5px;font-family:inherit;outline:none}
+.ai-box textarea:focus{border-color:#7dd3fc;box-shadow:0 0 0 3px rgba(125,211,252,.25)}
+.btn-match{background:var(--grad-brand);color:#fff;border:none;border-radius:12px;padding:0 22px;height:64px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;box-shadow:0 6px 18px rgba(220,38,38,.3)}
+.btn-match:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn-match:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.chip{font-size:12.5px;color:#dbe6ff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:6px 13px;border-radius:99px;cursor:pointer;transition:.2s}
+.chip:hover{background:rgba(255,255,255,.2)}
+
+/* 通用区块 */
+.section{padding:56px 0}
+.section-head{text-align:center;margin-bottom:36px}
+.section-head .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--dh-blue);background:rgba(30,64,175,.08);padding:5px 14px;border-radius:99px;margin-bottom:12px}
+.section-head h2{font-size:27px;font-weight:800;color:var(--txt-0);letter-spacing:.3px}
+.section-head p{color:var(--txt-2);font-size:15px;margin-top:8px}
+
+/* 匹配结果 */
+#matchResult{display:none;margin-top:8px}
+#matchResult.show{display:block;animation:fade .5s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.match-summary{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);margin-bottom:22px;display:flex;align-items:center;gap:16px}
+.match-summary .ic{width:46px;height:46px;border-radius:12px;background:var(--grad-blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0}
+.match-summary .txt b{color:var(--txt-0);font-size:15px}
+.match-summary .txt div{color:var(--txt-2);font-size:13.5px;margin-top:3px}
+
+/* 卡片网格 */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);transition:.25s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(15,23,42,.12);border-color:var(--border-2)}
+.card .cat{display:inline-flex;align-self:flex-start;font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:99px;margin-bottom:11px}
+.cat-载体{background:rgba(8,145,178,.12);color:#0e7490}
+.cat-项目{background:rgba(220,38,38,.1);color:#b91c1c}
+.cat-政策{background:rgba(245,158,11,.14);color:#b45309}
+.card h3{font-size:17px;color:var(--txt-0);font-weight:700;margin-bottom:6px}
+.card .meta{font-size:12.5px;color:var(--txt-2);margin-bottom:12px}
+.card .hl{font-size:13.5px;color:var(--txt-1);flex:1;margin-bottom:14px}
+.card .policy{font-size:12.5px;color:#0e7490;background:rgba(8,145,178,.06);border-radius:9px;padding:9px 12px;margin-bottom:14px}
+.card .foot{display:flex;align-items:center;justify-content:space-between}
+.status{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:99px}
+.st-招商中{background:rgba(22,163,74,.12);color:#15803d}
+.st-即将开放{background:rgba(245,158,11,.14);color:#b45309}
+.st-已满{background:rgba(100,116,139,.12);color:#475569}
+.btn-pick{font-size:12.5px;font-weight:600;color:var(--dh-blue);background:rgba(30,64,175,.07);border:1px solid rgba(30,64,175,.2);border-radius:8px;padding:6px 12px;cursor:pointer;transition:.2s}
+.btn-pick:hover{background:rgba(30,64,175,.14)}
+
+/* Tab */
+.tabs{display:flex;justify-content:center;gap:10px;margin-bottom:30px;flex-wrap:wrap}
+.tab-btn{font-size:14px;font-weight:600;color:var(--txt-2);background:#fff;border:1px solid var(--border);border-radius:99px;padding:9px 22px;cursor:pointer;transition:.2s}
+.tab-btn:hover{border-color:var(--dh-blue-2);color:var(--dh-blue)}
+.tab-btn.active{background:var(--grad-brand);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(30,64,175,.25)}
+
+/* 留资表单 */
+.lead-section{background:linear-gradient(160deg,#f8fafc,#eef2f8)}
+.lead-card{max-width:680px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:18px;padding:32px;box-shadow:var(--shadow)}
+.lead-card h3{font-size:20px;color:var(--txt-0);font-weight:800;text-align:center;margin-bottom:6px}
+.lead-card .desc{text-align:center;color:var(--txt-2);font-size:14px;margin-bottom:24px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1 / -1}
+.field label{font-size:13px;font-weight:600;color:var(--txt-1)}
+.field label .req{color:var(--dh-red);margin-left:2px}
+.field input,.field textarea,.field select{border:1px solid var(--border-2);border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;color:var(--txt-0);background:#fff;outline:none;transition:.2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--dh-blue-2);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.field textarea{resize:vertical;min-height:84px}
+.matched-pill{display:none;font-size:12.5px;color:#0e7490;background:rgba(8,145,178,.08);border:1px dashed rgba(8,145,178,.4);border-radius:9px;padding:9px 12px;margin-bottom:4px}
+.matched-pill.show{display:block}
+.btn-submit{width:100%;margin-top:22px;background:var(--grad-brand);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15.5px;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 8px 20px rgba(220,38,38,.22)}
+.btn-submit:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.lead-success{display:none;text-align:center;padding:14px 0}
+.lead-success.show{display:block;animation:fade .5s ease}
+.lead-success .ok{width:64px;height:64px;border-radius:50%;background:var(--grad-blue);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff;font-size:34px}
+.lead-success h3{font-size:20px;color:var(--txt-0);margin-bottom:8px}
+.lead-success p{color:var(--txt-2);font-size:14px}
+
+/* 页脚 */
+.footer{background:var(--dh-deep);color:#cdd9f0;padding:40px 0 30px}
+.footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.footer .f-brand .b1{font-size:16px;font-weight:800;color:#fff}
+.footer .f-brand .b2{font-size:12.5px;color:#8aa0c8;margin-top:6px;max-width:320px}
+.footer .f-contact{font-size:13.5px;line-height:2}
+.footer .f-contact b{color:#fff}
+.footer .copy{width:100%;border-top:1px solid rgba(255,255,255,.12);margin-top:18px;padding-top:16px;font-size:12px;color:#7e93bb;text-align:center}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:var(--dh-deep);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:.3s;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:860px){.grid{grid-template-columns:1fr 1fr}.hero h1{font-size:30px}.form-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.nav-link{display:none}}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav class="navbar">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <div class="brand-mark">招</div>
+      <div class="brand-text">
+        <span class="b1">大合产业 · AI招商智能体</span>
+        <span class="b2">投资客商自助门户</span>
+      </div>
+    </div>
+    <a class="nav-link" href="index.html">运营后台 →</a>
+  </div>
+</nav>
+
+<!-- Hero + AI 匹配 -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">● AI 智能招商 · 让投资对接更高效</span>
+    <h1>一句话描述需求<br>AI 为您<span>精准匹配</span>招商资源</h1>
+    <p class="sub">面向投资客商的自助对接平台：描述您的产业方向与落地诉求，AI 即时推荐适配的产业园区、招商项目与优惠政策，并在线提交对接意向，专属招商专员全程跟进。</p>
+    <div class="ai-box">
+      <div class="row">
+        <textarea id="needInput" placeholder="例如：我们是一家新能源电池企业，计划在成都周边投建正极材料产线，总投资约 5 亿元，希望享受设备投资奖补……"></textarea>
+        <button class="btn-match" id="matchBtn" onclick="doMatch()">智能匹配推荐</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+</header>
+
+<!-- 匹配结果 -->
+<section class="section" style="padding-top:40px">
+  <div class="wrap">
+    <div id="matchResult">
+      <div class="match-summary">
+        <div class="ic">✦</div>
+        <div class="txt">
+          <b id="matchTitle">为您匹配到以下招商资源</b>
+          <div id="matchDesc"></div>
+        </div>
+      </div>
+      <div class="grid" id="matchGrid"></div>
+      <div style="text-align:center;margin-top:26px">
+        <button class="btn-match" style="height:50px" onclick="scrollToLead()">留下联系方式，立即对接 →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 招商项目库 -->
+<section class="section" style="background:#fff">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">招商资源库</span>
+      <h2>产业园区 · 招商项目 · 优惠政策</h2>
+      <p>真实可对接的招商资源，按类型筛选，一键提交合作意向</p>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-cat="全部" onclick="switchTab(this)">全部</button>
+      <button class="tab-btn" data-cat="投资载体" onclick="switchTab(this)">投资载体</button>
+      <button class="tab-btn" data-cat="招商项目" onclick="switchTab(this)">招商项目</button>
+      <button class="tab-btn" data-cat="优惠政策" onclick="switchTab(this)">优惠政策</button>
+    </div>
+    <div class="grid" id="projectGrid"></div>
+  </div>
+</section>
+
+<!-- 留资表单 -->
+<section class="section lead-section" id="leadSection">
+  <div class="wrap">
+    <div class="lead-card">
+      <div id="leadForm">
+        <h3>提交投资对接意向</h3>
+        <p class="desc">填写联系方式，招商专员将在 1 个工作日内与您联系，为您定制落地方案</p>
+        <div class="matched-pill" id="matchedPill"></div>
+        <div class="form-grid">
+          <div class="field"><label>联系人<span class="req">*</span></label><input id="f_name" placeholder="您的称呼"></div>
+          <div class="field"><label>企业名称</label><input id="f_company" placeholder="企业全称"></div>
+          <div class="field"><label>联系电话<span class="req">*</span></label><input id="f_phone" placeholder="手机号码"></div>
+          <div class="field"><label>电子邮箱</label><input id="f_email" placeholder="用于发送方案资料"></div>
+          <div class="field"><label>意向行业</label><input id="f_industry" placeholder="如：新能源 / 电子信息"></div>
+          <div class="field"><label>意向地区</label><input id="f_region" placeholder="如：成都 / 宜宾"></div>
+          <div class="field"><label>投资预算</label><input id="f_budget" placeholder="如：5 亿元"></div>
+          <div class="field"><label>意向来源</label><input id="f_source" value="前台门户" readonly style="background:#f1f5f9;color:#64748b"></div>
+          <div class="field full"><label>需求描述</label><textarea id="f_intention" placeholder="请简要描述您的投资诉求、产能规划或政策期望"></textarea></div>
+        </div>
+        <button class="btn-submit" id="submitBtn" onclick="submitLead()">提交对接意向</button>
+      </div>
+      <div class="lead-success" id="leadSuccess">
+        <div class="ok">✓</div>
+        <h3>提交成功，感谢您的信任！</h3>
+        <p>我们已收到您的对接意向，专属招商专员将在 1 个工作日内与您联系。<br>您也可以直接致电咨询（见页脚联系方式）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="f-brand">
+      <div class="b1">大合产业发展集团 · AI招商智能体平台</div>
+      <div class="b2">以 AI 驱动招商全链路：产业洞察、智能匹配、线索跟进、政策直达，助力政府园区与投资客商高效对接。</div>
+    </div>
+    <div class="f-contact">
+      <div><b>咨询电话：</b>+86 131-1111-6874</div>
+      <div><b>邮箱：</b>xuduo217@gmail.com</div>
+      <div><b>地址：</b>中国浙江省宁波市高新区宁波软件园 D 座 211</div>
+    </div>
+    <div class="copy">© 2026 大合产业发展集团 · AI招商智能体平台 · 投资客商门户</div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'api';
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function catClass(c){if(c==='投资载体')return 'cat-载体';if(c==='招商项目')return 'cat-项目';return 'cat-政策';}
+function stClass(s){return 'st-'+s;}
+
+let allProjects = [];
+let matchedTitles = [];
+
+/* 加载项目库 */
+async function loadProjects(){
+  try{
+    const r = await fetch(API+'/portal/projects');
+    const j = await r.json();
+    allProjects = (j.data||[]);
+    renderProjects('全部');
+  }catch(e){ toast('项目库加载失败'); }
+}
+
+function renderProjects(cat){
+  const grid = document.getElementById('projectGrid');
+  const list = cat==='全部'? allProjects : allProjects.filter(p=>p.category===cat);
+  if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--txt-3);padding:30px">该分类暂无资源</div>'; return; }
+  grid.innerHTML = list.map(p=>`
+    <div class="card">
+      <span class="cat ${catClass(p.category)}">${esc(p.category)}</span>
+      <h3>${esc(p.title)}</h3>
+      <div class="meta">${esc(p.region||'')}${p.industry?' · '+esc(p.industry):''}${p.scale?' · '+esc(p.scale):''}</div>
+      <div class="hl">${esc(p.highlights||'')}</div>
+      ${p.policy?`<div class="policy">政策：${esc(p.policy)}</div>`:''}
+      <div class="foot">
+        <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
+        <button class="btn-pick" onclick="pickProject('${esc(p.title).replace(/'/g,"\\'")}')">选此对接</button>
+      </div>
+    </div>`).join('');
+}
+
+function switchTab(btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProjects(btn.dataset.cat);
+}
+
+function pickProject(title){
+  if(!matchedTitles.includes(title)) matchedTitles.push(title);
+  showMatched();
+  scrollToLead();
+  toast('已加入意向：'+title);
+}
+
+function showMatched(){
+  const pill = document.getElementById('matchedPill');
+  if(matchedTitles.length){
+    pill.classList.add('show');
+    pill.innerHTML='已选对接资源：'+matchedTitles.map(t=>'<b>'+esc(t)+'</b>').join('、');
+  }else pill.classList.remove('show');
+}
+
+/* AI 匹配 */
+async function doMatch(){
+  const input = document.getElementById('needInput');
+  const msg = input.value.trim();
+  if(!msg){ toast('请先描述您的投资需求'); input.focus(); return; }
+  const btn = document.getElementById('matchBtn');
+  btn.disabled=true; btn.textContent='AI 匹配中…';
+  try{
+    const r = await fetch(API+'/portal/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    const j = await r.json();
+    const matched = j.matched||[];
+    const need = j.need||{};
+    const desc = [need.summary, (need.industries||[]).length?('行业：'+need.industries.join('/')):'', (need.regions||[]).length?('地区：'+need.regions.join('/')):''].filter(Boolean).join('　|　');
+    document.getElementById('matchDesc').textContent = desc || '已根据您的描述智能推荐：';
+    const grid = document.getElementById('matchGrid');
+    if(!matched.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--txt-3);padding:20px">暂无可匹配资源，您可直接提交意向，由专员为您定向对接</div>'; }
+    else{
+      grid.innerHTML = matched.map(p=>`
+        <div class="card">
+          <span class="cat ${catClass(p.category)}">${esc(p.category)}</span>
+          <h3>${esc(p.title)}</h3>
+          <div class="meta">${esc(p.region||'')}${p.industry?' · '+esc(p.industry):''}</div>
+          <div class="hl">${esc(p.highlights||'')}</div>
+          <div class="foot">
+            <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
+            <button class="btn-pick" onclick="pickProject('${esc(p.title).replace(/'/g,"\\'")}')">选此对接</button>
+          </div>
+        </div>`).join('');
+    }
+    document.getElementById('matchResult').classList.add('show');
+    document.getElementById('matchResult').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ toast('匹配服务异常，请稍后再试'); }
+  finally{ btn.disabled=false; btn.textContent='智能匹配推荐'; }
+}
+
+/* 快捷需求 */
+const SAMPLES = ['成都新能源电池产线','宜宾动力电池基地','集成电路封测','智能制造产业园','制造业奖补政策','总部经济落户'];
+function renderChips(){
+  document.getElementById('chips').innerHTML = SAMPLES.map(s=>`<span class="chip" onclick="useSample('${s}')">${s}</span>`).join('');
+}
+function useSample(s){ document.getElementById('needInput').value=s; doMatch(); }
+
+/* 留资提交 */
+function scrollToLead(){ document.getElementById('leadSection').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+async function submitLead(){
+  const name=document.getElementById('f_name').value.trim();
+  const phone=document.getElementById('f_phone').value.trim();
+  if(!name||!phone){ toast('请填写联系人与联系电话'); return; }
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='提交中…';
+  const payload={
+    name, phone,
+    company:document.getElementById('f_company').value.trim(),
+    email:document.getElementById('f_email').value.trim(),
+    industry:document.getElementById('f_industry').value.trim(),
+    region:document.getElementById('f_region').value.trim(),
+    budget:document.getElementById('f_budget').value.trim(),
+    source:document.getElementById('f_source').value.trim(),
+    intention:document.getElementById('f_intention').value.trim(),
+    matchedProjects:matchedTitles
+  };
+  try{
+    const r=await fetch(API+'/portal/inquire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(j.ok){ document.getElementById('leadForm').style.display='none'; document.getElementById('leadSuccess').classList.add('show'); }
+    else toast(j.error||'提交失败');
+  }catch(e){ toast('网络异常，提交失败'); }
+  finally{ btn.disabled=false; btn.textContent='提交对接意向'; }
+}
+
+renderChips();
+loadProjects();
+</script>
+</body>
+</html>

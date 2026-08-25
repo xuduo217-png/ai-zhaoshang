@@ -9,6 +9,8 @@
     'page-bid-config': 'bidKeywords',
     'page-push-config': 'pushRules',
     'page-workmgr-config': 'workStages',
+    'page-projects': 'projects',
+    'page-leads': 'leads',
   };
   let SCHEMA = {}, TOKEN = localStorage.getItem('zs_token') || '', USER = null;
   window.ZS = window.ZS || {};

@@ -386,6 +386,48 @@ const RESOURCES = {
     ],
     seed: [],
   },
+
+  /* ---------- 前台投资客商门户数据 ---------- */
+  projects: {
+    label: '招商项目库',
+    columns: [
+      { key: 'category', label: '类型', type: 'select', options: ['投资载体', '招商项目', '优惠政策'], required: true },
+      { key: 'title', label: '名称/标题', type: 'text', required: true },
+      { key: 'region', label: '所在地', type: 'text' },
+      { key: 'industry', label: '适合行业', type: 'text' },
+      { key: 'scale', label: '规模/投资额', type: 'text' },
+      { key: 'highlights', label: '核心亮点', type: 'textarea' },
+      { key: 'policy', label: '配套政策', type: 'text' },
+      { key: 'status', label: '状态', type: 'select', options: ['招商中', '即将开放', '已满'] },
+    ],
+    seed: [
+      { id: 1, category: '投资载体', title: '成都高新区智能制造产业园', region: '成都高新区', industry: '智能制造/电子信息', scale: '占地 1200 亩 · 标准厂房 80 万㎡', highlights: '拎包入驻标准厂房，配套人才公寓与政务服务大厅，已落地龙头企业 12 家，产业链配套完善。', policy: '前三年租金减免，设备投资按 15% 奖补，最高 2000 万。', status: '招商中' },
+      { id: 2, category: '投资载体', title: '宜宾动力电池产业生态园', region: '宜宾三江新区', industry: '新能源/锂电', scale: '规划面积 30 平方公里', highlights: '全球最大动力电池生产基地之一，上游材料—电芯—Pack—回收全链条集聚，宁德时代、时代长安配套。', policy: '落地即享绿电指标，用工补贴每人每年 6000 元，能耗指标优先保障。', status: '招商中' },
+      { id: 3, category: '招商项目', title: '新能源电池关键材料生产基地', region: '成都/眉山', industry: '新能源/新材料', scale: '总投资约 50 亿元', highlights: '正极材料、隔膜、电解液三大环节招商，对接本地电芯龙头形成闭环，物流半径小于 200 公里。', policy: '按固定资产投资 12% 给予奖补，重大项一事一议，配套产业基金 30 亿。', status: '招商中' },
+      { id: 4, category: '招商项目', title: '集成电路先进封测产线', region: '成都高新西区', industry: '电子信息/集成电路', scale: '一期投资 20 亿元', highlights: '面向车规级与 AI 芯片封测，配套本地晶圆制造与设计企业，人才储备充足。', policy: '流片与封测按营收 3% 补贴，高端人才个税奖励最高 40%。', status: '即将开放' },
+      { id: 5, category: '优惠政策', title: '制造业高质量发展专项资金', region: '全省', industry: '全部制造业', scale: '单企业最高奖补 5000 万元', highlights: '电子信息、新能源等战略性新兴产业设备更新、技术改选、智改数转均可申报。', policy: '2026 年申报截止 09-30，采用"免申即享+项目库"双通道。', status: '招商中' },
+      { id: 6, category: '优惠政策', title: '总部经济落户奖励', region: '成都/宜宾', industry: '全部行业', scale: '落户奖励最高 1000 万元', highlights: '对世界 500 强、央企区域总部、专精特新"小巨人"总部迁入给予阶梯奖励与办公用房补贴。', policy: '按实缴注册资本与年度经济贡献分档奖励，前两年地方贡献全额返还。', status: '招商中' },
+    ],
+  },
+  leads: {
+    label: '客商线索',
+    columns: [
+      { key: 'name', label: '联系人', type: 'text', required: true },
+      { key: 'company', label: '企业名称', type: 'text' },
+      { key: 'phone', label: '联系电话', type: 'text', required: true },
+      { key: 'email', label: '邮箱', type: 'text' },
+      { key: 'industry', label: '意向行业', type: 'text' },
+      { key: 'budget', label: '投资预算', type: 'text' },
+      { key: 'region', label: '意向地区', type: 'text' },
+      { key: 'intention', label: '需求描述', type: 'textarea' },
+      { key: 'source', label: '来源', type: 'text' },
+      { key: 'matchedProjects', label: '匹配项目', type: 'text' },
+      { key: 'status', label: '跟进状态', type: 'select', options: ['新线索', '已联系', '已转化', '无效'] },
+      { key: 'note', label: '跟进备注', type: 'textarea' },
+      { key: 'createdAt', label: '提交时间', type: 'text' },
+    ],
+    seed: [],
+  },
 };
 
 /* ---------- 引擎计算 ---------- */
@@ -814,6 +856,74 @@ const server = http.createServer(async (req, res) => {
       res.end(buf);
     });
     return;
+  }
+
+  /* ---------- 投资客商自助门户（公开，无需登录） ---------- */
+  if (p.startsWith('/api/portal/')) {
+    if (p === '/api/portal/projects' && method === 'GET') {
+      const projects = loadRes('projects');
+      const cat = u.searchParams.get('category');
+      const list = cat ? projects.filter((x) => x.category === cat) : projects;
+      return send(res, 200, { data: list });
+    }
+    if (p === '/api/portal/match' && method === 'POST') {
+      const b = await readBody(req);
+      const message = String(b.message || '').trim();
+      if (!message) return send(res, 400, { error: '请描述您的投资需求' });
+      const projects = loadRes('projects');
+      let need = { industries: [], regions: [], keywords: [], summary: '' };
+      const key = serviceKey('DeepSeek');
+      if (key) {
+        try {
+          const sys = '你是招商智能匹配助手。根据用户投资需求，提取结构化字段，只输出 JSON：{ "industries":[行业关键词], "regions":[地区关键词], "keywords":[其他关键词], "summary":"一句话概括需求" }。不要任何解释或 Markdown。';
+          const raw = await deepseekChat(sys, message, key, 6000);
+          const m = raw.match(/\{[\s\S]*\}/);
+          if (m) { const j = JSON.parse(m[0]); need = { industries: j.industries || [], regions: j.regions || [], keywords: j.keywords || [], summary: j.summary || '' }; }
+        } catch (e) { /* DeepSeek 不可用，回退规则匹配 */ }
+      }
+      const ALL_IND = ['电子信息', '新能源', '智能制造', '装备制造', '食品饮料', '人工智能', '集成电路', '光伏', '锂电', '动力电池', '医药', '数字经济', '新材料', '生物医药', '汽车', '航空航天', '现代农业', '文旅', '节能环保', '集成电路'];
+      const hitInd = ALL_IND.filter((k) => message.indexOf(k) >= 0);
+      need.industries = Array.from(new Set([...(need.industries || []), ...hitInd]));
+      const REGIONS = ['成都', '绵阳', '德阳', '宜宾', '泸州', '南充', '攀枝花', '四川', '高新区', '天府新区', '重庆', '长三角', '珠三角', '京津冀'];
+      const hitReg = REGIONS.filter((k) => message.indexOf(k) >= 0);
+      need.regions = Array.from(new Set([...(need.regions || []), ...hitReg]));
+      const scored = projects.map((pj) => {
+        let score = 0;
+        const blob = [pj.industry, pj.region, pj.title, pj.highlights, pj.policy].join(' ');
+        (need.industries || []).forEach((k) => { if (blob.indexOf(k) >= 0) score += 3; });
+        (need.regions || []).forEach((k) => { if ((pj.region || '').indexOf(k) >= 0) score += 2; });
+        (need.keywords || []).forEach((k) => { if (blob.indexOf(k) >= 0) score += 1; });
+        return { project: pj, score };
+      }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
+      const matched = (scored.length ? scored.slice(0, 6) : projects.slice(0, 4)).map((x) => x.project);
+      return send(res, 200, { need, matched });
+    }
+    if (p === '/api/portal/inquire' && method === 'POST') {
+      const b = await readBody(req);
+      if (!b.name || !b.phone) return send(res, 400, { error: '请填写联系人姓名与联系电话' });
+      const leads = loadRes('leads');
+      const item = {
+        id: nextId(leads),
+        name: String(b.name).slice(0, 40),
+        company: String(b.company || '').slice(0, 80),
+        phone: String(b.phone).slice(0, 40),
+        email: String(b.email || '').slice(0, 80),
+        industry: String(b.industry || '').slice(0, 40),
+        budget: String(b.budget || '').slice(0, 40),
+        region: String(b.region || '').slice(0, 40),
+        intention: String(b.intention || '').slice(0, 1000),
+        source: String(b.source || '前台门户').slice(0, 40),
+        matchedProjects: Array.isArray(b.matchedProjects) ? b.matchedProjects.join('、') : String(b.matchedProjects || ''),
+        status: '新线索',
+        createdAt: now(),
+      };
+      leads.push(item); saveRes('leads', leads);
+      const messages = loadRes('messages');
+      messages.push({ id: nextId(messages), to: '全体', title: '【新客商线索】' + item.name + (item.company ? '（' + item.company + '）' : ''), content: '意向行业：' + (item.industry || '—') + '；意向地区：' + (item.region || '—') + '；预算：' + (item.budget || '—') + '；匹配项目：' + (item.matchedProjects || '—') + '；电话：' + item.phone, event: '新客商线索', method: '站内', time: now(), read: false, source: '门户留资' });
+      saveRes('messages', messages);
+      return send(res, 200, { ok: true, id: item.id });
+    }
+    return send(res, 404, { error: 'not found' });
   }
 
   if (p === '/api/login' && method === 'POST') {

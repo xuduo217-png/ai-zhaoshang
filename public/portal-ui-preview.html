@@ -4,336 +4,554 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>招商门户 · UI 版本挑选</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  .switcher {
-    position: sticky; top: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 24px; background: #0c0c0c; border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .switcher .brand { font-size: 13px; font-weight: 600; color: #e8e8e8; letter-spacing: .5px; }
-  .switcher .tabs { display: flex; gap: 8px; }
-  .switcher .tabs button {
-    padding: 7px 16px; border-radius: 999px; font-size: 12px; cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.18); background: transparent; color: #aaa;
-    transition: .2s;
-  }
-  .switcher .tabs button.active { background: #fff; color: #0c0c0c; border-color: #fff; font-weight: 700; }
-  .version { display: none; }
-  .version.active { display: block; }
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#0a0a0a;color:#fff;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
 
-  /* ================= 版本一：Apple/产品发布会风 ================= */
-  .v1 { background: #f5f5f7; color: #1d1d1f; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif; }
-  .v1 .top { display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; background: rgba(245,245,247,0.82); backdrop-filter: blur(20px); position: sticky; top: 47px; z-index: 90; border-bottom: 1px solid rgba(0,0,0,0.05); }
-  .v1 .top .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-  .v1 .top .logo .mk { width: 28px; height: 28px; border-radius: 7px; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
-  .v1 .top a { font-size: 12px; color: #0066cc; text-decoration: none; font-weight: 500; }
-  .v1 .hero { text-align: center; padding: 100px 24px 70px; max-width: 980px; margin: 0 auto; }
-  .v1 .hero .eyebrow { font-size: 19px; font-weight: 600; color: #6e6e73; margin-bottom: 14px; }
-  .v1 .hero h1 { font-size: 72px; line-height: 1.05; font-weight: 700; letter-spacing: -2px; margin-bottom: 24px; background: linear-gradient(180deg, #111 0%, #434344 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .v1 .hero .lead { font-size: 21px; color: #6e6e73; max-width: 660px; margin: 0 auto 48px; line-height: 1.5; font-weight: 400; }
-  .v1 .hero .cta-row { display: flex; gap: 18px; justify-content: center; margin-bottom: 60px; }
-  .v1 .hero .cta-row button { padding: 14px 28px; border-radius: 999px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; }
-  .v1 .hero .cta-row .primary { background: #0071e3; color: #fff; }
-  .v1 .hero .cta-row .secondary { background: #fff; color: #1d1d1f; border: 1px solid #d2d2d7; }
-  .v1 .stage { max-width: 980px; margin: 0 auto 80px; background: #fff; border-radius: 28px; box-shadow: 0 32px 80px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03); padding: 42px; }
-  .v1 .stage .chat-label { font-size: 13px; color: #6e6e73; margin-bottom: 14px; font-weight: 600; }
-  .v1 .stage .bubble { background: #f5f5f7; border-radius: 20px 20px 20px 4px; padding: 22px 24px; font-size: 17px; line-height: 1.6; margin-bottom: 20px; color: #1d1d1f; }
-  .v1 .stage .input-bar { display: flex; gap: 12px; }
-  .v1 .stage .input-bar input { flex: 1; border-radius: 16px; border: 1px solid #d2d2d7; padding: 16px 20px; font-size: 15px; background: #fff; }
-  .v1 .stage .input-bar button { background: #0071e3; color: #fff; border: none; border-radius: 16px; padding: 0 28px; font-size: 15px; font-weight: 600; cursor: pointer; }
-  .v1 .metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 34px; }
-  .v1 .metric { text-align: left; }
-  .v1 .metric .num { font-size: 40px; font-weight: 700; color: #1d1d1f; letter-spacing: -1px; }
-  .v1 .metric .num span { font-size: 18px; color: #6e6e73; }
-  .v1 .metric .tt { font-size: 15px; font-weight: 600; color: #1d1d1f; margin: 4px 0 4px; }
-  .v1 .metric .ds { font-size: 13px; color: #6e6e73; line-height: 1.5; }
-  .v1 .sec { max-width: 980px; margin: 0 auto 80px; }
-  .v1 .sec .h { font-size: 40px; font-weight: 700; letter-spacing: -1px; margin-bottom: 34px; text-align: center; }
-  .v1 .pgrid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; }
-  .v1 .pc { background: #fff; border-radius: 24px; padding: 34px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
-  .v1 .pc .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .v1 .pc .ph b { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
-  .v1 .pc .tag { font-size: 12px; font-weight: 600; color: #0071e3; background: rgba(0,113,227,0.08); padding: 5px 12px; border-radius: 999px; }
-  .v1 .pc p { font-size: 15px; color: #6e6e73; line-height: 1.7; margin-bottom: 18px; }
-  .v1 .pc .meta { display: flex; gap: 18px; font-size: 13px; color: #86868b; }
-  .v1 .form-card { max-width: 980px; margin: 0 auto 80px; background: #fff; border-radius: 28px; box-shadow: 0 32px 80px rgba(0,0,0,0.08); padding: 52px; }
-  .v1 .form-card .h { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 10px; }
-  .v1 .form-card .sub { font-size: 17px; color: #6e6e73; margin-bottom: 34px; }
-  .v1 .form-card .fg { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; margin-bottom: 24px; }
-  .v1 .form-card .field { display: flex; flex-direction: column; gap: 8px; }
-  .v1 .form-card .field.full { grid-column: 1 / -1; }
-  .v1 .form-card label { font-size: 12px; font-weight: 600; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.5px; }
-  .v1 .form-card input, .v1 .form-card textarea { width: 100%; border: 1px solid #d2d2d7; border-radius: 14px; padding: 16px 18px; font-size: 15px; background: #fbfbfd; color: #1d1d1f; }
-  .v1 .form-card input:focus, .v1 .form-card textarea:focus { outline: none; border-color: #0071e3; background: #fff; }
-  .v1 .form-card textarea { min-height: 120px; resize: vertical; }
-  .v1 .form-card .submit { background: #0071e3; color: #fff; border: none; border-radius: 16px; padding: 16px 40px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-  .v1 .foot { text-align: center; padding: 40px; font-size: 12px; color: #86868b; background: #f5f5f7; }
+/* 顶部切换 */
+.switcher{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.1);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.switcher .brand{font-size:13px;font-weight:600;letter-spacing:1px;color:#e8e8e8;display:flex;align-items:center;gap:10px}
+.switcher .brand .dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981}
+.switcher .tabs{display:flex;gap:6px}
+.switcher .tabs button{padding:7px 14px;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:#cfcfcf;border:1px solid rgba(255,255,255,.12);border-radius:8px;letter-spacing:.5px;transition:.15s}
+.switcher .tabs button:hover{background:rgba(255,255,255,.14);color:#fff}
+.switcher .tabs button.active{background:#fff;color:#0c0c0c;border-color:#fff;font-weight:700}
+.version{display:none;padding-top:54px;min-height:100vh}
+.version.active{display:block}
 
-  /* ================= 版本二：新中式/东方美学风 ================= */
-  .v2 { background: #f7f3ed; color: #3a3228; font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "PingFang SC", serif; }
-  .v2 .ink { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .06;
-    background: radial-gradient(circle at 80% 10%, #5a4a3a 0%, transparent 35%), radial-gradient(circle at 10% 90%, #8b7355 0%, transparent 30%); }
-  .v2 .top { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 22px 48px; border-bottom: 1px solid #d8d0c3; }
-  .v2 .top .logo { display: flex; align-items: center; gap: 14px; font-size: 20px; font-weight: 700; letter-spacing: 6px; color: #2c2420; }
-  .v2 .top .logo .mk { width: 38px; height: 38px; border: 2px solid #9c2c22; color: #9c2c22; display: flex; align-items: center; justify-content: center; font-size: 18px; border-radius: 4px; }
-  .v2 .top a { font-size: 13px; color: #9c2c22; text-decoration: none; letter-spacing: 2px; }
-  .v2 .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 40px 80px; }
-  .v2 .hero { padding: 80px 0 50px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; align-items: center; }
-  .v2 .hero .left .eyebrow { writing-mode: vertical-rl; font-size: 14px; color: #9c2c22; letter-spacing: 8px; position: absolute; left: -40px; top: 100px; }
-  .v2 .hero .right h1 { font-size: 52px; font-weight: 700; line-height: 1.4; letter-spacing: 4px; margin-bottom: 30px; color: #2c2420; }
-  .v2 .hero .right .lead { font-size: 17px; color: #6b5f52; line-height: 2; margin-bottom: 32px; }
-  .v2 .hero .seal { display: inline-flex; align-items: center; gap: 12px; border: 1px solid #d8d0c3; padding: 12px 22px; border-radius: 4px; background: rgba(255,255,255,0.5); }
-  .v2 .hero .seal .dot { width: 10px; height: 10px; background: #9c2c22; border-radius: 50%; }
-  .v2 .hero .seal span { font-size: 14px; letter-spacing: 2px; color: #6b5f52; }
-  .v2 .letter { background: #fffef9; border: 1px solid #d8d0c3; border-radius: 4px; padding: 42px; margin-bottom: 60px; box-shadow: 0 20px 60px rgba(90,74,58,0.08); position: relative; }
-  .v2 .letter::before { content: ""; position: absolute; top: 18px; right: 24px; width: 42px; height: 42px; border: 2px solid #9c2c22; border-radius: 4px; opacity: .5; }
-  .v2 .letter .bubble { font-size: 17px; line-height: 2; color: #4a4036; margin-bottom: 28px; }
-  .v2 .letter .bubble b { color: #9c2c22; font-weight: 700; }
-  .v2 .letter .input { display: flex; gap: 14px; }
-  .v2 .letter input { flex: 1; border: none; border-bottom: 1px solid #c9bfb2; padding: 14px 4px; font-size: 15px; background: transparent; font-family: inherit; }
-  .v2 .letter input:focus { outline: none; border-bottom-color: #9c2c22; }
-  .v2 .letter button { background: #9c2c22; color: #fff; border: none; padding: 14px 32px; font-size: 15px; letter-spacing: 4px; cursor: pointer; font-family: inherit; border-radius: 4px; }
-  .v2 .sec { margin-bottom: 60px; }
-  .v2 .sec .h { font-size: 28px; font-weight: 700; letter-spacing: 4px; margin-bottom: 28px; color: #2c2420; padding-bottom: 14px; border-bottom: 1px solid #d8d0c3; }
-  .v2 .pgrid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; }
-  .v2 .pc { background: #fffef9; border: 1px solid #d8d0c3; border-radius: 4px; padding: 30px; position: relative; }
-  .v2 .pc .corner { position: absolute; top: 12px; right: 16px; width: 24px; height: 24px; border-top: 2px solid #9c2c22; border-right: 2px solid #9c2c22; }
-  .v2 .pc .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .v2 .pc .ph b { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-  .v2 .pc .tag { font-size: 12px; color: #9c2c22; border: 1px solid #d8d0c3; padding: 3px 10px; letter-spacing: 1px; }
-  .v2 .pc p { font-size: 15px; color: #6b5f52; line-height: 1.9; margin-bottom: 14px; }
-  .v2 .pc .meta { display: flex; gap: 18px; font-size: 13px; color: #9a8b7a; }
-  .v2 .form-paper { background: #fffef9; border: 1px solid #d8d0c3; border-radius: 4px; padding: 48px; box-shadow: 0 20px 60px rgba(90,74,58,0.08); }
-  .v2 .form-paper .h { font-size: 28px; font-weight: 700; letter-spacing: 4px; margin-bottom: 10px; color: #2c2420; }
-  .v2 .form-paper .sub { font-size: 15px; color: #6b5f52; margin-bottom: 34px; letter-spacing: 1px; }
-  .v2 .form-paper .fg { display: grid; grid-template-columns: repeat(2,1fr); gap: 28px 40px; margin-bottom: 28px; }
-  .v2 .form-paper .field { display: flex; flex-direction: column; gap: 8px; }
-  .v2 .form-paper .field.full { grid-column: 1 / -1; }
-  .v2 .form-paper label { font-size: 13px; color: #9c2c22; letter-spacing: 3px; }
-  .v2 .form-paper input, .v2 .form-paper textarea { width: 100%; border: 1px solid #d8d0c3; border-radius: 4px; padding: 14px 16px; font-size: 15px; background: #fffef9; font-family: inherit; color: #3a3228; }
-  .v2 .form-paper input:focus, .v2 .form-paper textarea:focus { outline: none; border-color: #9c2c22; }
-  .v2 .form-paper textarea { min-height: 110px; resize: vertical; }
-  .v2 .form-paper .submit { background: #9c2c22; color: #fff; border: none; padding: 16px 48px; font-size: 16px; letter-spacing: 6px; cursor: pointer; font-family: inherit; border-radius: 4px; }
-  .v2 .foot { text-align: center; padding: 40px; font-size: 13px; color: #9a8b7a; letter-spacing: 2px; border-top: 1px solid #d8d0c3; }
-
-  /* ================= 版本三：国际投行/金融报告风 ================= */
-  .v3 { background: #0a1628; color: #e8eef5; font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif; }
-  .v3 .top { display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; border-bottom: 1px solid rgba(212,175,120,0.25); background: #0a1628; position: sticky; top: 47px; z-index: 90; }
-  .v3 .top .logo { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; letter-spacing: 1.5px; color: #fff; }
-  .v3 .top .logo .mk { width: 30px; height: 30px; border: 1.5px solid #d4af78; color: #d4af78; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
-  .v3 .top a { font-size: 12px; color: #d4af78; text-decoration: none; font-weight: 600; letter-spacing: 1px; }
-  .v3 .wrap { max-width: 1100px; margin: 0 auto; padding: 0 48px 80px; }
-  .v3 .hero { padding: 90px 0 60px; border-bottom: 1px solid rgba(212,175,120,0.25); }
-  .v3 .hero .eyebrow { font-size: 12px; font-weight: 700; color: #d4af78; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
-  .v3 .hero h1 { font-size: 56px; font-weight: 700; line-height: 1.1; letter-spacing: -1px; margin-bottom: 28px; max-width: 760px; }
-  .v3 .hero .lead { font-size: 18px; color: #9fb0c4; line-height: 1.7; max-width: 620px; margin-bottom: 42px; }
-  .v3 .hero .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 48px; }
-  .v3 .hero .kpi { background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,120,0.2); padding: 24px; }
-  .v3 .hero .kpi .num { font-size: 34px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .v3 .hero .kpi .tt { font-size: 12px; color: #9fb0c4; letter-spacing: 1px; text-transform: uppercase; }
-  .v3 .command { background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,120,0.25); padding: 30px; display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin-bottom: 60px; }
-  .v3 .command .bubble { font-size: 16px; line-height: 1.7; color: #c8d4e2; }
-  .v3 .command .bubble b { color: #d4af78; }
-  .v3 .command .input-col { display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
-  .v3 .command input { background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,120,0.3); padding: 14px 16px; color: #fff; font-size: 14px; }
-  .v3 .command input::placeholder { color: #6d7d91; }
-  .v3 .command button { background: #d4af78; color: #0a1628; border: none; padding: 14px; font-size: 14px; font-weight: 700; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; }
-  .v3 .sec { margin-top: 60px; }
-  .v3 .sec .h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgba(212,175,120,0.25); padding-bottom: 18px; margin-bottom: 28px; }
-  .v3 .sec .h b { font-size: 28px; font-weight: 700; letter-spacing: 0.5px; }
-  .v3 .sec .h span { font-size: 12px; color: #9fb0c4; text-transform: uppercase; letter-spacing: 1px; }
-  .v3 .pgrid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: rgba(212,175,120,0.2); border: 1px solid rgba(212,175,120,0.2); }
-  .v3 .pc { background: #0f1d32; padding: 32px; }
-  .v3 .pc .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .v3 .pc .ph b { font-size: 19px; font-weight: 700; color: #fff; }
-  .v3 .pc .tag { font-size: 11px; color: #d4af78; border: 1px solid rgba(212,175,120,0.4); padding: 3px 10px; letter-spacing: 1px; text-transform: uppercase; }
-  .v3 .pc p { font-size: 14px; color: #9fb0c4; line-height: 1.7; margin-bottom: 16px; }
-  .v3 .pc .meta { display: flex; gap: 20px; font-size: 12px; color: #6d7d91; text-transform: uppercase; letter-spacing: 0.5px; }
-  .v3 .form-panel { margin-top: 60px; border: 1px solid rgba(212,175,120,0.25); padding: 42px; background: rgba(255,255,255,0.02); }
-  .v3 .form-panel .h { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-  .v3 .form-panel .sub { font-size: 14px; color: #9fb0c4; margin-bottom: 32px; }
-  .v3 .form-panel .fg { display: grid; grid-template-columns: repeat(2,1fr); gap: 0; border-top: 1px solid rgba(212,175,120,0.2); border-left: 1px solid rgba(212,175,120,0.2); margin-bottom: 28px; }
-  .v3 .form-panel .field { border-right: 1px solid rgba(212,175,120,0.2); border-bottom: 1px solid rgba(212,175,120,0.2); padding: 22px 24px; }
-  .v3 .form-panel .field.full { grid-column: 1 / -1; }
-  .v3 .form-panel label { display: block; font-size: 11px; color: #d4af78; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-  .v3 .form-panel input, .v3 .form-panel textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 15px; padding: 0; }
-  .v3 .form-panel input:focus, .v3 .form-panel textarea:focus { outline: none; }
-  .v3 .form-panel input::placeholder, .v3 .form-panel textarea::placeholder { color: #6d7d91; }
-  .v3 .form-panel textarea { min-height: 80px; resize: none; }
-  .v3 .form-panel .submit { background: #d4af78; color: #0a1628; border: none; padding: 15px 40px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; }
-  .v3 .foot { text-align: center; padding: 40px; font-size: 12px; color: #6d7d91; letter-spacing: 1px; border-top: 1px solid rgba(212,175,120,0.15); margin-top: 60px; }
-
-  @media (max-width: 900px) {
-    .v1 .hero h1, .v3 .hero h1 { font-size: 38px; }
-    .v2 .hero { grid-template-columns: 1fr; }
-    .v2 .hero .left .eyebrow { display: none; }
-    .v1 .pgrid, .v2 .pgrid { grid-template-columns: 1fr; }
-    .v3 .hero .kpi-row { grid-template-columns: repeat(2,1fr); }
-    .v3 .command { grid-template-columns: 1fr; }
-    .v1 .form-card, .v2 .form-paper, .v3 .form-panel { padding: 28px; }
-    .v1 .form-card .fg, .v2 .form-paper .fg, .v3 .form-panel .fg { grid-template-columns: 1fr; }
-  }
+/* ========= 通用数据 ========= */
+.sample-data{display:none}
 </style>
 </head>
 <body>
 
+<!-- 顶栏 -->
 <div class="switcher">
-  <div class="brand">招商门户 · UI 版本挑选</div>
+  <div class="brand"><span class="dot"></span>招商门户 · UI 版本挑选</div>
   <div class="tabs">
-    <button class="active" onclick="showV('v1', this)">产品发布会</button>
-    <button onclick="showV('v2', this)">新中式</button>
-    <button onclick="showV('v3', this)">国际投行</button>
+    <button class="active" data-v="v1" onclick="showV('v1')">① 商业杂志</button>
+    <button data-v="v2" onclick="showV('v2')">② 数据大屏</button>
+    <button data-v="v3" onclick="showV('v3')">③ 极简白</button>
   </div>
 </div>
 
-<!-- 版本一：Apple/产品发布会风 -->
-<section class="version v1 active" id="v1">
-  <div class="top">
-    <div class="logo"><div class="mk">招</div><span>招商智能体平台</span></div>
-    <a href="#" target="_blank">运营后台 ↗</a>
-  </div>
-  <div class="hero">
-    <div class="eyebrow">投资客商自助门户</div>
-    <h1>一句话，<br>找到对的产业落点。</h1>
-    <div class="lead">用自然语言描述投资需求，AI 实时匹配产业项目、园区载体与政策红利，招商专员第一时间跟进。</div>
-    <div class="cta-row">
-      <button class="primary">开始智能匹配</button>
-      <button class="secondary">浏览招商项目</button>
+<!-- 演示数据（每版共用） -->
+<div class="sample-data" id="sampleData">
+  PROJECTS = [
+    {category:"投资载体", title:"成都高新区智能制造产业园", region:"成都高新区", industry:"智能制造/电子信息", scale:"规划面积 30 平方公里", highlights:"国家级经开区，集聚规上企业 800+ 家，电子信息、汽车、智能装备三大主导产业。", policy:"项目落户最高奖励 5000 万元；研发投入按 20% 给予补贴。", status:"招商中"},
+    {category:"投资载体", title:"宜宾动力电池产业生态园", region:"宜宾三江新区", industry:"新能源/锂电", scale:"规划面积 30 平方公里", highlights:"全球最大动力电池生产基地之一，上游材料—电芯—Pack—回收全链条集聚，宁德时代、时代长安配套。", policy:"落地即享绿电指标，用工补贴每人每年 6000 元。", status:"招商中"},
+    {category:"招商项目", title:"中欧班列（成都）集结中心冷链项目", region:"成都青白江", industry:"现代物流", scale:"总投资 18 亿元", highlights:"依托中欧班列集结中心，建设 5 万吨级冷链仓配中心，配套海关监管仓与跨境电商保税仓。", policy:"冷链设备投资补贴 30%，前两年税收地方留成全额返还。", status:"招商中"},
+    {category:"招商项目", title:"重庆两江新区半导体封测基地", region:"重庆两江新区", industry:"集成电路", scale:"总投资 65 亿元", highlights:"面向 12 寸晶圆先进封装，已落位华润微、SK 海力士等链主企业，水电气成本低于沿海 25%。", policy:"洁净厂房建设按 800 元/㎡ 补贴；设备进口关税全免。", status:"即将开放"},
+    {category:"招商项目", title:"苏州工业园区生物医药 CDMO 平台", region:"苏州工业园区", industry:"生物医药", scale:"总投资 22 亿元", highlights:"园区聚集生物医药企业 1800+ 家，CDMO 平台面向 ADC、细胞治疗、基因治疗等前沿领域。", policy:"GMP 车间装修补贴 50%，人才公寓三年免租。", status:"招商中"},
+    {category:"优惠政策", title:"上海市战略性新兴产业扶持办法", region:"上海市", industry:"人工智能/新能源/生物医药", scale:"—", highlights:"对纳入目录的重大项目，按实际投资额给予最高 15% 补贴，单项目上限 1 亿元。", policy:"设备投资补贴 15%，研发投入加计扣除 120%。", status:"招商中"},
+    {category:"优惠政策", title:"深圳前海深港现代服务业合作区税收优惠", region:"深圳前海", industry:"金融/科技服务", scale:"—", highlights:"鼓励类产业企业减按 15% 征收企业所得税；境外高端人才和紧缺人才个人所得税超负差部分免征。", policy:"符合条件企业所得税 15%；人才个税补贴。", status:"招商中"},
+    {category:"投资载体", title:"合肥新站高新技术产业开发区", region:"合肥新站区", industry:"新型显示/集成电路", scale:"规划面积 51 平方公里", highlights:"京东方、维信诺、康宁等链主企业集聚，新型显示产业规模全国领先。", policy:"固定资产投资最高 30% 配套补贴。", status:"招商中"},
+    {category:"招商项目", title:"杭州钱塘区智能网联汽车测试场", region:"杭州钱塘区", industry:"智能网联汽车", scale:"总投资 30 亿元", highlights:"覆盖城市、乡村、高速三大场景的 L4 级测试场，配套数据中心与整车在环仿真平台。", policy:"测试服务费 50% 补贴；首条产线落地奖励 1 亿元。", status:"即将开放"}
+  ];
+</div>
+
+<!-- ============================================ -->
+<!-- V1 商业杂志（编辑感、纸色、衬线、栏目化） -->
+<!-- ============================================ -->
+<div class="version v1 active" id="v1">
+<style>
+.v1{--paper:#f6f2ea;--ink:#0e0f12;--ink-2:#3a3c40;--ink-3:#6b6e72;--rule:#cfc7b6;--accent:#b1261c;--serif:"Noto Serif SC","Songti SC","SimSun",serif;--sans:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;--mono:"JetBrains Mono","SF Mono",Menlo,monospace;background:var(--paper);color:var(--ink);background-image:radial-gradient(1200px 800px at 90% -10%,rgba(177,38,28,.04),transparent 60%),radial-gradient(900px 600px at -10% 110%,rgba(10,58,138,.05),transparent 60%);font-family:var(--sans);line-height:1.7;font-size:15.5px}
+.v1 a{color:inherit;text-decoration:none}
+.v1 .wrap{max-width:1180px;margin:0 auto;padding:0 36px}
+.v1 .masthead{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:54px;z-index:30;backdrop-filter:blur(6px)}
+.v1 .top-bar{border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.5px}
+.v1 .top-bar .wrap{display:flex;justify-content:space-between;align-items:center;height:30px}
+.v1 .top-bar .left span{margin-right:18px}
+.v1 .head{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;padding:18px 0 14px;gap:30px}
+.v1 .h-left,.v1 .h-right{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.5px}
+.v1 .h-right{text-align:right}
+.v1 .h-right .badge{display:inline-block;border:1px solid var(--ink);padding:3px 8px;font-size:10.5px;color:var(--ink)}
+.v1 .title{font-family:var(--serif);font-weight:900;text-align:center;line-height:1;letter-spacing:-.5px}
+.v1 .title .zh{font-size:34px;display:block}
+.v1 .title .en{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--accent);letter-spacing:3px;display:block;margin-top:6px}
+.v1 .nav{display:flex;justify-content:center;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);height:42px;align-items:center}
+.v1 .nav a{font-weight:500;font-size:13.5px;color:var(--ink-2);padding:0 22px;line-height:42px;border-right:1px solid var(--rule);transition:.15s}
+.v1 .nav a:last-child{border-right:none}
+.v1 .nav a:hover{color:var(--accent)}
+.v1 .nav .cta{background:var(--ink);color:var(--paper);font-weight:600}
+.v1 .nav .cta:hover{background:var(--accent);color:#fff}
+.v1 .hero{padding:54px 0 36px;border-bottom:1px solid var(--rule)}
+.v1 .hero .wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:60px;align-items:start}
+.v1 .kicker{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
+.v1 .hero h1{font-family:var(--serif);font-weight:900;font-size:64px;line-height:1.05;letter-spacing:-1px;margin-bottom:18px}
+.v1 .hero h1 em{font-style:normal;color:var(--accent)}
+.v1 .hero .deck{font-family:var(--serif);font-weight:500;font-size:18px;line-height:1.6;color:var(--ink-2);margin-bottom:24px;max-width:560px}
+.v1 .byline{font-family:var(--mono);font-size:12px;color:var(--ink-3);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:8px 0}
+.v1 .byline b{color:var(--ink)}
+.v1 .ai-card{background:#fff;border:1px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.v1 .ai-card .head{background:var(--ink);color:var(--paper);padding:12px 18px;font-family:var(--mono);font-size:12px;letter-spacing:2px;display:flex;justify-content:space-between}
+.v1 .ai-card .head .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px;animation:blink 1.4s infinite}
+.v1 .ai-card .body{padding:18px}
+.v1 .ai-card .label{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:1.5px;margin-bottom:8px}
+.v1 .ai-card textarea{width:100%;min-height:100px;border:1px solid var(--rule);padding:12px 14px;font-family:var(--serif);font-size:15.5px;color:var(--ink);background:#fffdf6;outline:none;resize:vertical;line-height:1.6}
+.v1 .ai-card textarea:focus{border-color:var(--ink);background:#fff;box-shadow:inset 0 -2px 0 var(--accent)}
+.v1 .ai-card .actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+.v1 .ai-card .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.v1 .ai-card .chip{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:transparent;border:1px solid var(--rule);padding:3px 9px;cursor:pointer;transition:.15s}
+.v1 .ai-card .chip:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.v1 .ai-card .btn-match{font-weight:700;font-size:14px;background:var(--accent);color:#fff;border:none;padding:11px 20px;letter-spacing:1px;white-space:nowrap}
+.v1 .ai-card .btn-match:hover{background:#7a1810}
+.v1 .section{padding:48px 0;border-bottom:1px solid var(--rule)}
+.v1 .sec-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:28px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+.v1 .sec-head h2{font-family:var(--serif);font-weight:900;font-size:30px;letter-spacing:-.5px}
+.v1 .sec-head .more{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.v1 .tabs{display:flex;border-bottom:2px solid var(--ink);margin-bottom:0}
+.v1 .tab-btn{font-weight:600;font-size:14px;color:var(--ink-3);background:transparent;border:none;border-right:1px solid var(--ink);padding:10px 22px;cursor:pointer;letter-spacing:1px;transition:.15s}
+.v1 .tab-btn:last-child{border-right:none}
+.v1 .tab-btn:hover{color:var(--ink);background:var(--paper-2)}
+.v1 .tab-btn.active{background:var(--ink);color:var(--paper)}
+.v1 .grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ink);border-left:1px solid var(--ink)}
+.v1 .card{background:#fff;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:20px 18px;display:flex;flex-direction:column;transition:.15s}
+.v1 .card:hover{background:#fffdf6}
+.v1 .card .cat{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.v1 .card h3{font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.3;margin-bottom:6px}
+.v1 .card .meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-bottom:10px}
+.v1 .card .hl{font-size:13.5px;color:var(--ink-2);line-height:1.6;flex:1;margin-bottom:10px}
+.v1 .card .policy{font-size:12.5px;background:var(--paper-2);padding:8px 10px;margin-bottom:10px;border-left:3px solid var(--accent)}
+.v1 .card .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);padding-top:10px;margin-top:auto}
+.v1 .card .status{font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;padding:2px 8px;border:1px solid var(--ink);text-transform:uppercase}
+.v1 .card .st-招商中{border-color:#0a7a2a;color:#0a7a2a}
+.v1 .card .st-即将开放{border-color:#a86200;color:#a86200}
+.v1 .empty{grid-column:1 / -1;text-align:center;padding:60px 20px;color:var(--ink-3);font-family:var(--serif);font-style:italic}
+.v1 .contact{background:var(--ink);color:var(--paper);padding:60px 0}
+.v1 .contact .wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:start}
+.v1 .contact h2{font-family:var(--serif);font-weight:900;font-size:42px;line-height:1.1;letter-spacing:-.5px;margin:14px 0 18px}
+.v1 .contact p{font-family:var(--serif);font-size:16px;line-height:1.7;color:#cfc7b6;max-width:480px}
+.v1 .contact .kicker{color:#e09a92}
+.v1 .c-cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #3a3c40}
+.v1 .c-cell{padding:20px 18px;border-right:1px solid #3a3c40}
+.v1 .c-cell:last-child{border-right:none}
+.v1 .c-cell .label{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:#9aa0a8;text-transform:uppercase;margin-bottom:8px}
+.v1 .c-cell .v{font-family:var(--serif);font-weight:700;font-size:17px;line-height:1.4;color:#fff}
+.v1 .c-cell .v.mono{font-family:var(--mono);font-size:15px}
+.v1 .footer{background:#0a0b0d;color:#8b8e92;padding:30px 0;border-top:1px solid #1a1b1e}
+.v1 .footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.v1 .footer .col{font-family:var(--serif);font-size:14px;color:#bfc2c6}
+.v1 .footer .meta{font-family:var(--mono);font-size:11.5px;letter-spacing:1px;color:#5a5d60}
+.v1 .label-tag{font-family:var(--mono);font-size:11.5px;letter-spacing:3px;color:var(--accent);text-transform:uppercase}
+.v1 .label-tag .v{display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;margin-right:8px}
+.v1 @media(max-width:980px){.v1 .hero .wrap{grid-template-columns:1fr;gap:30px}.v1 .hero h1{font-size:42px}.v1 .grid{grid-template-columns:1fr 1fr}.v1 .contact .wrap{grid-template-columns:1fr;gap:30px}.v1 .c-cards{grid-template-columns:1fr}.v1 .c-cell{border-right:none;border-bottom:1px solid #3a3c40}}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:.3}}
+</style>
+
+<header class="masthead">
+  <div class="top-bar"><div class="wrap"><div class="left"><span>2026年8月26日</span><span>第 238 期</span><span>AI 招商专版</span></div><div class="right"><a href="https://everyday.logicstorm.cn/ai-zhaoshang/" target="_blank">运营后台 ↗</a></div></div></div>
+  <div class="wrap">
+    <div class="head">
+      <div class="h-left"><div>VOL. MMXXVI</div><div>EST. 2026</div></div>
+      <div class="title"><span class="zh">招商智能体</span><span class="en">INVESTMENT INTELLIGENCE DAILY</span></div>
+      <div class="h-right"><span class="badge">FOR INVESTORS</span><div style="margin-top:8px">在线 · 即时匹配</div></div>
     </div>
   </div>
-  <div class="stage">
-    <div class="chat-label">招商 AI 助手</div>
-    <div class="bubble">您好，请描述您的投资意向，例如：<b>计划在长三角投资新能源汽车零部件，预算 5 亿元，需工业用地 100 亩</b>。我将为您生成匹配报告。</div>
-    <div class="input-bar"><input placeholder="输入您的投资需求…"><button>智能匹配</button></div>
-    <div class="metrics">
-      <div class="metric"><div class="num">96<span>%</span></div><div class="tt">新能源汽车产业园</div><div class="ds">可用工业用地 150 亩，动力电池产业链齐全。</div></div>
-      <div class="metric"><div class="num">91<span>%</span></div><div class="tt">高端装备制造基地</div><div class="ds">标准化厂房 8 万㎡，享税收返还政策。</div></div>
-      <div class="metric"><div class="num">88<span>%</span></div><div class="tt">智能制造专项资金</div><div class="ds">设备投资补贴最高 12%，技改贴息支持。</div></div>
+  <nav class="nav">
+    <a href="#v1-hero">头版</a><a href="#v1-lib">资源库</a><a href="#v1-contact">联系我们</a>
+    <a class="cta" href="https://everyday.logicstorm.cn/ai-zhaoshang/" target="_blank">运营后台</a>
+  </nav>
+</header>
+
+<section class="hero" id="v1-hero">
+  <div class="wrap">
+    <div>
+      <div class="label-tag" style="margin-bottom:14px"><span class="v">①</span>商业杂志版</div>
+      <div class="kicker">■ 独家 · AI 智能招商</div>
+      <h1>一句话说出投资诉求<br><em>AI 精准匹配</em>招商资源</h1>
+      <div class="deck">面向投资客商的智能对接门户。描述产业方向与落地诉求，系统即时分析并推荐适配的产业园区、招商项目与优惠政策，全程无需注册。</div>
+      <div class="byline">BY <b>招商智能体</b> · 实时驱动 · 深度学习匹配</div>
+    </div>
+    <div class="ai-card">
+      <div class="head"><span><span class="dot"></span>AI 智能匹配 · 在线</span><span>NO. 001 / TODAY</span></div>
+      <div class="body">
+        <div class="label">▍ 请描述您的投资诉求</div>
+        <textarea placeholder="例：我们是一家新能源电池企业，计划在成都周边投建正极材料产线，总投资约 5 亿元，希望享受设备投资奖补……"></textarea>
+        <div class="actions"><div class="chips"></div><button class="btn-match">立即匹配 →</button></div>
+      </div>
     </div>
   </div>
-  <div class="sec">
-    <div class="h">重点招商项目</div>
-    <div class="pgrid">
-      <div class="pc"><div class="ph"><b>临港先进制造产业园</b><span class="tag">制造业</span></div><p>规划面积 2000 亩，重点引进新能源汽车、高端装备、智能制造项目，配套完善。</p><div class="meta"><span>用地 50-200 亩</span><span>税收返还</span><span>配套齐全</span></div></div>
-      <div class="pc"><div class="ph"><b>科创孵化中心</b><span class="tag">科技服务</span></div><p>5A 级孵化器，提供办公、研发、小试及产学研对接服务，基金配套成熟。</p><div class="meta"><span>面积 200-2000㎡</span><span>租金优惠</span><span>基金配套</span></div></div>
-    </div>
-  </div>
-  <div class="form-card">
-    <div class="h">提交投资意向</div>
-    <div class="sub">填写下方信息，获取专属对接方案与选址建议。</div>
-    <div class="fg">
-      <div class="field"><label>姓名</label><input placeholder="您的姓名"></div>
-      <div class="field"><label>联系电话</label><input placeholder="您的手机号"></div>
-      <div class="field"><label>企业名称</label><input placeholder="所属企业"></div>
-      <div class="field"><label>所属行业</label><input placeholder="如：新能源汽车"></div>
-      <div class="field full"><label>投资需求</label><textarea placeholder="请简述投资规模、目标地区、用地/厂房需求等"></textarea></div>
-    </div>
-    <button class="submit">获取对接方案</button>
-  </div>
-  <div class="foot">© 2026 招商服务平台 · 版权所有</div>
 </section>
 
-<!-- 版本二：新中式/东方美学风 -->
-<section class="version v2" id="v2">
-  <div class="ink"></div>
-  <div class="top">
-    <div class="logo"><div class="mk">招</div><span>招商智能体平台</span></div>
-    <a href="#" target="_blank">运营后台 ↗</a>
-  </div>
+<section class="section" id="v1-lib" style="background:#fffdf6">
   <div class="wrap">
-    <div class="hero">
-      <div class="left">
-        <div class="eyebrow">投资客商自助门户</div>
-        <div class="seal"><div class="dot"></div><span>AI 智能匹配</span></div>
-      </div>
-      <div class="right">
-        <h1>述投资之志<br>择产业之乡</h1>
-        <div class="lead">以AI为媒，述一方投资所愿；以数据为尺，择一处产业沃土。项目、园区、政策，皆可一语而达。</div>
-        <div class="seal"><div class="dot"></div><span>自然语言 · 即时匹配 · 专员对接</span></div>
-      </div>
-    </div>
-    <div class="letter">
-      <div class="bubble">贵客安好。请简述投资意向，例如：<b>拟于长三角投新能源汽车零部件，预算五亿元，需工业用地一百亩</b>。系统将据此生成匹配笺，并安排专人回复。</div>
-      <div class="input"><input placeholder="在此输入投资需求…"><button>生成匹配笺</button></div>
-    </div>
-    <div class="sec">
-      <div class="h">重点招商项目</div>
-      <div class="pgrid">
-        <div class="pc"><div class="corner"></div><div class="ph"><b>临港先进制造产业园</b><span class="tag">制造业</span></div><p>规划两千亩，重点引进新能源汽车、高端装备、智能制造项目，配套日臻完善。</p><div class="meta"><span>用地 50-200 亩</span><span>税收返还</span><span>配套齐全</span></div></div>
-        <div class="pc"><div class="corner"></div><div class="ph"><b>科创孵化中心</b><span class="tag">科技服务</span></div><p>五级孵化器，提供办公、研发、小试及产学研对接，基金与导师资源齐备。</p><div class="meta"><span>面积 200-2000㎡</span><span>租金优惠</span><span>基金配套</span></div></div>
-      </div>
-    </div>
-    <div class="form-paper">
-      <div class="h">留下投资意向</div>
-      <div class="sub">填写下方信息，我们将以专函回复选址与政策建议。</div>
-      <div class="fg">
-        <div class="field"><label>姓名</label><input placeholder="您的姓名"></div>
-        <div class="field"><label>电话</label><input placeholder="您的联系电话"></div>
-        <div class="field"><label>企业</label><input placeholder="所属企业"></div>
-        <div class="field"><label>行业</label><input placeholder="所属行业"></div>
-        <div class="field full"><label>投资需求</label><textarea placeholder="请简述投资规模、目标地区、用地需求等"></textarea></div>
-      </div>
-      <button class="submit">投递意向</button>
-    </div>
-    <div class="foot">© 2026 招商服务平台 · 版权所有</div>
+    <div class="sec-head"><div><div class="kicker">■ 资源库</div><h2>产业园区 · 招商项目 · 优惠政策</h2></div><div class="more">共 9 条资源</div></div>
+    <div class="tabs"><button class="tab-btn active">全部</button><button class="tab-btn">投资载体</button><button class="tab-btn">招商项目</button><button class="tab-btn">优惠政策</button></div>
+    <div class="grid" id="v1-grid"></div>
   </div>
 </section>
 
-<!-- 版本三：国际投行/金融报告风 -->
-<section class="version v3" id="v3">
-  <div class="top">
-    <div class="logo"><div class="mk">ZS</div><span>招商智能体平台</span></div>
-    <a href="#" target="_blank">运营后台 ↗</a>
-  </div>
+<section class="contact" id="v1-contact">
   <div class="wrap">
-    <div class="hero">
-      <div class="eyebrow">Investor Portal / 投资客商自助门户</div>
-      <h1>以智能匹配，<br>驱动产业投资决策。</h1>
-      <div class="lead">一处机构级门户，统览产业项目、园区载体与政策工具。输入投资逻辑，即刻生成匹配报告并进入专属对接流程。</div>
-      <div class="kpi-row">
-        <div class="kpi"><div class="num">2,000+</div><div class="tt">招商项目</div></div>
-        <div class="kpi"><div class="num">150+</div><div class="tt">产业园区</div></div>
-        <div class="kpi"><div class="num">40+</div><div class="tt">政策工具</div></div>
-        <div class="kpi"><div class="num">24h</div><div class="tt">响应时效</div></div>
-      </div>
+    <div>
+      <div class="kicker">■ 联系我们</div>
+      <h2>专属招商专员<br>全程跟进</h2>
+      <p>如需进一步对接，请直接联系招商专员。我们将在 1 个工作日内响应，并为您定制落地方案。</p>
     </div>
-    <div class="command">
-      <div class="bubble">请描述您的投资意向，例如：<b>计划于长三角投资新能源汽车零部件，预算 USD 70M，需工业用地 100 亩</b>。系统将据此生成机构级匹配报告。</div>
-      <div class="input-col"><input placeholder="输入投资需求…"><button>Generate Match</button></div>
+    <div class="c-cards">
+      <div class="c-cell"><div class="label">▍ 咨询电话</div><div class="v mono">+86 131-1111-6874</div></div>
+      <div class="c-cell"><div class="label">▍ 邮箱</div><div class="v mono">xuduo217@gmail.com</div></div>
+      <div class="c-cell"><div class="label">▍ 地址</div><div class="v">宁波软件园 D 座 211</div></div>
     </div>
-    <div class="sec">
-      <div class="h"><b>Featured Opportunities</b><span>重点招商项目</span></div>
-      <div class="pgrid">
-        <div class="pc"><div class="ph"><b>临港先进制造产业园</b><span class="tag">Manufacturing</span></div><p>规划面积 2000 亩，重点引进新能源汽车、高端装备、智能制造项目，基础设施完善。</p><div class="meta"><span>Land 50-200 mu</span><span>Tax rebate</span><span>Full facilities</span></div></div>
-        <div class="pc"><div class="ph"><b>科创孵化中心</b><span class="tag">Tech Service</span></div><p>5A 级孵化器，提供办公、研发、小试及产学研对接服务，基金配套成熟。</p><div class="meta"><span>200-2000 ㎡</span><span>Rent incentive</span><span>Fund access</span></div></div>
-      </div>
-    </div>
-    <div class="form-panel">
-      <div class="h">SUBMIT INQUIRY</div>
-      <div class="sub">Complete the form below to receive a tailored investment proposal.</div>
-      <div class="fg">
-        <div class="field"><label>Full Name</label><input placeholder="Your name"></div>
-        <div class="field"><label>Phone</label><input placeholder="Your phone number"></div>
-        <div class="field"><label>Company</label><input placeholder="Your organization"></div>
-        <div class="field"><label>Industry</label><input placeholder="e.g. New Energy Vehicles"></div>
-        <div class="field full"><label>Investment Requirement</label><textarea placeholder="Please describe target region, investment size, land/facility needs, etc."></textarea></div>
-      </div>
-      <button class="submit">Submit Inquiry</button>
-    </div>
-    <div class="foot">© 2026 招商服务平台 · 版权所有</div>
   </div>
 </section>
+
+<footer class="footer"><div class="wrap"><div class="col">招商智能体平台 · 投资客商门户</div><div class="meta">© 2026 · ALL RIGHTS RESERVED</div></div></footer>
+</div>
+
+<!-- ============================================ -->
+<!-- V2 数据大屏（暗色终端、Bloomberg 风） -->
+<!-- ============================================ -->
+<div class="version v2" id="v2">
+<style>
+.v2{--bg:#0a0e1a;--bg-2:#10151f;--bg-3:#161d2c;--ink:#e8eaf0;--ink-2:#9aa0b0;--ink-3:#5a6072;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);--accent:#00ff9d;--accent-2:#00d4ff;--warn:#ffb800;--danger:#ff3a5e;--sans:"Inter","Noto Sans SC",-apple-system,BlinkMacSystemFont,sans-serif;--mono:"JetBrains Mono","SF Mono",Menlo,monospace;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:14.5px;background-image:linear-gradient(180deg,#0a0e1a 0%,#0d1117 100%)}
+.v2 a{color:inherit;text-decoration:none}
+.v2 .wrap{max-width:1320px;margin:0 auto;padding:0 28px}
+.v2 .topbar{position:sticky;top:54px;z-index:30;background:rgba(10,14,26,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;max-width:1320px;margin:0 auto;font-family:var(--mono);font-size:12.5px;letter-spacing:.5px}
+.v2 .topbar .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink);font-size:14px;letter-spacing:1px}
+.v2 .topbar .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:blink 1.4s infinite}
+.v2 .topbar .stats{display:flex;gap:30px;color:var(--ink-2)}
+.v2 .topbar .stat b{color:var(--ink);font-weight:700;margin-left:6px}
+.v2 .topbar .stat b.up{color:var(--accent)}
+.v2 .topbar .nav{display:flex;gap:0}
+.v2 .topbar .nav a{padding:0 16px;line-height:58px;color:var(--ink-2);font-weight:500;font-size:13px;transition:.15s;border-left:1px solid var(--line)}
+.v2 .topbar .nav a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.v2 .topbar .nav .cta{background:var(--accent);color:#0a0e1a;font-weight:700}
+.v2 .topbar .nav .cta:hover{background:#00d4a3}
+.v2 .hero{padding:50px 0 30px;position:relative}
+.v2 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(800px 500px at 75% 20%,rgba(0,255,157,.06),transparent 60%),radial-gradient(700px 400px at 20% 80%,rgba(0,212,255,.05),transparent 60%);pointer-events:none}
+.v2 .hero .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;position:relative;z-index:2}
+.v2 .label-tag{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
+.v2 .label-tag .v{display:inline-block;background:var(--accent);color:#0a0e1a;padding:2px 8px;margin-right:8px}
+.v2 .hero h1{font-family:var(--sans);font-weight:800;font-size:60px;line-height:1.05;letter-spacing:-1.5px;margin-bottom:16px;color:#fff}
+.v2 .hero h1 .grad{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.v2 .hero .deck{font-size:17px;line-height:1.6;color:var(--ink-2);margin-bottom:28px;max-width:560px}
+.v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-2);border:1px solid var(--line-2);margin-top:36px}
+.v2 .metric{background:var(--bg-2);padding:14px 16px}
+.v2 .metric .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
+.v2 .metric .val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.5px}
+.v2 .metric .val .unit{font-size:11px;color:var(--ink-3);margin-left:4px;font-weight:500}
+.v2 .metric .delta{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:2px}
+.v2 .ai-card{background:var(--bg-2);border:1px solid var(--line-2);position:relative}
+.v2 .ai-card::before{content:'TERMINAL';position:absolute;top:-1px;left:-1px;background:var(--accent);color:#0a0e1a;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;padding:4px 10px}
+.v2 .ai-card .head{padding:18px 18px 12px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink-3);border-bottom:1px solid var(--line)}
+.v2 .ai-card .head b{color:var(--accent)}
+.v2 .ai-card .body{padding:18px}
+.v2 .ai-card .label{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);letter-spacing:1.5px;margin-bottom:8px}
+.v2 .ai-card .label b{color:var(--accent);margin-right:6px}
+.v2 .ai-card textarea{width:100%;min-height:110px;border:1px solid var(--line-2);background:rgba(0,0,0,.4);color:var(--ink);font-family:var(--mono);font-size:13.5px;padding:12px 14px;outline:none;resize:vertical;line-height:1.6}
+.v2 .ai-card textarea:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),inset 0 0 30px rgba(0,255,157,.05)}
+.v2 .ai-card .prompt{color:var(--accent);font-family:var(--mono);font-size:13.5px}
+.v2 .ai-card .actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+.v2 .ai-card .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.v2 .ai-card .chip{font-family:var(--mono);font-size:11px;color:var(--ink-2);background:transparent;border:1px solid var(--line-2);padding:4px 9px;cursor:pointer;transition:.15s}
+.v2 .ai-card .chip:hover{background:var(--accent);color:#0a0e1a;border-color:var(--accent)}
+.v2 .ai-card .btn-match{font-family:var(--mono);font-weight:700;font-size:12px;background:var(--accent);color:#0a0e1a;border:none;padding:11px 18px;letter-spacing:1px;white-space:nowrap}
+.v2 .ai-card .btn-match:hover{background:#00d4a3;box-shadow:0 0 20px rgba(0,255,157,.3)}
+.v2 .section{padding:50px 0;border-top:1px solid var(--line)}
+.v2 .sec-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:28px}
+.v2 .sec-head h2{font-family:var(--sans);font-weight:800;font-size:32px;letter-spacing:-.5px;color:#fff}
+.v2 .sec-head .more{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.v2 .tabs{display:flex;gap:1px;background:var(--line-2);border:1px solid var(--line-2);width:fit-content}
+.v2 .tab-btn{font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--bg-2);border:none;padding:8px 18px;cursor:pointer;letter-spacing:1px;transition:.15s}
+.v2 .tab-btn:hover{color:var(--ink);background:var(--bg-3)}
+.v2 .tab-btn.active{background:var(--accent);color:#0a0e1a;font-weight:700}
+.v2 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-top:none}
+.v2 .card{background:var(--bg-2);padding:20px 18px;display:flex;flex-direction:column;transition:.15s;position:relative;overflow:hidden}
+.v2 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:0;transition:.2s}
+.v2 .card:hover{background:var(--bg-3)}
+.v2 .card:hover::before{opacity:1}
+.v2 .card .cat{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.v2 .card h3{font-weight:700;font-size:18px;line-height:1.3;margin-bottom:6px;color:#fff}
+.v2 .card .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:10px;letter-spacing:.3px}
+.v2 .card .hl{font-size:13px;color:var(--ink-2);line-height:1.6;flex:1;margin-bottom:12px}
+.v2 .card .policy{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.2);padding:8px 10px;margin-bottom:10px}
+.v2 .card .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
+.v2 .card .status{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:2px 8px;text-transform:uppercase}
+.v2 .card .st-招商中{background:rgba(0,255,157,.12);color:var(--accent);border:1px solid rgba(0,255,157,.3)}
+.v2 .card .st-即将开放{background:rgba(255,184,0,.12);color:var(--warn);border:1px solid rgba(255,184,0,.3)}
+.v2 .empty{grid-column:1 / -1;text-align:center;padding:60px 20px;color:var(--ink-3);font-family:var(--mono);font-style:italic}
+.v2 .contact{padding:60px 0;background:var(--bg-2);border-top:1px solid var(--line)}
+.v2 .contact .wrap{display:grid;grid-template-columns:1fr 1.4fr;gap:50px;align-items:start}
+.v2 .contact h2{font-weight:800;font-size:40px;line-height:1.1;letter-spacing:-.5px;margin:14px 0 18px;color:#fff}
+.v2 .contact p{font-size:15px;line-height:1.7;color:var(--ink-2);max-width:480px}
+.v2 .c-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-2);border:1px solid var(--line-2)}
+.v2 .c-cell{background:var(--bg-3);padding:20px 18px}
+.v2 .c-cell .label{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.v2 .c-cell .v{font-family:var(--mono);font-weight:700;font-size:15px;line-height:1.4;color:#fff}
+.v2 .footer{background:#050810;color:var(--ink-3);padding:30px 0;border-top:1px solid var(--line)}
+.v2 .footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.v2 .footer .col{font-size:14px;color:var(--ink-2)}
+.v2 .footer .meta{font-family:var(--mono);font-size:11.5px;letter-spacing:1px}
+.v2 @media(max-width:980px){.v2 .hero .wrap{grid-template-columns:1fr;gap:30px}.v2 .hero h1{font-size:42px}.v2 .metrics{grid-template-columns:1fr 1fr}.v2 .grid{grid-template-columns:1fr 1fr}.v2 .contact .wrap{grid-template-columns:1fr;gap:30px}.v2 .c-cards{grid-template-columns:1fr}}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:.3}}
+</style>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:36px">
+    <div class="brand"><span class="dot"></span>招商智能体 / 终端</div>
+    <div class="stats">
+      <div class="stat">实时资源<b class="up">128</b></div>
+      <div class="stat">今日匹配<b class="up">47</b></div>
+      <div class="stat">在线企业<b class="up">2,318</b></div>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="#v2-hero">#头版</a><a href="#v2-lib">#资源库</a><a href="#v2-contact">#联系</a>
+    <a class="cta" href="https://everyday.logicstorm.cn/ai-zhaoshang/" target="_blank">运营后台</a>
+  </div>
+</div>
+
+<section class="hero" id="v2-hero">
+  <div class="wrap">
+    <div>
+      <div class="label-tag"><span class="v">②</span>数据大屏版</div>
+      <h1>说出投资需求<br><span class="grad">AI 即时解析</span><br>匹配全网资源</h1>
+      <div class="deck">面向投资客商的智能对接平台。系统实时分析产业方向、落地诉求与政策匹配，毫秒级返回推荐结果。</div>
+      <div class="metrics">
+        <div class="metric"><div class="lbl">资源总数</div><div class="val">128<span class="unit">个</span></div><div class="delta">▲ 12 本月</div></div>
+        <div class="metric"><div class="lbl">覆盖行业</div><div class="val">32<span class="unit">类</span></div><div class="delta">▲ 3 本月</div></div>
+        <div class="metric"><div class="lbl">政策精准度</div><div class="val">94<span class="unit">%</span></div><div class="delta">▲ 2.1%</div></div>
+        <div class="metric"><div class="lbl">平均响应</div><div class="val">0.8<span class="unit">s</span></div><div class="delta">▼ 0.2s</div></div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="head"><span>STATUS: <b>READY</b> · SESSION 2026-08-26</span><span>v1.0</span></div>
+      <div class="body">
+        <div class="label"><b>$</b>INPUT · 投资需求描述</div>
+        <textarea placeholder="> 例：我们是一家新能源电池企业，计划在成都周边投建正极材料产线，总投资约 5 亿元，希望享受设备投资奖补……"></textarea>
+        <div class="actions"><div class="chips"></div><button class="btn-match">EXEC → 立即匹配</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="v2-lib">
+  <div class="wrap">
+    <div class="sec-head"><div><div class="label-tag" style="margin-bottom:10px">▍资源库</div><h2>产业园区 · 招商项目 · 优惠政策</h2></div><div class="more">共 9 条资源 · 实时同步</div></div>
+    <div class="tabs"><button class="tab-btn active">全部</button><button class="tab-btn">投资载体</button><button class="tab-btn">招商项目</button><button class="tab-btn">优惠政策</button></div>
+    <div class="grid" id="v2-grid"></div>
+  </div>
+</section>
+
+<section class="contact" id="v2-contact">
+  <div class="wrap">
+    <div>
+      <div class="label-tag">▍联系我们</div>
+      <h2>专属招商专员<br>全程跟进</h2>
+      <p>如需进一步对接，请直接联系招商专员。我们将在 1 个工作日内响应，并为您定制落地方案。</p>
+    </div>
+    <div class="c-cards">
+      <div class="c-cell"><div class="label">▍TEL</div><div class="v">+86 131-1111-6874</div></div>
+      <div class="c-cell"><div class="label">▍EMAIL</div><div class="v">xuduo217@gmail.com</div></div>
+      <div class="c-cell"><div class="label">▍ADDR</div><div class="v">宁波软件园 D 座 211</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"><div class="wrap"><div class="col">招商智能体平台 · 投资客商门户</div><div class="meta">© 2026 · ALL RIGHTS RESERVED</div></div></footer>
+</div>
+
+<!-- ============================================ -->
+<!-- V3 极简白（Apple/Stripe 极简、留白、电蓝） -->
+<!-- ============================================ -->
+<div class="version v3" id="v3">
+<style>
+.v3{--bg:#ffffff;--bg-2:#fafafa;--ink:#0a0a0a;--ink-2:#555;--ink-3:#888;--line:#e5e5e5;--line-2:#d4d4d4;--accent:#0066ff;--sans:"Inter","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:16px;letter-spacing:-.01em}
+.v3 a{color:inherit;text-decoration:none}
+.v3 .wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+.v3 .topbar{position:sticky;top:54px;z-index:30;background:rgba(255,255,255,.78);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line);height:60px;display:flex;align-items:center;justify-content:space-between;max-width:1240px;margin:0 auto;padding:0 32px}
+.v3 .topbar .brand{font-weight:700;font-size:17px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.v3 .topbar .brand .mark{width:24px;height:24px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800}
+.v3 .topbar .nav{display:flex;gap:0;align-items:center}
+.v3 .topbar .nav a{padding:0 18px;line-height:60px;color:var(--ink-2);font-weight:500;font-size:14px;transition:.15s}
+.v3 .topbar .nav a:hover{color:var(--ink)}
+.v3 .topbar .nav .cta{margin-left:18px;background:var(--ink);color:#fff;font-weight:600;font-size:13px;padding:9px 18px;border-radius:8px;line-height:1;display:inline-flex;align-items:center;height:38px}
+.v3 .topbar .nav .cta:hover{background:var(--accent)}
+.v3 .hero{padding:80px 0 50px}
+.v3 .hero .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:60px;align-items:center}
+.v3 .label-tag{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--accent);text-transform:uppercase;margin-bottom:18px;display:inline-block}
+.v3 .label-tag .v{display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;margin-right:8px;border-radius:4px}
+.v3 .hero h1{font-weight:800;font-size:68px;line-height:1.04;letter-spacing:-2.5px;margin-bottom:22px;color:var(--ink)}
+.v3 .hero h1 .accent{color:var(--accent)}
+.v3 .hero .deck{font-size:20px;line-height:1.5;color:var(--ink-2);margin-bottom:36px;max-width:580px;letter-spacing:-.01em}
+.v3 .hero .stats{display:flex;gap:50px;margin-top:48px;padding-top:28px;border-top:1px solid var(--line)}
+.v3 .stat-item .v{font-weight:700;font-size:30px;letter-spacing:-1px;color:var(--ink);font-feature-settings:"tnum"}
+.v3 .stat-item .l{font-size:13px;color:var(--ink-3);margin-top:4px}
+.v3 .ai-card{background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden}
+.v3 .ai-card .head{padding:16px 22px;background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.v3 .ai-card .head .title{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.v3 .ai-card .head .title .dot{width:7px;height:7px;border-radius:50%;background:#10b981}
+.v3 .ai-card .head .meta{font-size:12px;color:var(--ink-3);font-feature-settings:"tnum"}
+.v3 .ai-card .body{padding:22px}
+.v3 .ai-card .label{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:10px;letter-spacing:.3px}
+.v3 .ai-card textarea{width:100%;min-height:120px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px;font-family:inherit;font-size:15px;color:var(--ink);outline:none;resize:vertical;line-height:1.6;transition:.2s}
+.v3 .ai-card textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,102,255,.12)}
+.v3 .ai-card .actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.v3 .ai-card .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.v3 .ai-card .chip{font-size:12px;color:var(--ink-2);background:#fff;border:1px solid var(--line);padding:5px 11px;border-radius:99px;cursor:pointer;transition:.15s}
+.v3 .ai-card .chip:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.v3 .ai-card .btn-match{font-weight:600;font-size:14px;background:var(--accent);color:#fff;border:none;padding:12px 22px;border-radius:10px;white-space:nowrap;transition:.15s}
+.v3 .ai-card .btn-match:hover{background:#0052cc}
+.v3 .section{padding:60px 0}
+.v3 .sec-head{margin-bottom:40px}
+.v3 .sec-head h2{font-weight:700;font-size:44px;letter-spacing:-1.2px;line-height:1.1;margin-bottom:12px;max-width:680px}
+.v3 .sec-head p{font-size:17px;color:var(--ink-2);max-width:580px}
+.v3 .tabs{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+.v3 .tab-btn{font-size:14px;font-weight:500;color:var(--ink-2);background:#fff;border:1px solid var(--line);padding:8px 18px;border-radius:99px;cursor:pointer;transition:.15s}
+.v3 .tab-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.v3 .tab-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.v3 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.v3 .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;transition:.2s}
+.v3 .card:hover{border-color:var(--ink-3);box-shadow:0 8px 24px rgba(0,0,0,.04);transform:translateY(-2px)}
+.v3 .card .cat{display:inline-block;font-size:11.5px;font-weight:600;color:var(--accent);background:rgba(0,102,255,.08);padding:3px 9px;border-radius:4px;margin-bottom:12px;align-self:flex-start;letter-spacing:.3px}
+.v3 .card h3{font-weight:700;font-size:19px;line-height:1.3;margin-bottom:6px;letter-spacing:-.3px}
+.v3 .card .meta{font-size:12.5px;color:var(--ink-3);margin-bottom:12px;font-feature-settings:"tnum"}
+.v3 .card .hl{font-size:14px;color:var(--ink-2);line-height:1.6;flex:1;margin-bottom:14px}
+.v3 .card .policy{font-size:12.5px;color:var(--ink-2);background:var(--bg-2);padding:10px 12px;border-radius:8px;margin-bottom:12px;border:1px solid var(--line)}
+.v3 .card .foot{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--line);margin-top:auto}
+.v3 .card .status{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px;background:rgba(16,185,129,.1);color:#059669}
+.v3 .card .st-即将开放{background:rgba(245,158,11,.1);color:#b45309}
+.v3 .empty{grid-column:1 / -1;text-align:center;padding:60px 20px;color:var(--ink-3);font-size:15px}
+.v3 .contact{padding:80px 0;background:var(--bg-2);border-top:1px solid var(--line)}
+.v3 .contact .wrap{display:grid;grid-template-columns:1fr 1.4fr;gap:60px;align-items:start}
+.v3 .contact h2{font-weight:700;font-size:48px;line-height:1.1;letter-spacing:-1.5px;margin:18px 0 22px}
+.v3 .contact p{font-size:18px;line-height:1.6;color:var(--ink-2);max-width:480px}
+.v3 .c-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.v3 .c-cell{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 20px}
+.v3 .c-cell .label{font-size:12px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.v3 .c-cell .v{font-weight:600;font-size:18px;line-height:1.4;color:var(--ink)}
+.v3 .c-cell .v.mono{font-feature-settings:"tnum";font-weight:500;font-size:16px}
+.v3 .footer{padding:40px 0;border-top:1px solid var(--line)}
+.v3 .footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.v3 .footer .col{font-size:14px;color:var(--ink-2)}
+.v3 .footer .meta{font-size:13px;color:var(--ink-3)}
+.v3 @media(max-width:980px){.v3 .hero .wrap{grid-template-columns:1fr;gap:30px}.v3 .hero h1{font-size:46px}.v3 .grid{grid-template-columns:1fr 1fr}.v3 .contact .wrap{grid-template-columns:1fr;gap:30px}.v3 .c-cards{grid-template-columns:1fr}}
+</style>
+
+<div class="topbar">
+  <div class="brand"><div class="mark">招</div>招商智能体</div>
+  <div class="nav">
+    <a href="#v3-hero">头版</a><a href="#v3-lib">资源库</a><a href="#v3-contact">联系</a>
+    <a class="cta" href="https://everyday.logicstorm.cn/ai-zhaoshang/" target="_blank">运营后台 →</a>
+  </div>
+</div>
+
+<section class="hero" id="v3-hero">
+  <div class="wrap">
+    <div>
+      <span class="label-tag"><span class="v">③</span>极简白版</span>
+      <h1>说出投资需求<br>AI <span class="accent">秒级匹配</span><br>全网招商资源</h1>
+      <div class="deck">面向投资客商的自助对接平台。描述您的产业方向与落地诉求，系统即时分析并推荐适配的产业园区、招商项目与优惠政策。</div>
+      <div class="stats">
+        <div class="stat-item"><div class="v">128+</div><div class="l">招商资源</div></div>
+        <div class="stat-item"><div class="v">32</div><div class="l">覆盖行业</div></div>
+        <div class="stat-item"><div class="v">0.8s</div><div class="l">平均响应</div></div>
+        <div class="stat-item"><div class="v">94%</div><div class="l">匹配精准度</div></div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="head"><div class="title"><span class="dot"></span>AI 智能匹配</div><div class="meta">在线 · 实时</div></div>
+      <div class="body">
+        <div class="label">描述您的投资需求</div>
+        <textarea placeholder="例：我们是一家新能源电池企业，计划在成都周边投建正极材料产线，总投资约 5 亿元，希望享受设备投资奖补……"></textarea>
+        <div class="actions"><div class="chips"></div><button class="btn-match">立即匹配</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="v3-lib">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>精选招商资源</h2>
+      <p>覆盖产业园区、招商项目与优惠政策，按需浏览或 AI 智能匹配。</p>
+    </div>
+    <div class="tabs"><button class="tab-btn active">全部</button><button class="tab-btn">投资载体</button><button class="tab-btn">招商项目</button><button class="tab-btn">优惠政策</button></div>
+    <div class="grid" id="v3-grid"></div>
+  </div>
+</section>
+
+<section class="contact" id="v3-contact">
+  <div class="wrap">
+    <div>
+      <span class="label-tag">联系我们</span>
+      <h2>专属招商专员<br>全程跟进</h2>
+      <p>如需进一步对接，请直接联系招商专员。我们将在 1 个工作日内响应。</p>
+    </div>
+    <div class="c-cards">
+      <div class="c-cell"><div class="label">电话</div><div class="v mono">+86 131-1111-6874</div></div>
+      <div class="c-cell"><div class="label">邮箱</div><div class="v mono">xuduo217@gmail.com</div></div>
+      <div class="c-cell"><div class="label">地址</div><div class="v">宁波软件园 D 座 211</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"><div class="wrap"><div class="col">招商智能体平台 · 投资客商门户</div><div class="meta">© 2026</div></div></footer>
+</div>
 
 <script>
-  function showV(id, btn) {
-    document.querySelectorAll('.version').forEach(function(s){ s.classList.remove('active'); });
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll('.switcher .tabs button').forEach(function(b){ b.classList.remove('active'); });
-    btn.classList.add('active');
-    window.scrollTo(0, 0);
-  }
+const PROJECTS = [
+  {category:"投资载体", title:"成都高新区智能制造产业园", region:"成都高新区", industry:"智能制造/电子信息", scale:"规划面积 30 平方公里", highlights:"国家级经开区，集聚规上企业 800+ 家，电子信息、汽车、智能装备三大主导产业。", policy:"项目落户最高奖励 5000 万元；研发投入按 20% 给予补贴。", status:"招商中"},
+  {category:"投资载体", title:"宜宾动力电池产业生态园", region:"宜宾三江新区", industry:"新能源/锂电", scale:"规划面积 30 平方公里", highlights:"全球最大动力电池生产基地之一，上游材料—电芯—Pack—回收全链条集聚，宁德时代、时代长安配套。", policy:"落地即享绿电指标，用工补贴每人每年 6000 元。", status:"招商中"},
+  {category:"招商项目", title:"中欧班列（成都）集结中心冷链项目", region:"成都青白江", industry:"现代物流", scale:"总投资 18 亿元", highlights:"依托中欧班列集结中心，建设 5 万吨级冷链仓配中心，配套海关监管仓与跨境电商保税仓。", policy:"冷链设备投资补贴 30%，前两年税收地方留成全额返还。", status:"招商中"},
+  {category:"招商项目", title:"重庆两江新区半导体封测基地", region:"重庆两江新区", industry:"集成电路", scale:"总投资 65 亿元", highlights:"面向 12 寸晶圆先进封装，已落位华润微、SK 海力士等链主企业，水电气成本低于沿海 25%。", policy:"洁净厂房建设按 800 元/㎡ 补贴；设备进口关税全免。", status:"即将开放"},
+  {category:"招商项目", title:"苏州工业园区生物医药 CDMO 平台", region:"苏州工业园区", industry:"生物医药", scale:"总投资 22 亿元", highlights:"园区聚集生物医药企业 1800+ 家，CDMO 平台面向 ADC、细胞治疗、基因治疗等前沿领域。", policy:"GMP 车间装修补贴 50%，人才公寓三年免租。", status:"招商中"},
+  {category:"优惠政策", title:"上海市战略性新兴产业扶持办法", region:"上海市", industry:"人工智能/新能源/生物医药", scale:"—", highlights:"对纳入目录的重大项目，按实际投资额给予最高 15% 补贴，单项目上限 1 亿元。", policy:"设备投资补贴 15%，研发投入加计扣除 120%。", status:"招商中"},
+  {category:"优惠政策", title:"深圳前海深港现代服务业合作区税收优惠", region:"深圳前海", industry:"金融/科技服务", scale:"—", highlights:"鼓励类产业企业减按 15% 征收企业所得税；境外高端人才和紧缺人才个人所得税超负差部分免征。", policy:"符合条件企业所得税 15%；人才个税补贴。", status:"招商中"},
+  {category:"投资载体", title:"合肥新站高新技术产业开发区", region:"合肥新站区", industry:"新型显示/集成电路", scale:"规划面积 51 平方公里", highlights:"京东方、维信诺、康宁等链主企业集聚，新型显示产业规模全国领先。", policy:"固定资产投资最高 30% 配套补贴。", status:"招商中"},
+  {category:"招商项目", title:"杭州钱塘区智能网联汽车测试场", region:"杭州钱塘区", industry:"智能网联汽车", scale:"总投资 30 亿元", highlights:"覆盖城市、乡村、高速三大场景的 L4 级测试场，配套数据中心与整车在环仿真平台。", policy:"测试服务费 50% 补贴；首条产线落地奖励 1 亿元。", status:"即将开放"}
+];
+const SAMPLES = ['成都新能源电池产线','宜宾动力电池基地','集成电路封测','智能制造产业园','制造业奖补政策','总部经济落户'];
+
+function showV(v){
+  document.querySelectorAll('.version').forEach(el=>el.classList.remove('active'));
+  document.getElementById(v).classList.add('active');
+  document.querySelectorAll('.switcher .tabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.switcher .tabs button[data-v="'+v+'"]').classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function catClass(c){if(c==='投资载体')return 'cat-载体';if(c==='招商项目')return 'cat-项目';return 'cat-政策';}
+function stClass(s){return ['招商中','即将开放','已满'].includes(s)?'st-'+s:'st-招商中';}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function renderGrid(gridId, cardClass){
+  const grid = document.getElementById(gridId);
+  if(!grid) return;
+  grid.innerHTML = PROJECTS.map(p=>`
+    <div class="card">
+      <span class="cat ${catClass(p.category)}">${esc(p.category)}</span>
+      <h3>${esc(p.title)}</h3>
+      <div class="meta">${esc(p.region||'')}${p.industry?' · '+esc(p.industry):''}${p.scale?' · '+esc(p.scale):''}</div>
+      <div class="hl">${esc(p.highlights||'')}</div>
+      ${p.policy?`<div class="policy">${esc(p.policy)}</div>`:''}
+      <div class="foot">
+        <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderChips(){
+  document.querySelectorAll('.version .chips').forEach(c=>{
+    c.innerHTML = SAMPLES.map(s=>`<span class="chip" onclick="useSample(this,'${s}')">${s}</span>`).join('');
+  });
+}
+function useSample(el,s){
+  el.closest('.ai-card').querySelector('textarea').value = s;
+  el.closest('.ai-card').querySelector('textarea').focus();
+}
+
+renderGrid('v1-grid');
+renderGrid('v2-grid');
+renderGrid('v3-grid');
+renderChips();
 </script>
 </body>
 </html>

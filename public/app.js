@@ -56,6 +56,28 @@
     bindNav();
     apiGet('/schema').then((s) => { SCHEMA = s.schema; renderCurrent(); }).catch(() => renderCurrent());
     loadMessages();
+    loadDeepseekBalance();
+  }
+  /* DeepSeek 实时余额（顶栏动态显示，充值后刷新即最新） */
+  async function loadDeepseekBalance() {
+    const tag = el('dsBalanceTag'); if (!tag) return;
+    try {
+      const r = await apiGet('/deepseek/balance');
+      if (!r.hasKey) {
+        tag.innerHTML = '<span class="dot"></span>DeepSeek API 未配置';
+        tag.style.borderColor = 'rgba(245,158,11,.4)'; tag.style.color = '#b45309'; tag.style.background = 'rgba(245,158,11,.1)';
+        return;
+      }
+      if (r.isAvailable) {
+        tag.innerHTML = '<span class="dot"></span>DeepSeek API 正常 · 余额 ¥' + (r.balance || '0');
+        tag.style.borderColor = ''; tag.style.color = ''; tag.style.background = '';
+      } else {
+        const bal = (r.balance !== null && r.balance !== undefined) ? ('¥' + r.balance) : '不可用';
+        tag.innerHTML = '<span class="dot"></span>DeepSeek 欠费 · 余额 ' + bal;
+        tag.style.borderColor = 'rgba(220,38,38,.45)'; tag.style.color = '#dc2626'; tag.style.background = 'rgba(220,38,38,.08)';
+        const dot = tag.querySelector('.dot'); if (dot) dot.style.background = '#dc2626';
+      }
+    } catch (e) { tag.textContent = 'DeepSeek 余额查询失败'; }
   }
   function setupMobileNav() {
     if (el('mobileMenuBtn')) return;

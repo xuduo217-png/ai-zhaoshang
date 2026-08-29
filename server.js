@@ -993,6 +993,29 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { ok: true });
   }
 
+  /* DeepSeek 实时余额（调官方 /user/balance，充值后刷新即最新） */
+  if (p === '/api/deepseek/balance' && method === 'GET') {
+    const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
+    const key = serviceKey('DeepSeek');
+    if (!key) return send(res, 200, { ok: true, hasKey: false, isAvailable: false, balance: null, currency: 'CNY', msg: '未配置 DeepSeek API Key' });
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const r2 = https.request('https://api.deepseek.com/user/balance', { method: 'GET', timeout: 8000, headers: { 'Authorization': 'Bearer ' + key } }, (r) => {
+          let buf = '';
+          r.on('data', (c) => (buf += c));
+          r.on('end', () => { try { resolve(JSON.parse(buf)); } catch (e) { reject(e); } });
+        });
+        r2.on('error', reject);
+        r2.on('timeout', () => { r2.destroy(); reject(new Error('timeout')); });
+        r2.end();
+      });
+      const bi = (data.balance_infos || [])[0] || {};
+      return send(res, 200, { ok: true, hasKey: true, isAvailable: !!data.is_available, balance: bi.total_balance || '0', currency: bi.currency || 'CNY', time: now() });
+    } catch (e) {
+      return send(res, 200, { ok: true, hasKey: true, isAvailable: false, balance: null, error: '余额查询失败' });
+    }
+  }
+
   if (p === '/api/schema' && method === 'GET') {
     if (!authUser(req)) return send(res, 401, { error: '未登录' });
     const schema = {};

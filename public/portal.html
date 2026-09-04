@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#7561f5">
   <title>招商智能体 · 智能招商工作台</title>
-  <link rel="stylesheet" href="portal-workspace.css?v=20260904-1">
-  <script src="portal-workspace.js?v=20260904-1" defer></script>
+  <link rel="stylesheet" href="portal-workspace.css?v=20260905-1">
+  <link rel="stylesheet" href="portal-tools.css?v=20260905-1">
+  <script src="portal-tools.js?v=20260905-1" defer></script>
+  <script src="portal-workspace.js?v=20260905-1" defer></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -39,10 +41,11 @@
         <button class="nav-item" data-view="全部"><span class="nav-icon"><svg class="icon"><use href="#i-grid"/></svg></span>招商资源库</button>
         <button class="nav-item" data-view="投资载体"><span class="nav-icon"><svg class="icon"><use href="#i-building"/></svg></span>产业园区与载体</button>
         <button class="nav-item" data-view="优惠政策"><span class="nav-icon"><svg class="icon"><use href="#i-book"/></svg></span>招商政策查询</button>
-        <button class="nav-item unavailable" disabled title="尚未接入公开企业查询接口"><span class="nav-icon"><svg class="icon"><use href="#i-search"/></svg></span>企业全景查询<span class="tiny-badge">待接入</span></button>
-        <button class="nav-item unavailable" disabled title="尚未接入个人知识库"><span class="nav-icon"><svg class="icon"><use href="#i-db"/></svg></span>个人知识库<span class="tiny-badge">待接入</span></button>
+        <button class="nav-item" data-extra="companies"><span class="nav-icon"><svg class="icon"><use href="#i-search"/></svg></span>企业资料查询<span class="tiny-badge">样本库</span></button>
+        <button class="nav-item" data-extra="knowledge"><span class="nav-icon"><svg class="icon"><use href="#i-db"/></svg></span>个人知识库</button>
+        <button class="nav-item" data-extra="reports"><span class="nav-icon"><svg class="icon"><use href="#i-book"/></svg></span>我的资料报告</button>
       </nav>
-      <div class="history-heading"><span>本次会话记录</span><button class="text-btn" id="clearHistory" data-action="clear-history" disabled>清空</button></div>
+      <div class="history-heading"><span>已保存的会话</span><button class="text-btn" id="clearHistory" data-action="clear-history" disabled>清空</button></div>
       <div id="historyList" class="history-list"><p class="history-empty">暂无分析记录</p></div>
       <div class="sidebar-bottom"><span class="avatar">招</span><div>投资客商工作台<small>让每一次招商，更有方向</small></div></div>
     </aside>
@@ -54,7 +57,8 @@
       <aside class="panel context-panel" id="contextPanel" aria-label="当前任务资料">
         <div class="panel-heading"><h2><svg class="icon"><use href="#i-db"/></svg>当前任务资料</h2><button class="icon-btn context-close" data-action="close-panels" aria-label="关闭任务资料"><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="context-content">
-          <div class="source-cards"><button class="source-card" disabled title="文件上传分析尚未接入"><span class="source-icon blue"><svg class="icon"><use href="#i-upload"/></svg></span>添加资料<small>暂未开放</small></button><button class="source-card connected-card" data-view="全部"><span class="selected-mark"><svg class="icon"><use href="#i-check"/></svg></span><span class="source-icon orange"><svg class="icon"><use href="#i-db"/></svg></span>招商资源库<small id="sourceCount">正在加载</small></button></div>
+          <div class="source-cards"><button class="source-card" data-extra="upload"><span class="source-icon blue"><svg class="icon"><use href="#i-upload"/></svg></span>添加资料<small>TXT / MD / CSV</small></button><button class="source-card connected-card" data-view="全部"><span class="selected-mark"><svg class="icon"><use href="#i-check"/></svg></span><span class="source-icon orange"><svg class="icon"><use href="#i-db"/></svg></span>招商资源库<small id="sourceCount">正在加载</small></button></div>
+          <div id="selectedDocuments" class="context-section"><p class="muted">尚未选择个人资料</p></div>
           <div class="source-status"><span>数据来源</span><span class="source-check"><svg class="icon"><use href="#i-check"/></svg>已发布资源</span></div>
           <div class="context-section"><div class="context-label"><strong>产业方向</strong><span>点击带入需求</span></div><div class="industry-chips" id="industryChips"></div></div>
           <div class="context-section"><div class="context-label"><strong>资源概况</strong><button class="text-btn" data-action="reload">刷新</button></div><div id="resourceStats" class="resource-stats"><p class="muted">正在读取资源库…</p></div></div>
@@ -73,7 +77,7 @@
           <div class="analysis-view" id="analysisView" hidden aria-live="polite"></div>
           <div class="library-view" id="libraryView" hidden><div class="library-heading"><span class="eyebrow">招商资源库</span><h2 id="libraryTitle">寻找适合您的招商资源</h2><p>浏览已发布项目，选择资源带入分析。</p></div><label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="resourceSearch" type="search" placeholder="搜索项目、地区或产业" aria-label="搜索招商资源"></label><div class="filter-tabs" id="filterTabs"><button class="active" data-category="全部" aria-pressed="true">全部</button><button data-category="投资载体" aria-pressed="false">投资载体</button><button data-category="招商项目" aria-pressed="false">招商项目</button><button data-category="优惠政策" aria-pressed="false">优惠政策</button></div><div id="projectGrid" class="project-grid"></div></div>
         </div>
-        <form class="composer" id="matchForm"><div class="composer-heading"><span><svg class="icon"><use href="#i-db"/></svg>基于招商资源库匹配</span><span id="characterCount">0 / 1000</span></div><div class="input-row"><label class="sr-only" for="needInput">您的招商需求</label><textarea id="needInput" rows="2" maxlength="1000" placeholder="输入您的问题，或描述一个招商需求…"></textarea><button class="send-btn" id="matchBtn" type="submit" aria-label="发送需求"><svg class="icon"><use href="#i-send"/></svg></button></div><div class="composer-foot"><span><span class="live-dot"></span>AI 辅助提取 · 规则匹配兜底</span><span class="keyboard-hint">Enter 发送，Shift + Enter 换行</span></div><p class="request-error" id="requestError" role="alert" hidden></p></form>
+        <form class="composer" id="matchForm"><div class="composer-heading"><label>匹配类型 <select id="matchCategory" aria-label="匹配资源类型"><option>全部</option><option>投资载体</option><option>招商项目</option><option>优惠政策</option></select></label><span id="characterCount">0 / 1000</span></div><div class="input-row"><label class="sr-only" for="needInput">您的招商需求</label><textarea id="needInput" rows="2" maxlength="1000" placeholder="描述招商需求；可继续追问上一轮结果…"></textarea><button class="send-btn" id="matchBtn" type="submit" aria-label="发送需求"><svg class="icon"><use href="#i-send"/></svg></button></div><div class="composer-foot"><span><span class="live-dot"></span>会话保存在当前浏览器访客空间</span><span class="keyboard-hint">Enter 发送，Shift + Enter 换行</span></div><p class="request-error" id="requestError" role="alert" hidden></p></form>
       </section>
       <aside class="panel tools-panel" id="toolsPanel" aria-label="智能分析工具">
         <div class="panel-heading"><h2><svg class="icon"><use href="#i-spark"/></svg>智能分析</h2><button class="icon-btn tools-close" data-action="close-panels" aria-label="关闭智能分析工具"><svg class="icon"><use href="#i-close"/></svg></button></div>
@@ -84,7 +88,8 @@
     </main>
   </div>
   <button class="panel-backdrop" id="panelBackdrop" data-action="close-panels" aria-label="关闭侧栏" hidden></button>
-  <dialog id="projectDialog" aria-labelledby="detailTitle"><div class="dialog-heading"><h2 id="detailTitle">资源详情</h2><button class="icon-btn" data-action="close-dialog" aria-label="关闭详情"><svg class="icon"><use href="#i-close"/></svg></button></div><div id="detailContent"></div><button class="primary-btn" id="useDetail">将此资源带入需求</button></dialog>
+  <dialog id="projectDialog" aria-labelledby="detailTitle"><div class="dialog-heading"><h2 id="detailTitle">资源详情</h2><button class="icon-btn" data-action="close-dialog" aria-label="关闭详情"><svg class="icon"><use href="#i-close"/></svg></button></div><div id="detailContent"></div><button class="primary-btn" id="useDetail">将此资源带入需求</button><button class="primary-btn secondary" id="contactDetail">提交该项目对接意向</button></dialog>
+  <dialog id="featureDialog" aria-labelledby="featureTitle"><div class="dialog-heading"><h2 id="featureTitle"></h2><button class="icon-btn" data-extra="close" aria-label="关闭功能窗口">×</button></div><div id="featureContent"></div><p id="featureError" class="request-error" role="alert" hidden></p></dialog>
   <div class="toast" id="toast" role="status"></div>
   <noscript><div class="noscript-note">请启用浏览器 JavaScript，以使用项目查询和智能匹配。</div></noscript>
 </body>

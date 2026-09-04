@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check public/app.js",
+    "check": "node --check server.js && node --check portal-service.js && node --check public/app.js && node --check public/portal-workspace.js && node --check public/portal-tools.js && node --test tests/*.test.js",
     "seed": "node server.js --seed"
   },
   "engines": { "node": ">=20" },

@@ -22,13 +22,13 @@
   ];
   const tools = [
     { name:'投资需求匹配', icon:'chart', prompt:'我们是一家新能源企业，计划在成都投资建厂，请匹配适合的招商资源。' },
-    { name:'招商项目查询', icon:'search', prompt:'请查询四川电子信息产业相关的招商项目。' },
-    { name:'产业园区匹配', icon:'building', prompt:'我们计划在宜宾建设动力电池产线，请推荐适合的产业园区。' },
-    { name:'优惠政策查询', icon:'book', tone:'orange', prompt:'请查询成都智能制造企业可享受的优惠政策。' },
-    { name:'产业链分析', icon:'grid', missing:true },
-    { name:'企业招商方案', icon:'building', tone:'blue', missing:true },
-    { name:'投资研判报告', icon:'chart', tone:'yellow', missing:true },
-    { name:'参阅材料生成', icon:'book', missing:true }
+    { name:'招商项目查询', icon:'search', category:'招商项目', prompt:'请查询四川电子信息产业相关的招商项目。' },
+    { name:'产业园区匹配', icon:'building', category:'投资载体', prompt:'我们计划在宜宾建设动力电池产线，请推荐适合的产业园区。' },
+    { name:'优惠政策查询', icon:'book', tone:'orange', category:'优惠政策', prompt:'请查询成都智能制造企业可享受的优惠政策。' },
+    { name:'产业链资料梳理', icon:'grid', report:'chain' },
+    { name:'企业招商方案', icon:'building', tone:'blue', report:'plan' },
+    { name:'投资研判清单', icon:'chart', tone:'yellow', report:'assessment' },
+    { name:'参阅材料整理', icon:'book', report:'brief' }
   ];
   function toast(message) {
     $('toast').textContent = message;
@@ -37,10 +37,11 @@
     toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 3000);
   }
   function syncInput() { $('characterCount').textContent = $('needInput').value.length + ' / 1000'; }
-  function setPrompt(message) {
+  function setPrompt(message,category='全部') {
     if (state.busy) { toast('正在匹配，请稍候再选择需求'); return; }
     showView('chat');
     $('needInput').value = message;
+    $('matchCategory').value = category;
     syncInput();
     $('requestError').hidden = true;
     closePanels();
@@ -142,6 +143,11 @@
     $('analysisView').innerHTML = '<div class="user-message">' + esc(item.message) + '</div><h2 class="analysis-heading">' + icon('spark') + '招商资源匹配</h2><p class="analysis-description">' + esc(need.summary || '已根据产业方向与地区检索当前资源库。') + '</p><div class="result-grid">' + (matched.length ? matched.map(projectCard).join('') : '<p class="empty-state">暂无匹配资源，试试补充产业方向或意向地区。</p>') + '</div><p class="result-note">结果来自已发布资源库，包含联调示例。AI 不可用时自动采用规则匹配；非投资建议。</p>';
     $('outputArea').innerHTML = '<h3 class="summary-title">' + icon('spark') + '本次需求摘要</h3><p class="summary-text">' + esc(need.summary || item.message) + '</p><div class="summary-tags">' + tags.map(t => '<span>' + esc(t) + '</span>').join('') + '</div><p class="summary-count"><b>' + matched.length + '</b>条推荐资源</p><p class="result-note">请在中间区域查看资源详情。</p>';
     $('currentNeed').textContent = item.message;
+    $('matchCategory').value = need.category || '全部';
+    const mode = item.result.engineMode === 'ai-assisted' ? 'AI 辅助提取 + 条件筛选' : '规则筛选（未使用 AI 生成）';
+    $('analysisView').innerHTML += '<p class="result-note">本次处理方式：'+mode+'</p>';
+    if(item.turns?.length>1) $('analysisView').innerHTML += '<details class="conversation-trail"><summary>查看此前 '+(item.turns.length-1)+' 轮需求</summary>'+item.turns.slice(0,-1).map(t=>'<p>'+esc(t.message)+'</p>').join('')+'</details>';
+    window.PortalExtras?.analysis(item);
     showView('chat');
     $('conversationScroll').scrollTop = 0;
   }
@@ -157,6 +163,8 @@
     if (state.busy) return;
     const message = $('needInput').value.trim();
     if (!message || message.length > 1000) { toast(message ? '需求请控制在 1000 字以内' : '请先描述您的招商需求'); $('needInput').focus(); return; }
+    const conversationId = state.active?.result?.conversationId;
+    const previousTurns = state.active?.turns || (state.active ? [{message:state.active.message,result:state.active.result}] : []);
     const run = ++state.run;
     const controller = new AbortController();
     state.controller = controller;
@@ -170,14 +178,17 @@
     $('analysisView').innerHTML = '<div class="user-message">' + esc(message) + '</div><p class="loading-line" role="status"><span class="loading-dot"></span>正在提取需求并匹配招商资源…</p>';
     $('conversationScroll').scrollTop = 0;
     try {
-      const response = await fetch('api/portal/match', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message}),signal:controller.signal});
+      if(window.PortalExtras) await window.PortalExtras.init();
+      if(run!==state.run)return;
+      const response = await fetch('api/portal/match', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,category:$('matchCategory').value||'全部',conversationId,documentIds:window.PortalExtras?.selected()||[]}),signal:controller.signal});
       const json = await response.json();
       if (!response.ok) throw new Error(typeof json.error === 'string' ? json.error : '匹配暂时不可用，请稍后重试');
       if (!json || !Array.isArray(json.matched)) throw new Error('匹配结果格式异常，请稍后重试');
       if (run !== state.run) return;
-      const item = {message,result:json};
+      const item = {message,result:json,turns:[...previousTurns,{message,result:json}].slice(-12)};
+      if(json.conversationId)state.history=state.history.filter(h=>h.result.conversationId!==json.conversationId);
       state.history.unshift(item);
-      state.history = state.history.slice(0,8);
+      state.history = state.history.slice(0,20);
       renderHistory();
       renderAnalysis(item);
       $('needInput').value = '';
@@ -197,6 +208,8 @@
     state.controller = null;
     setBusy(false);
     state.active = null;
+    window.PortalExtras?.analysis(null);
+    $('matchCategory').value = '全部';
     $('needInput').value = '';
     syncInput();
     $('requestError').hidden = true;
@@ -209,6 +222,7 @@
     const p = cardProjects.get(index);
     if (!validProject(p)) { toast('资源已更新，请刷新后重试'); return; }
     state.detail = p;
+    window.PortalExtras?.detail(p);
     $('detailTitle').textContent = p.title;
     $('detailContent').innerHTML = '<dl>' + [['类型',p.category],['地区',p.region],['产业',p.industry],['规模',p.scale],['状态',p.status],['亮点',p.highlights],['政策',p.policy]].filter(row => row[1]).map(([label,value]) => '<dt>' + label + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl><p class="result-note">当前资源包含联调示例，请核实项目与政策信息。</p>';
     $('projectDialog').showModal();
@@ -220,14 +234,16 @@
     if (btn.dataset.category) { state.category = btn.dataset.category; renderProjects(); return; }
     if (btn.dataset.sample !== undefined) return setPrompt(samples[Number(btn.dataset.sample)]);
     if (btn.dataset.industry) return setPrompt('请匹配' + btn.dataset.industry + '产业相关的招商项目与园区资源。');
-    if (btn.dataset.tool !== undefined) return setPrompt(tools[Number(btn.dataset.tool)].prompt);
+    if (btn.dataset.tool !== undefined) return setPrompt(tools[Number(btn.dataset.tool)].prompt,tools[Number(btn.dataset.tool)].category||'全部');
     if (btn.dataset.project !== undefined) return showDetail(Number(btn.dataset.project));
     if (btn.dataset.history !== undefined) { if (state.busy) return toast('正在匹配，请稍候'); const item = state.history[Number(btn.dataset.history)]; if (item) renderAnalysis(item); return; }
     switch (btn.dataset.action) {
       case 'new': return newChat();
       case 'shuffle': state.sample = (state.sample + 4) % samples.length; return renderSamples();
       case 'reload': return loadProjects();
-      case 'clear-history': state.history = []; renderHistory(); return toast('已清空本次会话记录');
+      case 'clear-history':
+        if(window.PortalExtras)return window.PortalExtras.clearHistory().then(ok=>{if(ok){state.history=[];newChat();renderHistory();toast('已清空保存的会话');}}).catch(e=>toast(e.message));
+        state.history = []; renderHistory(); return toast('已清空本次会话记录');
       case 'sidebar': return openPanel('sidebar');
       case 'context': return openPanel('contextPanel');
       case 'tools': return openPanel('toolsPanel');
@@ -236,6 +252,7 @@
     }
   });
   $('useDetail').addEventListener('click', () => { if (!state.detail) return; $('projectDialog').close(); setPrompt('我想了解' + state.detail.title + '，请匹配相关招商资源与政策。'); });
+  $('contactDetail').addEventListener('click',()=>{if(!state.detail)return;$('projectDialog').close();window.PortalExtras?.inquire(state.detail);});
   $('matchForm').addEventListener('submit', doMatch);
   $('needInput').addEventListener('input', syncInput);
   $('needInput').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) { event.preventDefault(); doMatch(); } });
@@ -243,7 +260,16 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closePanels(); });
   window.addEventListener('resize', closePanels);
   $('industryChips').innerHTML = ['人工智能','新能源','电子信息','智能制造','生物医药'].map(name => '<button class="industry-chip" data-industry="' + name + '">' + name + '</button>').join('');
-  $('toolGrid').innerHTML = tools.map((tool,index) => '<button class="tool-card ' + (tool.tone || '') + '" ' + (tool.missing ? 'disabled title="该能力尚未接入，不会生成报告"' : 'data-tool="' + index + '"') + '>' + icon(tool.icon) + '<span>' + tool.name + '</span>' + (tool.missing ? '<small>待接入</small>' : '<svg class="icon tool-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>') + '</button>').join('');
+  $('toolGrid').innerHTML = tools.map((tool,index) => '<button class="tool-card ' + (tool.tone || '') + '" ' + (tool.report ? 'data-extra="'+tool.report+'"' : 'data-tool="' + index + '"') + '>' + icon(tool.icon) + '<span>' + tool.name + '</span>' + (tool.report ? '<small>资料版</small>' : '<svg class="icon tool-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>') + '</button>').join('');
+  window.PortalWorkspace={closePanels};
+  if(window.PortalExtras){
+    const initialRun=state.run;
+    setBusy(true);
+    window.PortalExtras.init().then(data=>{
+      state.history=(data.conversations||[]).filter(c=>Array.isArray(c.turns)&&c.turns.length).map(c=>({...c.turns.at(-1),result:{...c.turns.at(-1).result,conversationId:c.id},turns:c.turns}));
+      renderHistory();if(state.history.length&&state.run===initialRun)renderAnalysis(state.history[0]);
+    }).catch(e=>{toast('历史记录加载失败：'+e.message);}).finally(()=>{if(state.run===initialRun)setBusy(false);});
+  }
   renderSamples();
   loadProjects();
 })();

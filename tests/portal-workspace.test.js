@@ -36,7 +36,7 @@ test('HTML references exist, assets are local, and event handlers are external',
   assert.equal(ids.length,new Set(ids).size);
   for(const m of code.matchAll(/\$\('([^']+)'\)/g))assert.ok(ids.includes(m[1]),m[1]);
   assert.ok(!/\bonclick=/.test(html));
-  for(const file of ['portal-workspace.css','portal-workspace.js'])assert.ok(html.includes(file)&&fs.existsSync(path.join(root,file)));
+  for(const file of ['portal-workspace.css','portal-workspace.js','portal-tools.css','portal-tools.js'])assert.ok(html.includes(file)&&fs.existsSync(path.join(root,file)));
   const css=fs.readFileSync(path.join(root,'portal-workspace.css'),'utf8');
   assert.match(css,/Kaiti SC/);assert.match(css,/@media\(max-width:700px\)/);assert.match(css,/prefers-reduced-motion/);
 });
@@ -55,7 +55,7 @@ test('empty and oversized input do not call matching',async()=>{
 });
 test('matching sends the existing API contract and renders results/history',async()=>{
   const h=await setup();h.el('needInput').value='成都新能源项目';await h.api.doMatch();
-  assert.equal(h.calls[1].url,'api/portal/match');assert.deepEqual(JSON.parse(h.calls[1].options.body),{message:'成都新能源项目'});
+  assert.equal(h.calls[1].url,'api/portal/match');assert.deepEqual(JSON.parse(h.calls[1].options.body),{message:'成都新能源项目',category:'全部',documentIds:[]});
   assert.match(h.el('analysisView').innerHTML,/成都新能源产业园/);assert.match(h.el('outputArea').innerHTML,/1<\/b>/);
   assert.equal(h.api.state.history.length,1);assert.equal(h.el('needInput').value,'');assert.equal(h.el('matchBtn').disabled,false);h.close();
 });

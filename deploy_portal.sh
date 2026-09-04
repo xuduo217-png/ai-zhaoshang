@@ -11,7 +11,7 @@ if [ -z "${DEPLOY_HOST:-}" ]; then
 fi
 
 echo "[1/3] 打包更新文件 (server.js + 前台 portal.html + 后台接入) ..."
-tar czf /tmp/portal_update.tar.gz server.js public/index.html public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js
+tar czf /tmp/portal_update.tar.gz server.js portal-service.js public/index.html public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js public/portal-tools.js public/portal-tools.css
 
 echo "[2/3] 上传更新包 ..."
 scp /tmp/portal_update.tar.gz "${DEPLOY_HOST}:/tmp/"

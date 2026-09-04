@@ -1,281 +1,91 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>button,input,select,textarea{font-family:inherit}</style>
-<title>投资客商门户 · AI招商智能体平台</title>
-<style>
-:root{
-  --dh-deep:#0f233f; --dh-blue:#1e40af; --dh-blue-2:#2563eb; --dh-cyan:#0891b2;
-  --dh-red:#dc2626; --dh-gold:#f59e0b; --dh-green:#16a34a;
-  --bg-0:#eef1f6; --bg-1:#e7ecf3; --bg-2:#ffffff;
-  --panel:#ffffff; --panel-2:#eaeef4;
-  --border:#e2e8f0; --border-2:#cbd5e1;
-  --txt-0:#0f172a; --txt-1:#334155; --txt-2:#64748b; --txt-3:#94a3b8;
-  --grad-brand:linear-gradient(135deg,#1e40af,#dc2626 60%,#0891b2);
-  --grad-blue:linear-gradient(135deg,#1e40af,#0891b2);
-  --shadow:0 8px 30px rgba(15,23,42,.08); --radius:14px;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{font-family:"Kaiti SC","STKaiti","KaiTi","楷体",serif;background:var(--bg-0);color:var(--txt-1);-webkit-font-smoothing:antialiased;line-height:1.6}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-
-/* 顶部导航 */
-.navbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
-.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:12px}
-.brand-mark{width:40px;height:40px;border-radius:10px;background:var(--grad-brand);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,64,175,.25);color:#fff;font-weight:800;font-size:18px}
-.brand-text{display:flex;flex-direction:column;line-height:1.2}
-.brand-text .b1{font-size:15px;font-weight:800;color:var(--txt-0)}
-.brand-text .b2{font-size:11px;color:var(--txt-2);letter-spacing:.5px}
-.nav-link{padding:8px 16px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--dh-blue);border:1px solid var(--border-2);transition:.2s}
-.nav-link:hover{background:rgba(30,64,175,.06);border-color:var(--dh-blue-2)}
-
-/* Hero */
-.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#0f233f 0%,#16335c 45%,#1e40af 100%);color:#fff;padding:74px 0 86px}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(700px 400px at 85% 20%,rgba(8,145,178,.35),transparent 60%),radial-gradient(500px 300px at 10% 90%,rgba(220,38,38,.22),transparent 60%)}
-.hero .wrap{position:relative;z-index:2}
-.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:1px;color:#bcd0ff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 14px;border-radius:99px;margin-bottom:18px}
-.hero h1{font-size:40px;line-height:1.18;font-weight:800;letter-spacing:.5px;margin-bottom:14px}
-.hero h1 span{background:linear-gradient(90deg,#7dd3fc,#fca5a5);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p.sub{font-size:16px;color:#cdd9f0;max-width:640px;margin-bottom:30px}
-.ai-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:18px;backdrop-filter:blur(6px);max-width:720px}
-.ai-box .row{display:flex;gap:12px;align-items:flex-end}
-.ai-box textarea{flex:1;min-height:64px;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.95);color:var(--txt-0);padding:12px 14px;font-size:14.5px;font-family:inherit;outline:none}
-.ai-box textarea:focus{border-color:#7dd3fc;box-shadow:0 0 0 3px rgba(125,211,252,.25)}
-.btn-match{background:var(--grad-brand);color:#fff;border:none;border-radius:12px;padding:0 22px;height:64px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s;box-shadow:0 6px 18px rgba(220,38,38,.3)}
-.btn-match:hover{transform:translateY(-1px);filter:brightness(1.05)}
-.btn-match:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
-.chip{font-size:12.5px;color:#dbe6ff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:6px 13px;border-radius:99px;cursor:pointer;transition:.2s}
-.chip:hover{background:rgba(255,255,255,.2)}
-
-/* 通用区块 */
-.section{padding:56px 0}
-.section-head{text-align:center;margin-bottom:36px}
-.section-head .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--dh-blue);background:rgba(30,64,175,.08);padding:5px 14px;border-radius:99px;margin-bottom:12px}
-.section-head h2{font-size:27px;font-weight:800;color:var(--txt-0);letter-spacing:.3px}
-.section-head p{color:var(--txt-2);font-size:15px;margin-top:8px}
-
-/* 匹配结果 */
-#matchResult{display:none;margin-top:8px}
-#matchResult.show{display:block;animation:fade .5s ease}
-@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.match-summary{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);margin-bottom:22px;display:flex;align-items:center;gap:16px}
-.match-summary .ic{width:46px;height:46px;border-radius:12px;background:var(--grad-blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0}
-.match-summary .txt b{color:var(--txt-0);font-size:15px}
-.match-summary .txt div{color:var(--txt-2);font-size:13.5px;margin-top:3px}
-
-/* 卡片网格 */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);transition:.25s;display:flex;flex-direction:column}
-.card:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(15,23,42,.12);border-color:var(--border-2)}
-.card .cat{display:inline-flex;align-self:flex-start;font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:99px;margin-bottom:11px}
-.cat-载体{background:rgba(8,145,178,.12);color:#0e7490}
-.cat-项目{background:rgba(220,38,38,.1);color:#b91c1c}
-.cat-政策{background:rgba(245,158,11,.14);color:#b45309}
-.card h3{font-size:17px;color:var(--txt-0);font-weight:700;margin-bottom:6px}
-.card .meta{font-size:12.5px;color:var(--txt-2);margin-bottom:12px}
-.card .hl{font-size:13.5px;color:var(--txt-1);flex:1;margin-bottom:14px}
-.card .policy{font-size:12.5px;color:#0e7490;background:rgba(8,145,178,.06);border-radius:9px;padding:9px 12px;margin-bottom:14px}
-.card .foot{display:flex;align-items:center;justify-content:space-between}
-.status{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:99px}
-.st-招商中{background:rgba(22,163,74,.12);color:#15803d}
-.st-即将开放{background:rgba(245,158,11,.14);color:#b45309}
-.st-已满{background:rgba(100,116,139,.12);color:#475569}
-.btn-pick{font-size:12.5px;font-weight:600;color:var(--dh-blue);background:rgba(30,64,175,.07);border:1px solid rgba(30,64,175,.2);border-radius:8px;padding:6px 12px;cursor:pointer;transition:.2s}
-.btn-pick:hover{background:rgba(30,64,175,.14)}
-
-/* Tab */
-.tabs{display:flex;justify-content:center;gap:10px;margin-bottom:30px;flex-wrap:wrap}
-.tab-btn{font-size:14px;font-weight:600;color:var(--txt-2);background:#fff;border:1px solid var(--border);border-radius:99px;padding:9px 22px;cursor:pointer;transition:.2s}
-.tab-btn:hover{border-color:var(--dh-blue-2);color:var(--dh-blue)}
-.tab-btn.active{background:var(--grad-brand);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(30,64,175,.25)}
-
-/* 页脚 */
-.footer{background:var(--dh-deep);color:#cdd9f0;padding:40px 0 30px}
-.footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px}
-.footer .f-brand .b1{font-size:16px;font-weight:800;color:#fff}
-.footer .f-brand .b2{font-size:12.5px;color:#8aa0c8;margin-top:6px;max-width:320px}
-.footer .copy{width:100%;border-top:1px solid rgba(255,255,255,.12);margin-top:18px;padding-top:16px;font-size:12px;color:#7e93bb;text-align:center}
-
-/* Toast */
-.toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:var(--dh-deep);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(15,23,42,.3);opacity:0;pointer-events:none;transition:.3s;z-index:60}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-@media(max-width:860px){.grid{grid-template-columns:1fr 1fr}.hero h1{font-size:30px}}
-@media(max-width:560px){.grid{grid-template-columns:1fr}.nav-link{display:none}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#7561f5">
+  <title>招商智能体 · 智能招商工作台</title>
+  <link rel="stylesheet" href="portal-workspace.css?v=20260904-1">
+  <script src="portal-workspace.js?v=20260904-1" defer></script>
 </head>
 <body>
-
-<!-- 顶部导航 -->
-<nav class="navbar">
-  <div class="wrap nav-inner">
-    <div class="brand">
-      <div class="brand-mark">招</div>
-      <div class="brand-text">
-        <span class="b1">招商智能体平台</span>
-        <span class="b2">投资客商自助门户</span>
-      </div>
-    </div>
-    <span class="nav-link">投资咨询服务</span>
-  </div>
-</nav>
-
-<!-- Hero + AI 匹配 -->
-<header class="hero">
-  <div class="wrap">
-    <span class="eyebrow">● AI 智能招商 · 让投资对接更高效</span>
-    <h1>一句话描述需求<br>AI 为您<span>精准匹配</span>招商资源</h1>
-    <p class="sub">面向投资客商的智能对接平台：描述您的产业方向与落地诉求，AI 即时推荐适配的产业园区、招商项目与优惠政策，全程智能匹配。</p>
-    <div class="ai-box">
-      <div class="row">
-        <textarea id="needInput" placeholder="例如：我们是一家新能源电池企业，计划在成都周边投建正极材料产线，总投资约 5 亿元，希望享受设备投资奖补……"></textarea>
-        <button class="btn-match" id="matchBtn" onclick="doMatch()">智能匹配推荐</button>
-      </div>
-      <div class="chips" id="chips"></div>
-    </div>
-  </div>
-</header>
-
-<!-- 匹配结果 -->
-<section class="section" style="padding-top:40px">
-  <div class="wrap">
-    <div id="matchResult">
-      <div class="match-summary">
-        <div class="ic">✦</div>
-        <div class="txt">
-          <b id="matchTitle">为您匹配到以下招商资源</b>
-          <div id="matchDesc"></div>
+  <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/><path d="m20 2 .5 1.5L22 4l-1.5.5L20 6l-.5-1.5L18 4l1.5-.5Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-4-4v8"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h12M4 18h16"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M5 21V5l8-2v18m0-12h6v12M8 7v1m0 3v1m0 3v1m8-4v1m0 3v1"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5C8 2 3 4 3 4v15s5-2 9 1c4-3 9-1 9-1V4s-5-2-9 1v15M6 8h3m6 0h3M6 12h3m6 0h3"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m21 3-7 18-4-7-7-4 18-7ZM10 14 21 3"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 3h8l10 10-8 8L3 11V3Z"/><circle cx="7" cy="7" r="1"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7a9 9 0 1 0 1 9M20 3v5h-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 14v6h16v-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M7 16l4-5 4 2 6-8"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#needInput">跳至需求输入</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="主导航">
+      <div class="brand-row"><span class="brand-symbol"><svg class="icon"><use href="#i-spark"/></svg></span><span class="brand-name">招商智能体</span><button class="icon-btn mobile-only" data-action="close-panels" aria-label="关闭导航"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <button class="new-chat" data-action="new"><svg class="icon"><use href="#i-plus"/></svg>开启智能分析</button>
+      <p class="section-label">招商工具箱</p>
+      <nav class="nav-items">
+        <button class="nav-item active" data-view="chat" aria-current="page"><span class="nav-icon"><svg class="icon"><use href="#i-spark"/></svg></span>智能招商分析</button>
+        <button class="nav-item" data-view="全部"><span class="nav-icon"><svg class="icon"><use href="#i-grid"/></svg></span>招商资源库</button>
+        <button class="nav-item" data-view="投资载体"><span class="nav-icon"><svg class="icon"><use href="#i-building"/></svg></span>产业园区与载体</button>
+        <button class="nav-item" data-view="优惠政策"><span class="nav-icon"><svg class="icon"><use href="#i-book"/></svg></span>招商政策查询</button>
+        <button class="nav-item unavailable" disabled title="尚未接入公开企业查询接口"><span class="nav-icon"><svg class="icon"><use href="#i-search"/></svg></span>企业全景查询<span class="tiny-badge">待接入</span></button>
+        <button class="nav-item unavailable" disabled title="尚未接入个人知识库"><span class="nav-icon"><svg class="icon"><use href="#i-db"/></svg></span>个人知识库<span class="tiny-badge">待接入</span></button>
+      </nav>
+      <div class="history-heading"><span>本次会话记录</span><button class="text-btn" id="clearHistory" data-action="clear-history" disabled>清空</button></div>
+      <div id="historyList" class="history-list"><p class="history-empty">暂无分析记录</p></div>
+      <div class="sidebar-bottom"><span class="avatar">招</span><div>投资客商工作台<small>让每一次招商，更有方向</small></div></div>
+    </aside>
+    <header class="topbar">
+      <div class="topbar-title"><button class="icon-btn mobile-only" data-action="sidebar" aria-label="打开导航" aria-controls="sidebar" aria-expanded="false"><svg class="icon"><use href="#i-menu"/></svg></button><span class="title-marker"></span><h1 id="pageTitle">新分析</h1><svg class="icon title-spark"><use href="#i-spark"/></svg></div>
+      <div class="topbar-actions"><span class="connection" id="connectionStatus">正在连接资源库</span><button class="text-btn header-new" data-action="new"><svg class="icon"><use href="#i-plus"/></svg>新建分析</button><button class="icon-btn context-toggle" data-action="context" aria-label="打开任务资料" aria-controls="contextPanel" aria-expanded="false"><svg class="icon"><use href="#i-db"/></svg></button><button class="icon-btn tools-toggle" data-action="tools" aria-label="打开智能分析工具" aria-controls="toolsPanel" aria-expanded="false"><svg class="icon"><use href="#i-grid"/></svg></button><span class="avatar top-avatar" aria-label="投资客商">客</span></div>
+    </header>
+    <main class="workspace">
+      <aside class="panel context-panel" id="contextPanel" aria-label="当前任务资料">
+        <div class="panel-heading"><h2><svg class="icon"><use href="#i-db"/></svg>当前任务资料</h2><button class="icon-btn context-close" data-action="close-panels" aria-label="关闭任务资料"><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div class="context-content">
+          <div class="source-cards"><button class="source-card" disabled title="文件上传分析尚未接入"><span class="source-icon blue"><svg class="icon"><use href="#i-upload"/></svg></span>添加资料<small>暂未开放</small></button><button class="source-card connected-card" data-view="全部"><span class="selected-mark"><svg class="icon"><use href="#i-check"/></svg></span><span class="source-icon orange"><svg class="icon"><use href="#i-db"/></svg></span>招商资源库<small id="sourceCount">正在加载</small></button></div>
+          <div class="source-status"><span>数据来源</span><span class="source-check"><svg class="icon"><use href="#i-check"/></svg>已发布资源</span></div>
+          <div class="context-section"><div class="context-label"><strong>产业方向</strong><span>点击带入需求</span></div><div class="industry-chips" id="industryChips"></div></div>
+          <div class="context-section"><div class="context-label"><strong>资源概况</strong><button class="text-btn" data-action="reload">刷新</button></div><div id="resourceStats" class="resource-stats"><p class="muted">正在读取资源库…</p></div></div>
+          <div class="context-section current-need"><div class="context-label"><strong>本次需求</strong></div><p id="currentNeed">描述您的产业方向、意向地区与投资诉求，开始一次资源匹配。</p></div>
+          <div class="data-note"><span class="note-dot"></span><p>当前包含联调示例资源，项目及政策信息请以主管部门确认结果为准。外部实时数据尚未接入。</p></div>
         </div>
-      </div>
-      <div class="grid" id="matchGrid"></div>
-    </div>
-  </div>
-</section>
-
-<!-- 招商项目库 -->
-<section class="section" style="background:#fff">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="tag">招商资源库</span>
-      <h2>产业园区 · 招商项目 · 优惠政策</h2>
-      <p>以下为联调演示数据，正式运营前须由项目方确认并替换</p>
-    </div>
-    <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-cat="全部" onclick="switchTab(this)">全部</button>
-      <button class="tab-btn" data-cat="投资载体" onclick="switchTab(this)">投资载体</button>
-      <button class="tab-btn" data-cat="招商项目" onclick="switchTab(this)">招商项目</button>
-      <button class="tab-btn" data-cat="优惠政策" onclick="switchTab(this)">优惠政策</button>
-    </div>
-    <div class="grid" id="projectGrid"></div>
-  </div>
-</section>
-
-<!-- 页脚 -->
-<footer class="footer">
-  <div class="wrap">
-    <div class="f-brand">
-      <div class="b1">招商智能体平台</div>
-      <div class="b2">以 AI 驱动招商全链路：产业洞察、智能匹配、线索跟进、政策直达，助力政府园区与投资客商高效对接。</div>
-    </div>
-    <div class="copy">© 2026 招商智能体平台 · 投资客商门户</div>
-  </div>
-</footer>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const API = 'api';
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
-function catClass(c){if(c==='投资载体')return 'cat-载体';if(c==='招商项目')return 'cat-项目';return 'cat-政策';}
-function stClass(s){return ['招商中','即将开放','已满'].includes(s)?'st-'+s:'st-招商中';}
-
-let allProjects = [];
-
-/* 加载项目库 */
-async function loadProjects(){
-  try{
-    const r = await fetch(API+'/portal/projects');
-    const j = await r.json();
-    allProjects = (j.data||[]);
-    renderProjects('全部');
-  }catch(e){ toast('项目库加载失败'); }
-}
-
-function renderProjects(cat){
-  const grid = document.getElementById('projectGrid');
-  const list = cat==='全部'? allProjects : allProjects.filter(p=>p.category===cat);
-  if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--txt-3);padding:30px">该分类暂无资源</div>'; return; }
-  grid.innerHTML = list.map(p=>`
-    <div class="card">
-      <span class="cat ${catClass(p.category)}">${esc(p.category)}</span>
-      <h3>${esc(p.title)}</h3>
-      <div class="meta">${esc(p.region||'')}${p.industry?' · '+esc(p.industry):''}${p.scale?' · '+esc(p.scale):''}</div>
-      <div class="hl">${esc(p.highlights||'')}</div>
-      ${p.policy?`<div class="policy">政策：${esc(p.policy)}</div>`:''}
-      <div class="foot">
-        <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
-        <button class="btn-pick" onclick="pickProjectById(${Number(p.id)||0})">选此对接</button>
-      </div>
-    </div>`).join('');
-}
-
-function switchTab(btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderProjects(btn.dataset.cat);
-}
-
-/* AI 匹配 */
-async function doMatch(){
-  const input = document.getElementById('needInput');
-  const msg = input.value.trim();
-  if(!msg){ toast('请先描述您的投资需求'); input.focus(); return; }
-  const btn = document.getElementById('matchBtn');
-  btn.disabled=true; btn.textContent='AI 匹配中…';
-  try{
-    const r = await fetch(API+'/portal/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
-    const j = await r.json();
-    const matched = j.matched||[];
-    const need = j.need||{};
-    const desc = [need.summary, (need.industries||[]).length?('行业：'+need.industries.join('/')):'', (need.regions||[]).length?('地区：'+need.regions.join('/')):''].filter(Boolean).join('　|　');
-    document.getElementById('matchDesc').textContent = desc || '已根据您的描述智能推荐：';
-    const grid = document.getElementById('matchGrid');
-    if(!matched.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--txt-3);padding:20px">暂无可匹配资源，您可直接提交意向，由专员为您定向对接</div>'; }
-    else{
-      grid.innerHTML = matched.map(p=>`
-        <div class="card">
-          <span class="cat ${catClass(p.category)}">${esc(p.category)}</span>
-          <h3>${esc(p.title)}</h3>
-          <div class="meta">${esc(p.region||'')}${p.industry?' · '+esc(p.industry):''}</div>
-          <div class="hl">${esc(p.highlights||'')}</div>
-          <div class="foot">
-            <span class="status ${stClass(p.status||'招商中')}">${esc(p.status||'招商中')}</span>
-            <button class="btn-pick" onclick="pickProjectById(${Number(p.id)||0})">选此对接</button>
+      </aside>
+      <section class="panel conversation-panel" aria-label="智能招商分析">
+        <div class="conversation-scroll" id="conversationScroll">
+          <div class="welcome" id="welcome">
+            <div class="welcome-brand"><span class="hero-symbol"><svg class="icon"><use href="#i-spark"/></svg></span><h2>招商智能体</h2></div>
+            <p class="welcome-subtitle">从一个招商需求，找到产业落地的可能。</p>
+            <div class="suggestions"><div class="suggestion-heading"><h3><svg class="icon"><use href="#i-spark"/></svg>为您推荐</h3><button class="text-btn" data-action="shuffle"><svg class="icon"><use href="#i-refresh"/></svg>换一换</button></div><div class="suggestion-grid" id="suggestionGrid"></div></div>
+            <p class="welcome-footnote">产业园区 · 招商项目 · 优惠政策</p>
           </div>
-        </div>`).join('');
-    }
-    document.getElementById('matchResult').classList.add('show');
-    document.getElementById('matchResult').scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(e){ toast('匹配服务异常，请稍后再试'); }
-  finally{ btn.disabled=false; btn.textContent='智能匹配推荐'; }
-}
-
-/* 快捷需求 */
-const SAMPLES = ['成都新能源电池产线','宜宾动力电池基地','集成电路封测','智能制造产业园','制造业奖补政策','总部经济落户'];
-function renderChips(){
-  document.getElementById('chips').innerHTML = SAMPLES.map(s=>`<span class="chip" onclick="useSample('${s}')">${s}</span>`).join('');
-}
-function useSample(s){ document.getElementById('needInput').value=s; doMatch(); }
-
-renderChips();
-loadProjects();
-</script>
+          <div class="analysis-view" id="analysisView" hidden aria-live="polite"></div>
+          <div class="library-view" id="libraryView" hidden><div class="library-heading"><span class="eyebrow">招商资源库</span><h2 id="libraryTitle">寻找适合您的招商资源</h2><p>浏览已发布项目，选择资源带入分析。</p></div><label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="resourceSearch" type="search" placeholder="搜索项目、地区或产业" aria-label="搜索招商资源"></label><div class="filter-tabs" id="filterTabs"><button class="active" data-category="全部" aria-pressed="true">全部</button><button data-category="投资载体" aria-pressed="false">投资载体</button><button data-category="招商项目" aria-pressed="false">招商项目</button><button data-category="优惠政策" aria-pressed="false">优惠政策</button></div><div id="projectGrid" class="project-grid"></div></div>
+        </div>
+        <form class="composer" id="matchForm"><div class="composer-heading"><span><svg class="icon"><use href="#i-db"/></svg>基于招商资源库匹配</span><span id="characterCount">0 / 1000</span></div><div class="input-row"><label class="sr-only" for="needInput">您的招商需求</label><textarea id="needInput" rows="2" maxlength="1000" placeholder="输入您的问题，或描述一个招商需求…"></textarea><button class="send-btn" id="matchBtn" type="submit" aria-label="发送需求"><svg class="icon"><use href="#i-send"/></svg></button></div><div class="composer-foot"><span><span class="live-dot"></span>AI 辅助提取 · 规则匹配兜底</span><span class="keyboard-hint">Enter 发送，Shift + Enter 换行</span></div><p class="request-error" id="requestError" role="alert" hidden></p></form>
+      </section>
+      <aside class="panel tools-panel" id="toolsPanel" aria-label="智能分析工具">
+        <div class="panel-heading"><h2><svg class="icon"><use href="#i-spark"/></svg>智能分析</h2><button class="icon-btn tools-close" data-action="close-panels" aria-label="关闭智能分析工具"><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div class="tools-content"><div class="tool-grid" id="toolGrid"></div><p class="tool-hint">选择一个场景，补充需求后发送</p></div>
+        <div class="output-area" id="outputArea"><div class="output-empty"><svg class="icon"><use href="#i-spark"/></svg><h3>让招商思路，在这里成形</h3><p>匹配完成后，在这里查看需求摘要与推荐资源。</p></div></div>
+        <div class="tools-footer"><svg class="icon"><use href="#i-book"/></svg>分析仅供参考，投资决策请核实</div>
+      </aside>
+    </main>
+  </div>
+  <button class="panel-backdrop" id="panelBackdrop" data-action="close-panels" aria-label="关闭侧栏" hidden></button>
+  <dialog id="projectDialog" aria-labelledby="detailTitle"><div class="dialog-heading"><h2 id="detailTitle">资源详情</h2><button class="icon-btn" data-action="close-dialog" aria-label="关闭详情"><svg class="icon"><use href="#i-close"/></svg></button></div><div id="detailContent"></div><button class="primary-btn" id="useDetail">将此资源带入需求</button></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <noscript><div class="noscript-note">请启用浏览器 JavaScript，以使用项目查询和智能匹配。</div></noscript>
 </body>
 </html>

@@ -424,7 +424,11 @@ const RESOURCES = {
       { key: 'intention', label: '需求描述', type: 'textarea' },
       { key: 'source', label: '来源', type: 'text' },
       { key: 'matchedProjects', label: '匹配项目', type: 'text' },
+      { key: 'priority', label: '优先级', type: 'select', options: ['高', '中', '低'] },
+      { key: 'assignee', label: '负责人账号', type: 'text' },
+      { key: 'stage', label: '跟进阶段', type: 'select', options: ['初次接触', '方案沟通', '深入对接', '协议谈判', '落地签约'] },
       { key: 'status', label: '跟进状态', type: 'select', options: ['新线索', '已联系', '已转化', '无效'] },
+      { key: 'nextFollowAt', label: '下次跟进时间', type: 'text' },
       { key: 'note', label: '跟进备注', type: 'textarea' },
       { key: 'createdAt', label: '提交时间', type: 'text' },
     ],
@@ -490,7 +494,7 @@ function logAudit(kind, text, tag) {
   const map = { op: 'auditOps', data: 'auditData', api: 'auditApi' };
   const name = map[kind] || 'auditOps';
   const arr = loadRes(name);
-  const item = { id: nextId(arr), time: nowHMS(), text: text || '', tag: tag || '系统' };
+  const item = { id: nextId(arr), time: nowHMS(), createdAt: now(), text: text || '', tag: tag || '系统' };
   if (name === 'auditApi') { // 兼容API日志字段结构
     item.scene = '外部API'; item.model = '-'; item.inTok = '-'; item.outTok = '-'; item.cost = '—'; item.money = '¥0.00'; item.status = '成功';
   }
@@ -799,7 +803,8 @@ function readBody(req, res) {
 }
 function authUser(req) {
   const h = req.headers['authorization'] || '';
-  const t = h.startsWith('Bearer ') ? h.slice(7) : '';
+  const cookieToken = String(req.headers.cookie || '').split(';').map((part) => part.trim()).find((part) => part.startsWith('zs_admin='))?.slice(9) || '';
+  const t = h.startsWith('Bearer ') ? h.slice(7) : cookieToken;
   const session = TOKENS.get(t);
   if (!session || session.expiresAt <= Date.now()) {
     if (session) { TOKENS.delete(t); saveTokens(); }
@@ -958,7 +963,12 @@ const server = http.createServer(async (req, res) => {
         intention: String(b.intention || '').slice(0, 1000),
         source: String(b.source || '前台门户').slice(0, 40),
         matchedProjects,
+        priority: '中',
+        assignee: '',
+        stage: '初次接触',
         status: '新线索',
+        nextFollowAt: '',
+        note: '',
         createdAtMs: Date.now(),
         createdAt: now(),
       };
@@ -988,6 +998,8 @@ const server = http.createServer(async (req, res) => {
     const token = makeToken();
     TOKENS.set(token, { user: user.username, expiresAt: Date.now() + SESSION_TTL_MS });
     saveTokens();
+    const secure = req.socket.encrypted || (['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && req.headers['x-forwarded-proto'] === 'https');
+    res.setHeader('Set-Cookie', 'zs_admin=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + Math.floor(SESSION_TTL_MS / 1000) + (secure ? '; Secure' : ''));
     user.lastLogin = now();
     saveRes('users', users);
     return send(res, 200, { token, expiresIn: SESSION_TTL_MS / 1000, user: safeUser(user) });
@@ -1003,8 +1015,10 @@ const server = http.createServer(async (req, res) => {
 
   if (p === '/api/logout' && method === 'POST') {
     const h = req.headers.authorization || '';
-    const token = h.startsWith('Bearer ') ? h.slice(7) : '';
+    const cookieToken = String(req.headers.cookie || '').split(';').map((part) => part.trim()).find((part) => part.startsWith('zs_admin='))?.slice(9) || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : cookieToken;
     if (token) { TOKENS.delete(token); saveTokens(); }
+    res.setHeader('Set-Cookie', 'zs_admin=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
     return send(res, 200, { ok: true });
   }
 
@@ -1045,10 +1059,54 @@ const server = http.createServer(async (req, res) => {
     if (!authUser(req)) return send(res, 401, { error: '未登录' });
     const knowledge = loadRes('knowledge');
     const pending = knowledge.filter((x) => x.status === '待审核').length;
+    const news = loadRes('news');
+    const newsMeta = loadRes('newsMeta')[0] || {};
+    const companies = loadRes('companies');
+    const scores = loadRes('scores');
+    const signals = loadRes('signals');
+    const portalPrivateDir = path.join(DATA, 'portal-private');
+    const portalSessionCount = fs.existsSync(portalPrivateDir) ? fs.readdirSync(portalPrivateDir).filter((name) => name.endsWith('.json')).length : 0;
+    const today = ymd(new Date());
+    const todayNews = news.filter((item) => item.date === today);
+    const todayAi = todayNews.filter((item) => item.ai).length;
+    const cacheTotal = Number(newsMeta.cacheHitTotal) || 0;
+    const cacheBase = news.length + cacheTotal;
+    const knowledgeByType = {};
+    knowledge.forEach((item) => { knowledgeByType[item.type || '其他'] = (knowledgeByType[item.type || '其他'] || 0) + 1; });
+    const sevenDays = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(); day.setDate(day.getDate() - (6 - i)); return ymd(day);
+    });
+    const trend1 = sevenDays.map((day) => news.filter((item) => item.date === day).length);
+    const trend2 = sevenDays.map((day) => news.filter((item) => item.date === day && item.ai).length);
+    const activities = ['auditOps', 'auditData', 'auditApi'].flatMap((name) => loadRes(name).slice(0, 12).map((item) => ({
+      id: name + '-' + item.id,
+      time: item.createdAt || item.time || '-',
+      title: item.text || ((item.scene || '系统') + '调用'),
+      detail: [item.tag, item.status, item.model && item.model !== '-' ? item.model : ''].filter(Boolean).join(' · '),
+      kind: name,
+      isSample: !item.createdAt,
+    }))).sort((a, b) => String(b.time).localeCompare(String(a.time))).slice(0, 8);
     return send(res, 200, {
-      kbTotal: 86420, aiToday: 2386, cacheHit: 73.2, pendingReview: pending,
-      trend1: [1820, 2150, 1980, 2360, 2100, 2480, 2386],
-      trend2: [142, 168, 156, 186, 172, 198, 186],
+      kbTotal: knowledge.length,
+      knowledgeByType,
+      aiToday: todayAi,
+      aiTokenTotal: Number(newsMeta.tokenTotal) || 0,
+      aiCostTotal: Number(newsMeta.costTotal) || 0,
+      cacheHit: cacheBase ? Math.round(cacheTotal / cacheBase * 1000) / 10 : 0,
+      cacheHitTotal: cacheTotal,
+      pendingReview: pending,
+      trend1,
+      trend2,
+      trendDays: sevenDays,
+      activities,
+      agents: [
+        { name: '数据处理', status: '功能可用', detail: '企业 ' + companies.length + ' 家' },
+        { name: '知识管理', status: '功能可用', detail: '待审核 ' + pending + ' 条' },
+        { name: '企业画像', status: '功能可用', detail: '标签 ' + loadRes('profileTags').length + ' 维' },
+        { name: '招商价值评分', status: '功能可用', detail: '已评分 ' + scores.length + ' 家' },
+        { name: '招商机会发现', status: '功能可用', detail: '信号 ' + signals.length + ' 条' },
+        { name: '前台智能匹配', status: '功能可用', detail: '访客空间 ' + portalSessionCount + ' 个' },
+      ],
     });
   }
 
@@ -1287,6 +1345,68 @@ const server = http.createServer(async (req, res) => {
     const result = await collectTestBids();
     logAudit('api', user.username + ' → 招投标测试采集（获取' + result.fetched + ' / 新增' + result.added + ' / 匹配' + result.matched + '）', '招投标采集');
     return send(res, result.errors.length && !result.fetched ? 502 : 200, { success: result.fetched > 0, ...result });
+  }
+
+  /* 客商线索闭环：分配、阶段、下次跟进与不可变跟进记录 */
+  if (p === '/api/leads/export' && method === 'GET') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    if (!XLSX) return send(res, 503, { error: 'Excel 导出组件未安装' });
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(loadRes('leads')), '客商线索');
+    XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(loadRes('leadFollowups')), '跟进记录');
+    const output = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
+    res.writeHead(200, { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': "attachment; filename*=UTF-8''leads-workflow.xlsx", 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.end(output); return;
+  }
+  if (p === '/api/audit/export' && method === 'GET') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    if (!XLSX) return send(res, 503, { error: 'Excel 导出组件未安装' });
+    const book = XLSX.utils.book_new();
+    for (const [resource, title] of [['auditOps','操作日志'],['auditData','数据日志'],['auditApi','调用日志']]) XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(loadRes(resource)), title);
+    const output = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
+    res.writeHead(200, { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': "attachment; filename*=UTF-8''audit-logs.xlsx", 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.end(output); return;
+  }
+  const followMatch = p.match(/^\/api\/leads\/(\d+)\/followups$/);
+  if (followMatch) {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    const leadId = Number(followMatch[1]);
+    const leads = loadRes('leads');
+    const lead = leads.find((item) => item.id === leadId);
+    if (!lead) return send(res, 404, { error: '线索不存在' });
+    if (method === 'GET') return send(res, 200, { data: loadRes('leadFollowups').filter((item) => item.leadId === leadId).sort((a, b) => b.id - a.id) });
+    if (method === 'POST') {
+      if (!canWrite(user, 'leads')) return send(res, 403, { error: '无权跟进线索' });
+      const body = await readBody(req);
+      const note = String(body.note || '').trim().slice(0, 1000);
+      if (!note) return send(res, 400, { error: '请填写本次跟进记录' });
+      const statuses = ['新线索', '已联系', '已转化', '无效'];
+      const stages = loadRes('workStages').filter((item) => item.status === '启用').map((item) => item.name);
+      const priorities = ['高', '中', '低'];
+      if (body.status && !statuses.includes(body.status)) return send(res, 400, { error: '跟进状态无效' });
+      if (body.stage && !stages.includes(body.stage)) return send(res, 400, { error: '跟进阶段无效' });
+      if (body.priority && !priorities.includes(body.priority)) return send(res, 400, { error: '优先级无效' });
+      const assignee = String(body.assignee || '').trim().slice(0, 50);
+      if (assignee && !loadRes('users').some((item) => item.status === '启用' && item.username === assignee)) return send(res, 400, { error: '负责人账号不存在或已停用' });
+      const nextFollowAt = String(body.nextFollowAt || '').trim().slice(0, 30);
+      if (nextFollowAt && Number.isNaN(Date.parse(nextFollowAt))) return send(res, 400, { error: '下次跟进时间无效' });
+      Object.assign(lead, { status: body.status || lead.status, stage: body.stage || lead.stage, priority: body.priority || lead.priority, assignee, nextFollowAt, note, lastFollowAt: now(), updatedAt: now() });
+      saveRes('leads', leads);
+      const list = loadRes('leadFollowups');
+      const record = { id: nextId(list), leadId, actor: user.username, actorName: user.name || user.username, note, status: lead.status, stage: lead.stage, priority: lead.priority, assignee: lead.assignee, nextFollowAt: lead.nextFollowAt, createdAt: now() };
+      list.push(record); saveRes('leadFollowups', list);
+      if (lead.assignee) {
+        const messages = loadRes('messages');
+        messages.push({ id: nextId(messages), to: lead.assignee, title: '客商线索跟进：' + (lead.company || lead.name), content: note, event: '客商线索跟进', method: '站内', time: now(), read: false, source: '线索管理' });
+        saveRes('messages', messages);
+      }
+      logAudit('data', user.username + ' → 跟进客商线索 #' + leadId + '（' + lead.stage + ' / ' + lead.status + '）', '线索跟进');
+      return send(res, 201, { data: record, lead });
+    }
+    return send(res, 405, { error: '不支持该操作' });
   }
 
   /* 资源 CRUD: /api/:resource[/:id] */

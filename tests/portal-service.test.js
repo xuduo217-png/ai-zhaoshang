@@ -57,7 +57,7 @@ test('visitor sessions are persistent, signed and isolated',async t=>{
 test('documents validate type/size and cannot delete another visitor document',async t=>{
   const f=fixture(t),r=f.response();f.service.session(f.request(),r);const cookie=r.headers['Set-Cookie'].split(';')[0];
   await assert.rejects(()=>f.service.handle(f.request(cookie,'POST',{name:'x.html',content:'<script>x</script>'}),f.response(),'/api/portal/documents'),/支持/);
-  await assert.rejects(()=>f.service.handle(f.request(cookie,'POST',{name:'x.txt',content:'x'.repeat(60001)}),f.response(),'/api/portal/documents'),/6 万字/);
+  const large=f.response();await f.service.handle(f.request(cookie,'POST',{name:'x.txt',content:'x'.repeat(60001)}),large,'/api/portal/documents');assert.equal(large.body.truncated,true);assert.equal(large.body.content.length,60000);
   await assert.rejects(()=>f.service.handle(f.request(cookie,'DELETE',{id:'not-owned'}),f.response(),'/api/portal/documents'),/不存在/);
 });
 test('four report types use owned evidence, persist and expose limitations',async t=>{

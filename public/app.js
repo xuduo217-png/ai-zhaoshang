@@ -53,6 +53,7 @@
     hideLogin();
     setupMobileNav();
     setupCreateBtns();
+    setupAcceptanceActions();
     bindNav();
     apiGet('/schema').then((s) => { SCHEMA = s.schema; renderCurrent(); }).catch(() => renderCurrent());
     loadMessages();
@@ -131,10 +132,16 @@
     if (p && p.style.display === 'block' && !p.contains(e.target) && e.target !== bell && !(bell && bell.contains(e.target))) p.style.display = 'none';
   });
   function bindNav() { qa('.nav-item').forEach((it) => it.addEventListener('click', () => setTimeout(renderCurrent, 0))); }
+  function setupAcceptanceActions() {
+    const syncBtn=qa('#page-data-api button').find(button=>/立即同步/.test(button.textContent));
+    if(syncBtn){syncBtn.onclick=null;syncBtn.disabled=true;syncBtn.title='等待客户提供正式工商 API 后启用';syncBtn.textContent='待接入客户 API';}
+    for(const pageId of ['page-push-config','page-workmgr-config']) qa('#'+pageId+' button').filter(button=>/保存配置/.test(button.textContent)).forEach(button=>{button.onclick=null;button.addEventListener('click',()=>showToast('该页配置通过每行“编辑”保存，当前数据已持久化'));});
+  }
   function renderCurrent() {
     const p = q('.page.active'); if (!p) return; const pid = p.id;
     if (pid === 'page-data-ds') return renderNews();
     if (pid === 'page-bid-config') return renderBidConfig();
+    if (pid === 'page-leads') return renderLeads();
     if (PAGE_RES[pid]) return renderTable(pid, PAGE_RES[pid]);
     if (pid === 'page-overview') return renderOverview();
     if (pid === 'page-data-api') return renderApiCards();
@@ -166,6 +173,38 @@
       return '<tr>' + tds + '<td><button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'' + res + '\',' + it.id + ')">编辑</button> <button class="btn btn-red btn-sm" onclick="ZS.del(\'' + res + '\',' + it.id + ')">删除</button>' + extra + '</td></tr>';
     }).join('') : '<tr><td colspan="' + (sc.columns.length + 1) + '" style="text-align:center;color:var(--txt-3);padding:24px">暂无数据，点击右上角“新增”添加</td></tr>');
   }
+
+  /* ---------- 客商线索：分配、阶段、跟进记录、到期提醒与导出 ---------- */
+  let leadFilter = '全部';
+  async function renderLeads() {
+    const page = el('page-leads');
+    const [{ data }, { data: users }, { data: stages }] = await Promise.all([apiGet('/leads'), apiGet('/users'), apiGet('/workStages')]);
+    const rows = (data || []).filter((lead) => leadFilter === '全部' || (lead.status || '新线索') === leadFilter);
+    let controls = el('leadControls');
+    if (!controls) {
+      controls = document.createElement('div'); controls.id = 'leadControls'; controls.style.cssText = 'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0';
+      page.querySelector('.section-title').insertAdjacentElement('afterend', controls);
+    }
+    controls.innerHTML = '<label style="font-size:12px;color:var(--txt-3)">状态筛选 <select id="leadFilter" style="margin-left:6px"><option>全部</option><option>新线索</option><option>已联系</option><option>已转化</option><option>无效</option></select></label><span class="tag">共 '+data.length+' 条 · 当前 '+rows.length+' 条</span><button class="btn btn-ghost btn-sm" id="exportLeadsBtn">导出线索与跟进记录</button>';
+    el('leadFilter').value=leadFilter;el('leadFilter').onchange=(event)=>{leadFilter=event.target.value;renderLeads();};
+    el('exportLeadsBtn').onclick=()=>downloadAuthenticated('/leads/export','客商线索与跟进记录.xlsx');
+    const tb=page.querySelector('tbody'),head=page.querySelector('thead tr');
+    head.innerHTML='<th>企业 / 联系人</th><th>联系方式</th><th>意向与匹配项目</th><th>负责人</th><th>阶段</th><th>状态</th><th>下次跟进</th><th>操作</th>';
+    const overdue=(value)=>value&&Date.parse(value)<Date.now();
+    tb.innerHTML=rows.length?rows.map((lead)=>'<tr><td><b>'+fmt(lead.company||'未填写企业')+'</b><br><span style="color:var(--txt-3)">'+fmt(lead.name)+'</span></td><td>'+fmt(lead.phone)+(lead.email?'<br>'+fmt(lead.email):'')+'</td><td>'+fmt(lead.intention)+'<br><span style="color:var(--txt-3)">'+fmt(lead.matchedProjects)+'</span></td><td>'+fmt(lead.assignee||'未分配')+'</td><td>'+fmt(lead.stage||'初次接触')+'</td><td><span class="status-badge '+((lead.status==='已转化')?'sb-success':lead.status==='无效'?'sb-fail':lead.status==='已联系'?'sb-aging':'sb-new')+'"><span class="sb-dot"></span>'+fmt(lead.status||'新线索')+'</span></td><td '+(overdue(lead.nextFollowAt)?'style="color:var(--dh-red-2);font-weight:700"':'')+'>'+fmt(lead.nextFollowAt)+'</td><td><button class="btn btn-blue btn-sm" onclick="ZS.followLead('+lead.id+')">记录跟进</button> <button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'leads\','+lead.id+')">编辑资料</button></td></tr>').join(''):'<tr><td colspan="8" style="text-align:center;color:var(--txt-3);padding:24px">当前筛选下暂无线索</td></tr>';
+    window.__leadWorkflow={users:(users||[]).filter(user=>user.status==='启用'),stages:(stages||[]).filter(stage=>stage.status==='启用'),leads:data||[]};
+  }
+  async function downloadAuthenticated(path,filename) {
+    const a=document.createElement('a');a.href=API+path;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  }
+  window.ZS.followLead=async function(id){
+    const state=window.__leadWorkflow||{users:[],stages:[],leads:[]},lead=state.leads.find(item=>item.id===id);if(!lead)return;
+    const history=(await apiGet('/leads/'+id+'/followups')).data||[];
+    const option=(value,label,current)=>'<option value="'+escapeHtml(value)+'"'+(value===current?' selected':'')+'>'+escapeHtml(label)+'</option>';
+    const historyHtml=history.length?history.map(item=>'<div class="review-item"><div class="ri-info"><div class="ri-cat">'+fmt(item.createdAt)+' · '+fmt(item.actorName)+'</div><div class="ri-title">'+fmt(item.stage)+' / '+fmt(item.status)+'</div><div class="ri-summary">'+fmt(item.note)+'</div></div></div>').join(''):'<div style="color:var(--txt-3);padding:8px 0">暂无跟进记录</div>';
+    showResultModal('记录跟进 · '+(lead.company||lead.name),'<div class="form-row"><label>负责人账号</label><select id="followAssignee"><option value="">未分配</option>'+state.users.map(user=>option(user.username,user.name+'（'+user.username+'）',lead.assignee||'')).join('')+'</select></div><div class="form-row"><label>优先级</label><select id="followPriority">'+['高','中','低'].map(value=>option(value,value,lead.priority||'中')).join('')+'</select></div><div class="form-row"><label>跟进阶段</label><select id="followStage">'+state.stages.map(stage=>option(stage.name,stage.name,lead.stage||'初次接触')).join('')+'</select></div><div class="form-row"><label>跟进状态</label><select id="followStatus">'+['新线索','已联系','已转化','无效'].map(value=>option(value,value,lead.status||'新线索')).join('')+'</select></div><div class="form-row"><label>下次跟进</label><input id="followNext" type="datetime-local" value="'+escapeHtml(String(lead.nextFollowAt||'').slice(0,16))+'"></div><div class="form-row"><label>本次记录 *</label><textarea id="followNote" rows="4" maxlength="1000"></textarea></div><button class="btn btn-blue" id="saveFollowBtn">保存跟进记录</button><div style="margin-top:18px;font-weight:700">历史记录（只追加、不删除）</div>'+historyHtml);
+    el('saveFollowBtn').onclick=async()=>{const button=el('saveFollowBtn'),note=el('followNote').value.trim();if(!note)return showToast('请填写本次跟进记录');button.disabled=true;const result=await apiPost('/leads/'+id+'/followups',{assignee:el('followAssignee').value,priority:el('followPriority').value,stage:el('followStage').value,status:el('followStatus').value,nextFollowAt:el('followNext').value,note});if(result.data){showToast('跟进记录已保存');el('zsResultModal').style.display='none';await renderLeads();await loadMessages();}else{showToast(result.error||'保存失败');button.disabled=false;}};
+  };
 
   async function renderBidConfig() {
     await renderTable('page-bid-config', 'bidKeywords');
@@ -243,12 +282,22 @@
       const v = [s.kbTotal, s.aiToday, s.cacheHit + '%', s.pendingReview][i];
       e.textContent = v == null ? '—' : (i === 0 ? Number(v).toLocaleString() : v);
     });
-    drawOverviewReal(s.trend1, s.trend2);
+    const subs=qa('#page-overview .stat-card .ds-sub');
+    if(subs[0]) subs[0].textContent=Object.entries(s.knowledgeByType||{}).map(([type,count])=>type+' '+count).join(' / ')||'暂无知识数据';
+    if(subs[1]) subs[1].textContent='Token '+Number(s.aiTokenTotal||0).toLocaleString()+' · 成本 ¥'+Number(s.aiCostTotal||0).toFixed(2);
+    if(subs[2]) subs[2].textContent='累计缓存命中 '+Number(s.cacheHitTotal||0).toLocaleString()+' 次';
+    if(subs[3]) subs[3].textContent='仅统计真实待审核记录';
+    const agentBox=el('overviewAgentStatus');
+    if(agentBox) agentBox.innerHTML=(s.agents||[]).map(item=>'<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>'+fmt(item.status)+'</span><span style="flex:1;font-size:13px;color:var(--txt-0)">'+fmt(item.name)+'</span><span style="font-size:11px;color:var(--txt-3)">'+fmt(item.detail)+'</span></div>').join('');
+    const activityBox=el('overviewActivities');
+    if(activityBox) activityBox.innerHTML=(s.activities||[]).length?(s.activities||[]).map((item,index)=>'<div class="tl-item"><div class="tl-dot '+(['green','blue','gold'][index%3])+'"></div><div class="tl-date">'+fmt(item.time)+(item.isSample?' · 初始样例':'')+'</div><div class="tl-title">'+fmt(item.title)+'</div><div class="tl-desc">'+fmt(item.detail)+'</div></div>').join(''):'<div style="color:var(--txt-3);padding:12px">暂无系统活动</div>';
+    drawOverviewReal(s.trend1||[], s.trend2||[], s.trendDays||[]);
   }
-  function drawOverviewReal(d1, d2) {
+  function drawOverviewReal(d1, d2, days) {
     const svg = el('overviewChart'); if (!svg) return;
-    const w = 400, h = 180, days = ['08-02', '08-03', '08-04', '08-05', '08-06', '08-07', '08-08'];
-    const max1 = Math.max.apply(null, d1), max2 = Math.max.apply(null, d2);
+    const w = 400, h = 180; days=(days||[]).map(day=>String(day).slice(5));
+    if(!d1.length){svg.innerHTML='<text x="200" y="90" text-anchor="middle" fill="#64748b" font-size="12">暂无趋势数据</text>';return;}
+    const max1 = Math.max(1,Math.max.apply(null, d1)), max2 = Math.max(1,Math.max.apply(null, d2));
     let html = '<defs><linearGradient id="og1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(30,64,175,.3)"/><stop offset="100%" stop-color="rgba(30,64,175,0)"/></linearGradient></defs>';
     let p1 = '', a1 = ''; d1.forEach((v, i) => { const x = 30 + (w - 50) * i / 6; const y = h - 25 - (h - 50) * v / max1; p1 += (i ? 'L' : 'M') + x + ' ' + y + ' '; if (i === 0) a1 = 'M' + x + ' ' + (h - 25) + ' '; a1 += 'L' + x + ' ' + y + ' '; });
     a1 += 'L' + (30 + (w - 50)) + ' ' + (h - 25) + ' Z';
@@ -263,13 +312,17 @@
   /* ---------- API 卡片 + 外部API ---------- */
   async function renderApiCards() {
     const { data } = await apiGet('/apiSources');
+    const sources=await Promise.all(data.map(async item=>{
+      const source=String(item.name||'').replace(/\s*API.*$/i,'').trim();
+      const status=await apiPost('/external/test',{source});
+      return {...item,source,configured:!!status.configured};
+    }));
     const grid = q('#page-data-api .grid-3'); if (!grid) return;
-    const color = { '已连接': 'sb-success', '额度预警': 'sb-fail', '已断开': 'sb-normal' };
-    grid.innerHTML = data.map((a) => {
-      const ci = color[a.status] || 'sb-normal'; const pct = a.usage || 0;
-      return '<div class="card"><div class="card-head"><div class="card-title">' + a.name + '</div><span class="status-badge ' + ci + '"><span class="sb-dot"></span>' + a.status + '</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">' + fmt(a.todayCalls) + ' 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">' + fmt(a.remain) + ' 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">' + fmt(a.content) + '</span></div></div><div style="margin-top:12px"><div class="progress-bar"><i style="width:' + pct + '%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">额度使用 ' + pct + '%</div></div><div style="margin-top:10px"><button class="btn btn-ghost btn-sm" data-test="' + a.name + '">测试连接</button></div></div>';
+    grid.innerHTML = sources.map((a) => {
+      const state=a.configured?'已配置':'待接入客户 API';
+      return '<div class="card"><div class="card-head"><div class="card-title">' + fmt(a.name) + '</div><span class="status-badge ' + (a.configured?'sb-success':'sb-normal') + '"><span class="sb-dot"></span>' + state + '</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">—</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv">—</span></div><div class="field"><span class="fk">获取内容</span><span class="fv">' + fmt(a.content) + '</span></div></div><div style="margin-top:10px"><button class="btn btn-ghost btn-sm" data-test="' + fmt(a.source) + '">检查配置</button></div></div>';
     }).join('');
-    grid.querySelectorAll('[data-test]').forEach((btn) => { btn.onclick = async () => { const r = await apiPost('/external/test', { source: btn.dataset.test }); showToast(btn.dataset.test + (r.configured ? '：Key 已配置，可真实调用' : '：未配置 Key，当前演示模式')); }; });
+    grid.querySelectorAll('[data-test]').forEach((btn) => { btn.onclick = async () => { const r = await apiPost('/external/test', { source: btn.dataset.test }); showToast(btn.dataset.test + (r.configured ? '：已配置访问凭据' : '：待接入客户正式 API')); }; });
     const page = el('page-data-api');
     let testBar = el('companyTestImportBar');
     if (!testBar) {
@@ -285,6 +338,8 @@
     }
     const syncBtn = Array.from(page.querySelectorAll('button')).find((b) => /立即同步/.test(b.textContent));
     if (syncBtn) syncBtn.onclick = async () => { await apiPost('/audit/log', { kind: 'api', text: '企业工商变更同步任务已触发', tag: '外部API' }); showToast('已触发工商变更同步任务'); };
+    const syncBody=page.querySelector('.section-title + .table-wrap tbody');
+    if(syncBody) syncBody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt-3);padding:24px">待客户提供正式工商 API 后生成同步记录</td></tr>';
   }
 
   /* ---------- Excel 数据上传（真实解析导入） ---------- */
@@ -541,7 +596,7 @@
   }
 
   /* ---------- 知识库 ---------- */
-  let kbQuery = '';
+  let kbQuery = '', kbType = '全部';
   async function renderKb() {
     const page = el('page-kb');
     const { data } = await apiGet('/knowledge');
@@ -551,6 +606,8 @@
     const doSearch = () => { kbQuery = (input.value || '').trim(); renderKbList(data); };
     if (input) input.oninput = doSearch;
     if (searchBtn) searchBtn.onclick = doSearch;
+    const typeMap=['企业','产业','案例','政策'];
+    page.querySelectorAll('.kb-card').forEach((card,index)=>{card.onclick=()=>{kbType=typeMap[index]||'全部';renderKbList(data);};card.setAttribute('role','button');card.tabIndex=0;card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();card.click();}};});
     // 用 DeepSeek 生成知识
     if (searchBtn && !searchBtn.dataset.zsGen) {
       searchBtn.dataset.zsGen = '1';
@@ -585,10 +642,12 @@
   }
   function renderKbList(data) {
     const list = el('kbList'); if (!list) return;
-    const filtered = kbQuery ? data.filter((d) => (d.title + ' ' + (d.content || '')).indexOf(kbQuery) >= 0) : data;
+    let filtered = kbType==='全部'?data:data.filter(d=>d.type===kbType);
+    if(kbQuery)filtered=filtered.filter((d) => (d.title + ' ' + (d.content || '')).indexOf(kbQuery) >= 0);
     const stColor = { '待审核': 'sb-aging', '已通过': 'sb-success', '已退回': 'sb-fail' };
-    list.innerHTML = '<div style="margin:4px 0 12px;font-size:12px;color:var(--txt-3)">共 ' + filtered.length + ' 条知识' + (kbQuery ? '（匹配“' + kbQuery + '”）' : '') + '</div>' + (filtered.length ? filtered.map((d) => '<div class="review-item"><div class="ri-info"><div class="ri-cat">' + fmt(d.type) + '知识库 · ' + fmt(d.source) + '</div><div class="ri-title">' + fmt(d.title) + '</div><div class="ri-summary">' + fmt(d.content) + '</div></div><div class="ri-actions"><span class="status-badge ' + (stColor[d.status] || 'sb-normal') + '"><span class="sb-dot"></span>' + (d.status === '已通过' ? '已发布' : fmt(d.status)) + (d.status === '已通过' && d.publishedAt ? ' · ' + d.publishedAt : '') + '</span> <button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'knowledge\',' + d.id + ')">编辑</button></div></div>').join('') : '<div style="color:var(--txt-3);padding:16px">无匹配结果</div>');
+    list.innerHTML = '<div style="margin:4px 0 12px;font-size:12px;color:var(--txt-3)">'+fmt(kbType)+' · 共 ' + filtered.length + ' 条知识' + (kbQuery ? '（匹配“' + fmt(kbQuery) + '”）' : '') + ' <button class="btn btn-ghost btn-sm" onclick="ZS.resetKbFilter()">查看全部</button></div>' + (filtered.length ? filtered.map((d) => '<div class="review-item"><div class="ri-info"><div class="ri-cat">' + fmt(d.type) + '知识库 · ' + fmt(d.source) + '</div><div class="ri-title">' + fmt(d.title) + '</div><div class="ri-summary">' + fmt(d.content) + '</div></div><div class="ri-actions"><span class="status-badge ' + (stColor[d.status] || 'sb-normal') + '"><span class="sb-dot"></span>' + (d.status === '已通过' ? '已发布' : fmt(d.status)) + (d.status === '已通过' && d.publishedAt ? ' · ' + d.publishedAt : '') + '</span> <button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'knowledge\',' + d.id + ')">编辑</button></div></div>').join('') : '<div style="color:var(--txt-3);padding:16px">无匹配结果</div>');
   }
+  window.ZS.resetKbFilter=()=>{kbType='全部';kbQuery='';if(el('kbSearch'))el('kbSearch').value='';renderKb();};
 
   /* ---------- 知识审核 ---------- */
   let reviewFilter = 'all';
@@ -635,7 +694,7 @@
     const { data } = await apiGet('/models');
     const tb = page.querySelector('table tbody'); if (!tb) return;
     const roleColor = { '主模型': 'sb-success', '备模型': 'sb-normal', '运行中': 'sb-success' };
-    tb.innerHTML = data.map((m) => '<tr><td>' + fmt(m.name) + '</td><td>' + fmt(m.type) + '</td><td>' + fmt(m.version) + '</td><td><span class="status-badge ' + (roleColor[m.role] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(m.role) + '</span></td><td>' + fmt(m.accuracy) + '</td><td>' + fmt(m.samples) + '</td><td>' + (m.role === '备模型' ? '<button class="btn btn-blue btn-sm" onclick="ZS.switchModel(' + m.id + ')">切换为主</button> ' : '') + '<button class="btn btn-ghost btn-sm" onclick="showToast(\'版本对比\')">版本对比</button></td></tr>').join('');
+    tb.innerHTML = data.map((m) => '<tr><td>' + fmt(m.name) + '</td><td>' + fmt(m.type) + '</td><td>' + fmt(m.version) + '</td><td><span class="status-badge ' + (roleColor[m.role] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(m.role) + '</span></td><td>' + fmt(m.accuracy) + '</td><td>' + fmt(m.samples) + '</td><td>' + (m.role === '备模型' ? '<button class="btn btn-blue btn-sm" onclick="ZS.switchModel(' + m.id + ')">切换为主</button> ' : '') + '<button class="btn btn-ghost btn-sm" onclick="ZS.compareRecords(\'models\','+m.id+')">版本对比</button></td></tr>').join('');
     const trainBtn = Array.from(page.querySelectorAll('button')).find((b) => /发起训练任务/.test(b.textContent));
     if (trainBtn) trainBtn.onclick = async () => {
       showToast('正在基于现有企业/信号数据校准模型…');
@@ -650,13 +709,19 @@
     for (const m of data) { if (m.name === target.name) { await apiPut('/models/' + m.id, { role: m.id === id ? '主模型' : '备模型' }); } }
     showToast('已切换 ' + target.name + ' 为主模型'); renderModel();
   };
+  window.ZS.compareRecords=async function(resource,id){
+    const {data}=await apiGet('/'+resource),current=data.find(item=>item.id===id);if(!current)return showToast('记录不存在');
+    const peers=data.filter(item=>item.name===current.name).sort((a,b)=>String(b.version||'').localeCompare(String(a.version||'')));
+    const keys=resource==='models'?['version','role','accuracy','samples']:['version','date','status','content'];
+    showResultModal('版本对比 · '+current.name,'<div style="overflow:auto"><table><thead><tr><th>字段</th>'+peers.map(item=>'<th>'+fmt(item.version)+'</th>').join('')+'</tr></thead><tbody>'+keys.map(key=>'<tr><td>'+fmt(key)+'</td>'+peers.map(item=>'<td>'+fmt(item[key])+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+(peers.length<2?'<p style="color:var(--txt-3);margin-top:12px">当前仅保存一个版本；新增版本后可在此逐项比较。</p>':''));
+  };
 
   /* ---------- 规则配置 ---------- */
   async function renderRule() {
     const page = el('page-rule');
     const { data } = await apiGet('/prompts');
     const tb = page.querySelector('table tbody'); if (!tb) return;
-    tb.innerHTML = data.map((p) => '<tr><td>' + fmt(p.name) + '</td><td>' + fmt(p.version) + '</td><td>' + fmt(p.date) + '</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>' + fmt(p.status) + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'prompts\',' + p.id + ')">编辑</button> <button class="btn btn-blue btn-sm" onclick="showToast(\'版本对比\')">版本对比</button></td></tr>').join('');
+    tb.innerHTML = data.map((p) => '<tr><td>' + fmt(p.name) + '</td><td>' + fmt(p.version) + '</td><td>' + fmt(p.date) + '</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>' + fmt(p.status) + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="ZS.edit(\'prompts\',' + p.id + ')">编辑</button> <button class="btn btn-blue btn-sm" onclick="ZS.compareRecords(\'prompts\',' + p.id + ')">版本对比</button></td></tr>').join('');
     await bindToggles('page-rule', 'costConfig');
   }
   async function bindToggles(pageId, resName) {
@@ -682,6 +747,7 @@
     if (dtBox) dtBox.innerHTML = '<div class="card">' + dts.map((l) => '<div class="log-line success"><span class="lt">' + l.time + '</span><span class="lm">' + l.text + '</span><span class="status-badge sb-' + (l.tag === '评分更新' ? 'success' : l.tag === '画像更新' ? 'aging' : 'new') + '">' + l.tag + '</span></div>').join('') + '</div>';
     const aiBox = el('log-ai');
     if (aiBox) { const tb = aiBox.querySelector('tbody'); if (tb) tb.innerHTML = apis.map((l) => '<tr><td>' + l.time + '</td><td>' + fmt(l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.outTok) + '</td><td>' + fmt(l.cost) + '</td><td>' + fmt(l.money) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : l.status === '缓存' ? 'normal' : 'fail') + '"><span class="sb-dot"></span>' + l.status + '</span></td></tr>').join(''); }
+    qa('#page-audit button').filter(button=>/导出Excel/.test(button.textContent)).forEach(button=>{button.onclick=()=>downloadAuthenticated('/audit/export','审计与调用日志.xlsx');});
   }
 
   /* ---------- 数据校验与缓存 ---------- */
@@ -694,8 +760,12 @@
     const page = el('page-data-log');
     const { data } = await apiGet('/auditApi');
     const tb = page.querySelector('table tbody'); if (!tb) return;
-    tb.innerHTML = data.map((l) => '<tr><td>' + l.time + '</td><td>' + fmt(l.scene === '外部API' ? l.text.split('→')[0].replace('外部API查询（', '').replace('）', '') : l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.cost) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : 'fail') + '"><span class="sb-dot"></span>' + l.status + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast(\'查看详情\')">查看</button></td></tr>').join('');
+    window.__dataLogs=data;
+    tb.innerHTML = data.map((l) => '<tr><td>' + l.time + '</td><td>' + fmt(l.scene === '外部API' ? l.text.split('→')[0].replace('外部API查询（', '').replace('）', '') : l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.cost) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : 'fail') + '"><span class="sb-dot"></span>' + l.status + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="ZS.viewDataLog(' + l.id + ')">查看</button></td></tr>').join('');
+    qa('#page-data-log button').filter(button=>/导出Excel/.test(button.textContent)).forEach(button=>{button.onclick=()=>downloadAuthenticated('/audit/export','接入记录.xlsx');});
+    page.querySelectorAll('.log-line button').forEach(button=>{button.disabled=true;button.title='该提示为历史示例，不能执行真实外部服务操作';});
   }
+  window.ZS.viewDataLog=function(id){const item=(window.__dataLogs||[]).find(row=>row.id===id);if(!item)return;showResultModal('调用记录详情 #'+id,'<div class="field-list">'+Object.entries(item).map(([key,value])=>'<div class="field"><span class="fk">'+fmt(key)+'</span><span class="fv">'+fmt(value)+'</span></div>').join('')+'</div>');};
 
   // data-ds 资讯获取（真实 RSS + DeepSeek 摘要）
   async function renderNews() {

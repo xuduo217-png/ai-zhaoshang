@@ -3,12 +3,40 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const net = require('net');
+let XLSX, mammoth, pdfParse;
+try { XLSX = require('xlsx'); } catch (_) {}
+try { mammoth = require('mammoth'); } catch (_) {}
+try { pdfParse = require('pdf-parse'); } catch (_) {}
 const INDUSTRIES = ['电子信息','新能源','智能制造','装备制造','食品饮料','人工智能','集成电路','光伏','锂电','动力电池','生物医药','数字经济','新材料','汽车','航空航天','现代农业','文旅','节能环保'];
 const REGIONS = ['成都','绵阳','德阳','宜宾','眉山','泸州','南充','攀枝花','四川','重庆','北京','上海','广州','深圳','杭州','苏州','南京','武汉','西安','合肥','济南','郑州','长三角','珠三角','京津冀'];
 const CATEGORIES = ['全部','投资载体','招商项目','优惠政策'];
 const REPORTS = {chain:'产业链资料梳理',plan:'企业招商对接方案',assessment:'投资研判核查清单',brief:'招商参阅材料'};
 const strings = list => Array.isArray(list) ? [...new Set(list.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0,40)))].slice(0,12) : [];
 const fail = (message, statusCode = 400) => { throw Object.assign(new Error(message), {statusCode}); };
+async function extractDocument(name, body) {
+  const ext = path.extname(name).toLowerCase();
+  const supported = ['.txt','.md','.csv','.xlsx','.xls','.docx','.pdf'];
+  if (!supported.includes(ext)) fail('支持 TXT、Markdown、CSV、Excel、Word（DOCX）和 PDF 文件');
+  if (['.txt','.md','.csv'].includes(ext) && typeof body.content === 'string') return body.content;
+  const encoded = String(body.dataBase64 || '');
+  if (!encoded || encoded.length > 1.4 * 1024 * 1024 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) fail('文件内容无效或超过 1 MB');
+  const buffer = Buffer.from(encoded,'base64');
+  if (!buffer.length || buffer.length > 1024 * 1024) fail('文件须为非空且不超过 1 MB');
+  if (['.txt','.md','.csv'].includes(ext)) {
+    try { return new TextDecoder('utf-8',{fatal:true}).decode(buffer); } catch (_) { fail('文本文件必须使用 UTF-8 编码'); }
+  }
+  if (ext === '.docx') {
+    if (!mammoth) fail('Word 解析组件未安装',503);
+    return (await mammoth.extractRawText({buffer})).value;
+  }
+  if (ext === '.pdf') {
+    if (!pdfParse) fail('PDF 解析组件未安装',503);
+    return (await pdfParse(buffer,{max:80})).text;
+  }
+  if (!XLSX) fail('Excel 解析组件未安装',503);
+  const workbook = XLSX.read(buffer,{type:'buffer',cellDates:false,cellFormula:false,cellHTML:false});
+  return workbook.SheetNames.map(sheet => '# '+sheet+'\n'+XLSX.utils.sheet_to_csv(workbook.Sheets[sheet],{blankrows:false})).join('\n\n');
+}
 function clientIp(req) {
   const peer = String(req.socket.remoteAddress || '').replace(/^::ffff:/,'');
   // Only the local reverse proxy may supply the client address. Never trust a public peer's forwarding headers.
@@ -147,11 +175,13 @@ function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtu
     const data = load(id);
     if (p === '/api/portal/documents' && method === 'POST') {
       const name = String(body.name || '').trim().slice(0,100);
-      const content = String(body.content || '').trim();
-      if (!/\.(txt|md|csv)$/i.test(name)) fail('目前支持 UTF-8 的 TXT、Markdown、CSV 文本资料');
-      if (!content || content.length > 60000 || content.includes('\0')) fail('资料须为非空文本且不超过 6 万字');
+      let content;
+      try { content = String(await extractDocument(name,body)).trim(); } catch (error) { if (error.statusCode) throw error; fail('文件无法解析，请确认文件未损坏'); }
+      if (!content || content.includes('\0')) fail('文件中没有可读取的文本内容');
+      const truncated = content.length > 60000;
+      if (truncated) content = content.slice(0,60000);
       if (data.documents.length >= 8) fail('每个空间最多保存 8 份资料，请先删除旧资料');
-      const doc = {id:crypto.randomUUID(),name,content,createdAt:new Date().toISOString()};
+      const doc = {id:crypto.randomUUID(),name,content,truncated,createdAt:new Date().toISOString()};
       data.documents.push(doc);save(id,data);send(res,201,doc);return true;
     }
     if (p === '/api/portal/documents' && method === 'DELETE') {

@@ -8,8 +8,12 @@
     "check": "node --check server.js && node --check portal-service.js && node --check public/app.js && node --check public/portal-workspace.js && node --check public/portal-tools.js && node --test tests/*.test.js",
     "seed": "node server.js --seed"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "xlsx": "^0.18.5"
+    "mammoth": "1.12.2",
+    "pdf-parse": "1.1.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

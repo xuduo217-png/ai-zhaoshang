@@ -350,15 +350,15 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
       <!-- ===== 系统总览 ===== -->
       <div class="page active" id="page-overview">
         <div class="grid-4" style="margin-bottom:18px">
-          <div class="stat-card s1"><div class="ds-lbl">知识库总量</div><div class="ds-num">86,420</div><div class="ds-sub">企业 12,580 / 产业 3,200 / 案例 860 / 政策 1,780</div></div>
-          <div class="stat-card s2"><div class="ds-lbl">今日AI调用</div><div class="ds-num">2,386</div><div class="ds-sub">Token消耗 1.28M · 成本 ¥186</div></div>
-          <div class="stat-card s3"><div class="ds-lbl">缓存命中率</div><div class="ds-num">73.2%</div><div class="ds-sub">节省调用 1,748 次 · 节省 ¥132</div></div>
-          <div class="stat-card s4"><div class="ds-lbl">待审核知识</div><div class="ds-num">42</div><div class="ds-sub">DeepSeek摘要 28 / Excel上传 14</div></div>
+          <div class="stat-card s1"><div class="ds-lbl">知识库总量</div><div class="ds-num">—</div><div class="ds-sub">正在统计真实数据…</div></div>
+          <div class="stat-card s2"><div class="ds-lbl">今日AI调用</div><div class="ds-num">—</div><div class="ds-sub">正在统计真实数据…</div></div>
+          <div class="stat-card s3"><div class="ds-lbl">缓存命中率</div><div class="ds-num">—</div><div class="ds-sub">正在统计真实数据…</div></div>
+          <div class="stat-card s4"><div class="ds-lbl">待审核知识</div><div class="ds-num">—</div><div class="ds-sub">正在统计真实数据…</div></div>
         </div>
         <div class="grid-2">
           <div class="card">
             <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>6类智能体运行状态</div></div>
-            <div style="display:flex;flex-direction:column;gap:10px">
+            <div id="overviewAgentStatus" style="display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">数据处理智能体</span><span style="font-size:11px;color:var(--txt-3)">今日处理 1,286 条</span></div>
               <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">知识更新智能体</span><span style="font-size:11px;color:var(--txt-3)">待审核 42 条</span></div>
               <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--panel-2);border-radius:10px"><span class="status-badge sb-success"><span class="sb-dot"></span>运行中</span><span style="flex:1;font-size:13px;color:var(--txt-0)">企业画像智能体</span><span style="font-size:11px;color:var(--txt-3)">模型 v2.3</span></div>
@@ -378,7 +378,7 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
         </div>
         <div class="section-title"><h3>最近系统活动</h3><div class="line"></div></div>
         <div class="card">
-          <div class="timeline">
+          <div class="timeline" id="overviewActivities">
             <div class="tl-item"><div class="tl-dot green"></div><div class="tl-date">2026-08-08 15:42</div><div class="tl-title">企业画像智能体完成 186 家企业画像更新</div><div class="tl-desc">模型版本 v2.3，处理耗时 8 分钟，平均置信度 92%</div></div>
             <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-date">2026-08-08 14:30</div><div class="tl-title">DeepSeek 资讯获取任务完成</div><div class="tl-desc">获取新闻 286 条 / 投融资 42 条 / 招投标 168 条 / 政策 12 条，Token消耗 0.86M</div></div>
             <div class="tl-item"><div class="tl-dot gold"></div><div class="tl-date">2026-08-08 13:15</div><div class="tl-title">招商规则配置已更新</div><div class="tl-desc">融资信号权重调整为 25，评分权重合同到期调整为 30，操作人：系统管理员</div></div>
@@ -978,7 +978,6 @@ function drawChain(){
   svg.innerHTML=html;
 }
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-setTimeout(drawOverview,100);
 </script>
 <style>
 .modal-mask{position:fixed;inset:0;background:rgba(2,8,20,.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9999}
@@ -1008,7 +1007,7 @@ setTimeout(drawOverview,100);
     <div class="modal-foot"><button class="btn btn-ghost" onclick="ZS.close()">取消</button><button class="btn btn-blue" onclick="ZS.save()">保存</button></div>
   </div>
 </div>
-<script src="app.js?v=2.7"></script>
+<script src="app.js?v=2.9"></script>
 <script>
 /* 备用：即使 app.js 加载异常，登录/获取也能直接调用后端 */
 async function doLoginStandalone() {
@@ -1099,8 +1098,6 @@ async function fetchNewsStandalone() {
   } catch (e) { showToast('请求异常：' + e.message); }
   btn.disabled = false; btn.innerHTML = old;
 }
-// 页面进入资讯页时自动渲染已有数据
-setTimeout(renderNewsInline, 300);
 </script>
 </body>
 </html>

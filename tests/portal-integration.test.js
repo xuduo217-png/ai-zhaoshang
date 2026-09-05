@@ -5,21 +5,22 @@ const os=require('node:os');
 const path=require('node:path');
 const net=require('node:net');
 const {spawn}=require('node:child_process');
+const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
   for(const file of ['server.js','portal-service.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
-  const child=spawn(process.execPath,['server.js'],{cwd:dir,env:{...process.env,PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'test',DEEPSEEK_API_KEY:'',INITIAL_ADMIN_PASSWORD:'TestOnly-Portal123!'},stdio:['ignore','pipe','pipe']});
+  const child=spawn(process.execPath,['server.js'],{cwd:dir,env:{...process.env,NODE_PATH:path.join(__dirname,'..','node_modules'),PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'test',DEEPSEEK_API_KEY:'',INITIAL_ADMIN_PASSWORD:'TestOnly-Portal123!'},stdio:['ignore','pipe','pipe']});
   t.after(async()=>{if(child.exitCode===null){const done=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await done;}fs.rmSync(dir,{recursive:true,force:true});});
   await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('startup timeout')),10000);child.once('error',reject);child.stdout.on('data',chunk=>{if(String(chunk).includes('已启动')){clearTimeout(timer);resolve();}});child.once('exit',code=>{clearTimeout(timer);reject(new Error('server exited '+code));});});
   const base='http://127.0.0.1:'+port;
-  async function call(endpoint,{method='GET',body,cookie='',ip='203.0.113.1',origin,raw=false}={}){
-    const response=await fetch(base+endpoint,{method,headers:{'Content-Type':'application/json','X-Real-IP':ip,...(cookie?{cookie}:{}),...(origin?{origin}:{})},body:body===undefined?undefined:JSON.stringify(body)});
+  async function call(endpoint,{method='GET',body,cookie='',ip='203.0.113.1',origin,authorization,raw=false}={}){
+    const response=await fetch(base+endpoint,{method,headers:{'Content-Type':'application/json','X-Real-IP':ip,...(cookie?{cookie}:{}),...(origin?{origin}:{}),...(authorization?{Authorization:'Bearer '+authorization}:{})},body:body===undefined?undefined:JSON.stringify(body)});
     if(raw)return {status:response.status,text:await response.text(),headers:Object.fromEntries(response.headers)};
-    const json=await response.json();return {status:response.status,body:json,cookie:response.headers.get('set-cookie')?.split(';')[0]};
+    const json=await response.json();const setCookie=response.headers.get('set-cookie');return {status:response.status,body:json,cookie:setCookie?.split(';')[0],setCookie};
   }
   const a=await call('/api/portal/workspace'),b=await call('/api/portal/workspace');assert.ok(a.cookie&&b.cookie&&a.cookie!==b.cookie);
-  let conv,document;
+  let conv,document,token,leadId;
   await t.test('browse returns concrete resources and category filter is enforced',async()=>{
     const generic=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'请推荐招商资源'}});assert.equal(generic.status,200);assert.ok(generic.body.matched.length&&generic.body.matched.every(p=>p?.title));
     const filtered=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'成都智能制造',category:'优惠政策'}});assert.equal(filtered.status,200);assert.ok(filtered.body.matched.length);assert.ok(filtered.body.matched.every(p=>p.category==='优惠政策'));conv=filtered.body.conversationId;
@@ -27,7 +28,9 @@ test('portal HTTP integration uses isolated data, no live model and no productio
   });
   await t.test('private documents persist, affect selected context, and are isolated',async()=>{
     const upload=await call('/api/portal/documents',{method:'POST',cookie:a.cookie,body:{name:'测试资料.txt',content:'宜宾动力电池投资需求，仅供自动化测试。'}});assert.equal(upload.status,201);document=upload.body.id;
-    const persisted=await call('/api/portal/workspace',{cookie:a.cookie});assert.equal(persisted.body.documents.length,1);
+    const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet([['企业','产业'],['测试电池公司','动力电池']]),'清单');
+    const excel=await call('/api/portal/documents',{method:'POST',cookie:a.cookie,body:{name:'企业清单.xlsx',dataBase64:XLSX.write(book,{type:'base64',bookType:'xlsx'})}});assert.equal(excel.status,201);assert.match(excel.body.content,/测试电池公司/);
+    const persisted=await call('/api/portal/workspace',{cookie:a.cookie});assert.equal(persisted.body.documents.length,2);
     const other=await call('/api/portal/workspace',{cookie:b.cookie});assert.equal(other.body.documents.length,0);
     const denied=await call('/api/portal/match',{method:'POST',cookie:b.cookie,body:{message:'查询',documentIds:[document]}});assert.equal(denied.status,404);
     const own=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'按资料匹配园区',category:'投资载体',documentIds:[document]}});assert.equal(own.status,200);assert.ok(own.body.need.industries.includes('动力电池'));assert.equal(own.body.documentSources[0],'测试资料.txt');
@@ -42,11 +45,21 @@ test('portal HTTP integration uses isolated data, no live model and no productio
   await t.test('inquiry reaches the administrator lead API and creates a notification',async()=>{
     const body={name:'自动化测试客商',phone:'19900000001',company:'测试公司（非真实客商）',intention:'回归验证',matchedProjects:['成都高新区智能制造产业园']};
     const without=await call('/api/portal/inquire',{method:'POST',body});assert.equal(without.status,400);
-    const created=await call('/api/portal/inquire',{method:'POST',body:{...body,consent:true}});assert.equal(created.status,200);
-    const login=await call('/api/login',{method:'POST',body:{username:'admin',password:'TestOnly-Portal123!'}});assert.equal(login.status,200);
+    const created=await call('/api/portal/inquire',{method:'POST',body:{...body,consent:true}});assert.equal(created.status,200);leadId=created.body.id;
+    const login=await call('/api/login',{method:'POST',body:{username:'admin',password:'TestOnly-Portal123!'}});assert.equal(login.status,200);token=login.body.token;assert.match(login.setCookie,/HttpOnly/);assert.match(login.setCookie,/SameSite=Strict/);
     const leads=JSON.parse(fs.readFileSync(path.join(dir,'data','leads.json'),'utf8'));assert.ok(leads.some(l=>l.id===created.body.id&&l.name===body.name&&l.matchedProjects===body.matchedProjects[0]));
     const messages=JSON.parse(fs.readFileSync(path.join(dir,'data','messages.json'),'utf8'));assert.ok(messages.some(m=>m.title.includes(body.name)));
     const duplicate=await call('/api/portal/inquire',{method:'POST',body:{...body,consent:true}});assert.equal(duplicate.status,409);
+  });
+  await t.test('lead workflow assigns, records, reminds and exports without third-party services',async()=>{
+    const followed=await call('/api/leads/'+leadId+'/followups',{method:'POST',authorization:token,body:{assignee:'admin',priority:'高',stage:'方案沟通',status:'已联系',nextFollowAt:'2026-09-10T09:00',note:'已电话沟通，等待企业资料。'}});assert.equal(followed.status,201);assert.equal(followed.body.lead.assignee,'admin');assert.equal(followed.body.lead.status,'已联系');
+    const history=await call('/api/leads/'+leadId+'/followups',{authorization:token});assert.equal(history.status,200);assert.equal(history.body.data.length,1);assert.match(history.body.data[0].note,/电话沟通/);
+    const messages=JSON.parse(fs.readFileSync(path.join(dir,'data','messages.json'),'utf8'));assert.ok(messages.some(message=>message.to==='admin'&&message.event==='客商线索跟进'));
+    const exported=await call('/api/leads/export',{authorization:token,raw:true});assert.equal(exported.status,200);assert.match(exported.headers['content-type'],/spreadsheet/);assert.ok(exported.text.length>100);
+  });
+  await t.test('overview uses persisted counts and audit export is downloadable',async()=>{
+    const stats=await call('/api/stats/overview',{authorization:token});assert.equal(stats.status,200);assert.equal(stats.body.kbTotal,5);assert.notEqual(stats.body.kbTotal,86420);assert.equal(stats.body.agents.length,6);assert.ok(stats.body.agents.every(item=>item.status==='功能可用'));assert.equal(stats.body.trend1.length,7);
+    const exported=await call('/api/audit/export',{authorization:token,raw:true});assert.equal(exported.status,200);assert.match(exported.headers['content-type'],/spreadsheet/);assert.ok(exported.text.length>100);
   });
   await t.test('CSRF and malformed payloads are rejected; public enterprise endpoint is labeled',async()=>{
     const csrf=await call('/api/portal/documents',{method:'POST',cookie:a.cookie,origin:'https://attacker.invalid',body:{name:'x.txt',content:'x'}});assert.equal(csrf.status,403);

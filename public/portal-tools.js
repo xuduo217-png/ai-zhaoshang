@@ -28,10 +28,10 @@
     return ready;
   }
   function knowledge() {
-    modal('个人知识库',privacy+'<button class="primary-btn" data-extra="upload">添加文本资料</button><p class="result-note">勾选后，资料摘录会用于下一次匹配及报告；AI 可用时会随需求发送至模型服务。</p><div class="document-list">'+(workspace.documents.length?workspace.documents.map(d=>'<article class="project-card"><label><input type="checkbox" data-document="'+d.id+'" '+(selected.has(d.id)?'checked':'')+'> '+esc(d.name)+'</label><p class="project-meta">'+d.content.length+' 字 · '+esc(d.createdAt.slice(0,10))+'</p><div class="feature-actions"><button class="text-btn" data-read-document="'+d.id+'">查看内容</button><button class="text-btn" data-delete-document="'+d.id+'">删除</button></div></article>').join(''):'<p class="empty-state">暂无个人资料。</p>')+'</div>');
+    modal('个人知识库',privacy+'<button class="primary-btn" data-extra="upload">添加资料</button><p class="result-note">勾选后，资料摘录会用于下一次匹配及报告；AI 可用时会随需求发送至模型服务。</p><div class="document-list">'+(workspace.documents.length?workspace.documents.map(d=>'<article class="project-card"><label><input type="checkbox" data-document="'+d.id+'" '+(selected.has(d.id)?'checked':'')+'> '+esc(d.name)+'</label><p class="project-meta">'+d.content.length+' 字'+(d.truncated?' · 已截取前 6 万字':'')+' · '+esc(d.createdAt.slice(0,10))+'</p><div class="feature-actions"><button class="text-btn" data-read-document="'+d.id+'">查看内容</button><button class="text-btn" data-delete-document="'+d.id+'">删除</button></div></article>').join(''):'<p class="empty-state">暂无个人资料。</p>')+'</div>');
   }
   function upload() {
-    modal('添加分析资料',privacy+'<form data-feature-form="upload"><label class="field-label">选择 UTF-8 文本文件<input type="file" name="file" accept=".txt,.md,.csv" required></label><p class="result-note">单份最多 6 万字 / 200 KB，每个空间最多 8 份。暂不支持 PDF、Word 和扫描件，可另存为文本后上传。</p><button class="primary-btn" type="submit">保存到私有知识库</button></form>');
+    modal('添加分析资料',privacy+'<form data-feature-form="upload"><label class="field-label">选择资料文件<input type="file" name="file" accept=".txt,.md,.csv,.xlsx,.xls,.docx,.pdf" required></label><p class="result-note">支持 TXT、Markdown、CSV、Excel、Word（DOCX）和含文本层的 PDF；单份不超过 1 MB，每个空间最多 8 份。扫描版 PDF 请先进行文字识别。</p><button class="primary-btn" type="submit">保存到私有知识库</button></form>');
   }
   function reports() {
     modal('我的资料报告','<p class="result-note">资料整理版不调用大模型，不替代专业尽调或投资判断。</p><div class="document-list">'+(workspace.reports.length?workspace.reports.map(r=>'<article class="project-card"><h3>'+esc(r.title)+'</h3><p class="project-meta">'+esc(r.createdAt.slice(0,19))+'</p><div class="feature-actions"><button class="text-btn" data-report="'+r.id+'">打开</button><button class="text-btn" data-export="'+r.id+'">导出文本</button><button class="text-btn" data-delete-report="'+r.id+'">删除</button></div></article>').join(''):'<p class="empty-state">完成资源匹配后，可使用右侧工具生成资料稿。</p>')+'</div>');
@@ -85,9 +85,9 @@
     try {
       const data=new FormData(form);
       if(form.dataset.featureForm==='upload'){
-        const file=data.get('file');if(!file||!file.size||file.size>200*1024)throw new Error('请选择不超过 200 KB 的文本文件');
-        const content=new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer());
-        const doc=await api('documents','POST',{name:file.name,content});workspace.documents.push(doc);selectedLabel();knowledge();
+        const file=data.get('file');if(!file||!file.size||file.size>1024*1024)throw new Error('请选择不超过 1 MB 的资料文件');
+        const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
+        const doc=await api('documents','POST',{name:file.name,dataBase64:btoa(binary)});workspace.documents.push(doc);selected.add(doc.id);selectedLabel();knowledge();
       }else if(form.dataset.featureForm==='companies')await companies(String(data.get('query')||''));
       else if(form.dataset.featureForm==='inquire'){
         const body=Object.fromEntries(data.entries());body.consent=data.get('consent')==='on';body.matchedProjects=JSON.parse(form.dataset.projects);body.source='前台工作台';

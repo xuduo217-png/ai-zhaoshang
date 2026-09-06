@@ -993,14 +993,19 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
 .form-row input,.form-row select{background:var(--panel-2);border:1px solid var(--border);color:var(--txt-0);border-radius:8px;padding:9px 11px;font-size:13px;width:100%;outline:none}
 .form-row input:focus,.form-row select:focus{border-color:var(--dh-blue-2)}
 #loginMask .logo-text{margin-bottom:6px}
+#loginError{display:none;margin-top:10px;padding:9px 11px;border:1px solid #fecaca;border-radius:9px;background:#fef2f2;color:#b91c1c;font-size:13px;line-height:1.45}
+#loginError.show{display:block}
 </style>
 <div id="loginMask" class="modal-mask" style="display:none">
   <div class="modal-card" style="width:360px">
     <div class="login-brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/><path d="m20 2 .5 1.5L22 4l-1.5.5L20 6l-.5-1.5L18 4l1.5-.5Z"/></svg></div>
     <div class="logo-text" style="margin-bottom:18px"><span class="lt1">AI招商智能体平台</span><span class="lt2">管理端登录</span></div>
-    <div class="form-row"><label>账号</label><input id="loginUser" type="text" placeholder="请输入账号" autocomplete="username"></div>
-    <div class="form-row"><label>密码</label><input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password"></div>
-    <button class="btn btn-blue" style="width:100%;margin-top:10px;padding:11px" onclick="doLoginStandalone()">登 录</button>
+    <form id="loginForm" onsubmit="event.preventDefault();doLoginStandalone()">
+      <div class="form-row"><label for="loginUser">账号</label><input id="loginUser" type="text" placeholder="请输入账号" autocomplete="username" aria-describedby="loginError"></div>
+      <div class="form-row"><label for="loginPass">密码</label><input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password" aria-describedby="loginError"></div>
+      <div id="loginError" role="alert" aria-live="polite"></div>
+      <button id="loginSubmit" type="submit" class="btn btn-blue" style="width:100%;margin-top:10px;padding:11px">登 录</button>
+    </form>
   </div>
 </div>
 <div id="crudModal" class="modal-mask" style="display:none">
@@ -1016,7 +1021,17 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
 async function doLoginStandalone() {
   var u = document.getElementById('loginUser').value.trim();
   var p = document.getElementById('loginPass').value;
-  if (!u || !p) { showToast('请输入账号和密码'); return; }
+  var errorBox = document.getElementById('loginError');
+  var submitButton = document.getElementById('loginSubmit');
+  function showLoginError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.add('show');
+  }
+  errorBox.textContent = '';
+  errorBox.classList.remove('show');
+  if (!u || !p) { showLoginError('请输入账号和密码'); return; }
+  submitButton.disabled = true;
+  submitButton.textContent = '登录中…';
   try {
     var r = await fetch('api/login', {
       method: 'POST',
@@ -1028,9 +1043,14 @@ async function doLoginStandalone() {
       localStorage.setItem('zs_token', j.token);
       location.reload();
     } else {
-      showToast(j.error || '登录失败');
+      showLoginError(j.error || '登录失败');
     }
-  } catch (e) { showToast('登录异常：' + e.message); }
+  } catch (e) {
+    showLoginError('登录异常，请检查网络后重试');
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = '登 录';
+  }
 }
 async function renderNewsInline() {
   var token = localStorage.getItem('zs_token') || '';

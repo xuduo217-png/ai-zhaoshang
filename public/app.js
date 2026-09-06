@@ -809,7 +809,5 @@
     renderNews();
   };
 
-  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && el('loginMask') && el('loginMask').style.display === 'flex' && e.target.tagName === 'INPUT') doLogin(); });
-
   init();
 })();

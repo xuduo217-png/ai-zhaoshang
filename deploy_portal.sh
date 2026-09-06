@@ -14,7 +14,7 @@ ARCHIVE="$(mktemp /tmp/ai-zhaoshang-update-XXXXXX.tar.gz)"
 trap 'rm -f "$ARCHIVE"' EXIT
 
 echo "[1/3] 打包应用与锁定依赖 ..."
-tar czf "$ARCHIVE" package.json package-lock.json server.js portal-service.js public/index.html public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js public/portal-tools.js public/portal-tools.css
+tar czf "$ARCHIVE" package.json package-lock.json server.js portal-service.js public/index.html public/admin-theme.css public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js public/portal-tools.js public/portal-tools.css
 
 echo "[2/3] 上传更新包 ..."
 scp "$ARCHIVE" "${DEPLOY_HOST}:/tmp/ai-zhaoshang-update.tar.gz"
@@ -25,7 +25,9 @@ set -euo pipefail
 APP_DIR=/opt/ai-zhaoshang
 BACKUP_DIR="$(mktemp -d /opt/ai-zhaoshang-before-deploy-XXXXXX)"
 cd "$APP_DIR"
-cp --parents package.json package-lock.json server.js portal-service.js public/index.html public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js public/portal-tools.js public/portal-tools.css "$BACKUP_DIR"
+for file in package.json package-lock.json server.js portal-service.js public/index.html public/admin-theme.css public/app.js public/portal.html public/portal-workspace.css public/portal-workspace.js public/portal-tools.js public/portal-tools.css; do
+  [ ! -e "$file" ] || cp --parents "$file" "$BACKUP_DIR"
+done
 rollback() {
   echo "部署失败，正在恢复 $BACKUP_DIR"
   cp -a "$BACKUP_DIR"/. "$APP_DIR"/

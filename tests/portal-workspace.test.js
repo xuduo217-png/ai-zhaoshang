@@ -38,7 +38,7 @@ test('HTML references exist, assets are local, and event handlers are external',
   assert.ok(!/\bonclick=/.test(html));
   for(const file of ['portal-workspace.css','portal-workspace.js','portal-tools.css','portal-tools.js'])assert.ok(html.includes(file)&&fs.existsSync(path.join(root,file)));
   const css=fs.readFileSync(path.join(root,'portal-workspace.css'),'utf8');
-  assert.match(css,/Kaiti SC/);assert.match(css,/@media\(max-width:700px\)/);assert.match(css,/prefers-reduced-motion/);
+  assert.match(css,/Heiti SC/);assert.doesNotMatch(css,/Kaiti SC|STKaiti|KaiTi|楷体/);assert.match(css,/@media\(max-width:700px\)/);assert.match(css,/prefers-reduced-motion/);
 });
 test('published resources load; category and text filtering work',async()=>{
   const h=await setup();

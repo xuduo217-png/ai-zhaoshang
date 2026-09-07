@@ -420,14 +420,14 @@
     const chip = (label, val, color) => '<div style="flex:1;background:var(--panel-2,#f4f6fb);border:1px solid var(--border,#e5e9f2);border-radius:10px;padding:10px 6px;text-align:center"><div style="font-size:21px;font-weight:800;color:' + (color || 'var(--txt-0)') + '">' + val + '</div><div style="font-size:11px;color:var(--txt-3,#888);margin-top:2px">' + label + '</div></div>';
     let html = '<div style="display:flex;gap:8px">' + chip('总行数', r.total, 'var(--dh-blue)') + chip('成功', r.success, 'var(--dh-green)') + chip('失败', r.fail, 'var(--dh-red-2)') + chip('新增', r.added, 'var(--dh-blue)') + chip('更新', r.updated, 'var(--dh-orange)') + '</div>';
     if (r.newScores && r.newScores.length) {
-      html += '<div style="margin-top:14px;font-weight:700;color:var(--txt-0,#222)">新增企业 · 评分维度已自动补全并测算招商评分</div>';
-      html += '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px"><thead><tr style="text-align:left;color:var(--txt-3,#888);border-bottom:1px solid var(--border,#e5e9f2)"><th style="padding:6px 8px">企业</th><th style="padding:6px 8px">评分</th><th style="padding:6px 8px">等级</th><th style="padding:6px 8px">数据源</th></tr></thead><tbody>';
-      const lvColor = { 'A类': 'var(--dh-green)', 'B类': 'var(--dh-orange)', 'C类': 'var(--txt-3,#888)', '待分析': 'var(--txt-3,#888)' };
+      html += '<div style="margin-top:14px;font-weight:700;color:var(--txt-0,#222)">新增企业 · 七维尽调评分状态</div>';
+      html += '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px"><thead><tr style="text-align:left;color:var(--txt-3,#888);border-bottom:1px solid var(--border,#e5e9f2)"><th style="padding:6px 8px">企业</th><th style="padding:6px 8px">评分</th><th style="padding:6px 8px">完整度</th><th style="padding:6px 8px">状态</th></tr></thead><tbody>';
+      const lvColor = { 'A类': 'var(--dh-green)', 'B类': 'var(--dh-orange)', 'C类': 'var(--txt-3,#888)', 'D类': 'var(--dh-red-2)', '待核实': 'var(--txt-3,#888)' };
       r.newScores.forEach((s) => {
-        html += '<tr style="border-bottom:1px solid var(--border,#eef1f6)"><td style="padding:6px 8px">' + fmt(s.company) + '</td><td style="padding:6px 8px;font-weight:700;color:var(--dh-red-2)">' + (s.score == null ? '待分析' : s.score) + '</td><td style="padding:6px 8px;color:' + (lvColor[s.level] || 'var(--txt-3)') + '">' + fmt(s.level) + '</td><td style="padding:6px 8px;color:var(--txt-3,#888)">' + fmt(s.source) + '</td></tr>';
+        html += '<tr style="border-bottom:1px solid var(--border,#eef1f6)"><td style="padding:6px 8px">' + fmt(s.company) + '</td><td style="padding:6px 8px;font-weight:700;color:var(--dh-red-2)">' + (s.score == null ? '待核实' : s.score) + '</td><td style="padding:6px 8px">' + fmt(s.coverage || 0) + '%</td><td style="padding:6px 8px;color:' + (lvColor[s.level] || 'var(--txt-3)') + '">' + fmt(s.source) + '</td></tr>';
       });
       html += '</tbody></table>';
-      html += '<div style="margin-top:10px;font-size:11px;color:var(--txt-3,#888)">评分维度由「' + (r.enrichMode === 'live' ? '真实工商源（天眼查/企查查）' : '本地规则 + 工商字段映射') + '」自动补全，可在「招商评分」页查看完整分布与等级。</div>';
+      html += '<div style="margin-top:10px;font-size:11px;color:var(--txt-3,#888)">只有评分和核验依据同时完整的板块才计入正式总分。可在「招商价值评分」页继续录入或核实。</div>';
     } else if (r.newCompanies && r.newCompanies.length) {
       html += '<div style="margin-top:12px;color:var(--txt-3,#888);font-size:12px">新增：' + r.newCompanies.map(fmt).join('、') + '</div>';
     }
@@ -475,13 +475,19 @@
   /* ---------- 引擎：招商评分 ---------- */
   async function renderEngineScore() {
     const page = el('page-engine-score');
-    const w = (await apiGet('/scoreWeights'))[0] || {};
+    const standardResult = await apiGet('/score-standard');
+    window.__scoreStandard = standardResult.data || [];
+    const w = Object.fromEntries(window.__scoreStandard.map((dim) => [dim.name, dim.weight]));
     bindWeightRows(page, w);
+    const grid = el('scoreStandardGrid');
+    if (grid) grid.innerHTML = window.__scoreStandard.map((dim) => '<div class="card"><div class="card-title" style="margin-bottom:8px">' + fmt(dim.name) + ' <span style="color:var(--dh-purple);font-weight:700">' + fmt(dim.weight) + '%</span></div><div style="font-size:13px;line-height:1.65;color:var(--txt-2)">' + fmt(dim.criteria) + '</div></div>').join('');
     const saveBtn = Array.from(page.querySelectorAll('button')).find((b) => /保存配置/.test(b.textContent));
     if (saveBtn) saveBtn.onclick = async () => {
       const body = {}; page.querySelectorAll('.weight-row').forEach((r) => { body[r.querySelector('.wr-name').textContent.trim()] = Number(r.querySelector('.wr-slider').value); });
+      const total = Object.values(body).reduce((sum, value) => sum + value, 0);
+      if (total !== 100) { showToast('当前权重合计 ' + total + '，请调整为 100'); return; }
       await apiPut('/scoreWeights', body); showToast('权重已保存，正在重算评分…');
-      await apiPost('/engine/score/recompute'); renderScoreTable();
+      await apiPost('/engine/score/recompute'); renderEngineScore();
     };
     renderScoreTable();
   }
@@ -490,41 +496,64 @@
     let { data } = await apiGet('/scores');
     if (!data || !data.length) { data = (await apiPost('/engine/score/recompute')).data || []; }
     const tb = page.querySelector('table tbody'); if (!tb) return;
-    const lvColor = { 'A类': 'sb-success', 'B类': 'sb-aging', 'C类': 'sb-normal', '待分析': 'sb-normal' };
-    tb.innerHTML = data.map((s) => '<tr><td>' + fmt(s.company) + '</td><td style="color:var(--dh-red-2);font-weight:700">' + (s.score == null ? '<span style="color:var(--txt-3)">待分析</span>' : s.score) + '</td><td>' + fmt(s.modelVer) + '</td><td>' + fmt(s.ruleVer) + '</td><td>' + fmt(s.time) + '</td><td><span class="status-badge ' + (lvColor[s.level] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(s.level) + '</span></td></tr>').join('');
+    const lvColor = { 'A类': 'sb-success', 'B类': 'sb-aging', 'C类': 'sb-normal', 'D类': 'sb-fail', '待核实': 'sb-normal' };
+    tb.innerHTML = data.map((s) => {
+      const scoreText = s.score == null ? '<span style="color:var(--txt-3)">待核实' + (s.provisionalScore == null ? '' : '（参考 ' + s.provisionalScore + '）') + '</span>' : s.score;
+      const missing = (s.missing || []).length ? (s.missing || []).join('、') : '无';
+      return '<tr><td><b>' + fmt(s.company) + '</b></td><td style="color:var(--dh-red-2);font-weight:700">' + scoreText + '</td><td><span class="status-badge ' + (s.coverage === 100 ? 'sb-success' : 'sb-aging') + '"><span class="sb-dot"></span>' + fmt(s.coverage || 0) + '%</span></td><td style="max-width:230px">' + fmt(missing) + '</td><td>' + fmt(s.ruleVer) + '</td><td>' + fmt(s.time) + '</td><td><span class="status-badge ' + (lvColor[s.level] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(s.level) + '</span></td><td><button class="btn btn-blue btn-sm" onclick="ZS.editAssessment(' + s.companyId + ')">录入/查看</button></td></tr>';
+    }).join('');
     renderScoreDist(data);
   }
+  window.ZS.editAssessment = async function (companyId) {
+    const companyResult = await apiGet('/companies/' + companyId);
+    const company = companyResult.data;
+    const standard = window.__scoreStandard || (await apiGet('/score-standard')).data || [];
+    if (!company) return showToast('企业不存在');
+    const fields = standard.map((dim) => '<div style="padding:13px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><b style="color:var(--txt-0)">' + fmt(dim.name) + '</b><div style="font-size:12px;color:var(--txt-3);margin-top:3px">' + fmt(dim.criteria) + '</div></div><span class="tag">权重 ' + fmt(dim.weight) + '%</span></div><div class="grid-2" style="margin-top:10px"><div class="form-row"><label>评分（0-100）</label><input class="assessment-score" data-key="' + dim.scoreKey + '" type="number" min="0" max="100" step="0.1" value="' + escapeHtml(company[dim.scoreKey] == null ? '' : company[dim.scoreKey]) + '"></div><div class="form-row"><label>核验依据/资料来源</label><textarea class="assessment-evidence" data-key="' + dim.evidenceKey + '" rows="2" maxlength="2000" placeholder="填写财报、专利、合同、公开记录或人工核验结论">' + escapeHtml(company[dim.evidenceKey] || '') + '</textarea></div></div></div>').join('');
+    showResultModal('企业尽调评分 · ' + company.name, '<div style="padding:10px 12px;border-radius:10px;background:#fefce8;color:#854d0e;font-size:13px">评分和核验依据必须同时填写才计入正式总分；缺少资料的板块会显示“待核实”。</div>' + fields + '<button class="btn btn-blue" style="width:100%;margin-top:16px" onclick="ZS.saveAssessment(' + companyId + ')">保存并重新计算</button>');
+  };
+  window.ZS.saveAssessment = async function (companyId) {
+    const body = {};
+    qa('#zsResultBody .assessment-score').forEach((input) => { body[input.dataset.key] = input.value; });
+    qa('#zsResultBody .assessment-evidence').forEach((input) => { body[input.dataset.key] = input.value; });
+    const result = await apiPut('/companies/' + companyId + '/assessment', body);
+    if (!result.data) return showToast(result.error || '评分保存失败');
+    el('zsResultModal').style.display = 'none';
+    showToast('尽调评分已保存，资料完整度 ' + result.data.coverage + '%');
+    renderScoreTable();
+  };
   function renderScoreDist(data) {
     const page = el('page-engine-score'); if (!page) return;
     let sec = el('scoreDistSec');
     if (!sec) {
       const titles = page.querySelectorAll('.section-title');
       let anchor = null;
-      titles.forEach((t) => { const h = t.querySelector('h3'); if (h && /评分历史留痕/.test(h.textContent)) anchor = t; });
+      titles.forEach((t) => { const h = t.querySelector('h3'); if (h && h.textContent.trim() === '企业尽调评分') anchor = t; });
       sec = document.createElement('div'); sec.id = 'scoreDistSec';
       if (anchor) anchor.insertAdjacentElement('beforebegin', sec); else page.appendChild(sec);
     }
     const a = data.filter((x) => x.level === 'A类').length;
     const b = data.filter((x) => x.level === 'B类').length;
     const c = data.filter((x) => x.level === 'C类').length;
-    const p = data.filter((x) => x.level === '待分析' || x.score == null).length;
+    const d = data.filter((x) => x.level === 'D类').length;
+    const p = data.filter((x) => x.level === '待核实' || x.score == null).length;
     const total = data.length || 1;
-    const segs = [{ v: a, c: '#dc2626', l: 'A类' }, { v: b, c: '#f59e0b', l: 'B类' }, { v: c, c: '#64748b', l: 'C类' }, { v: p, c: '#334155', l: '待分析' }].filter((s) => s.v > 0);
+    const segs = [{ v: a, c: '#10b981', l: 'A类' }, { v: b, c: '#f59e0b', l: 'B类' }, { v: c, c: '#64748b', l: 'C类' }, { v: d, c: '#dc2626', l: 'D类' }, { v: p, c: '#7561f5', l: '待核实' }].filter((s) => s.v > 0);
     const C = 2 * Math.PI * 70; let off = 0;
     const arcs = segs.map((s) => { const len = s.v / total * C; const dash = C - len; const arc = '<circle cx="100" cy="100" r="70" fill="none" stroke="' + s.c + '" stroke-width="26" stroke-dasharray="' + len.toFixed(2) + ' ' + dash.toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 100 100)"/>'; off += len; return arc; }).join('');
     const scored = data.filter((x) => x.score != null).map((x) => x.score);
     const avg = scored.length ? Math.round(scored.reduce((s, x) => s + x, 0) / scored.length) : 0;
-    const maxv = Math.max(a, b, c, p, 1);
+    const maxv = Math.max(a, b, c, d, p, 1);
     const bars = segs.map((s) => '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><span style="width:52px;font-size:12px;color:var(--txt-2)">' + s.l + '</span><div style="flex:1;height:14px;background:var(--border,#e5e9f2);border-radius:7px;overflow:hidden"><i style="display:block;height:100%;width:' + (s.v / maxv * 100).toFixed(1) + '%;background:' + s.c + '"></i></div><span style="width:28px;text-align:right;font-size:12px;font-weight:700">' + s.v + '</span></div>').join('');
     sec.innerHTML = '<div class="section-title"><h3>评分等级分布</h3><span class="tag">实时统计</span><div class="line"></div></div>' +
       '<div class="card" style="margin-bottom:18px;display:flex;gap:24px;align-items:center;flex-wrap:wrap">' +
       '<svg viewBox="0 0 200 200" style="width:180px;height:180px;flex:0 0 auto">' + arcs +
       '<text x="100" y="94" text-anchor="middle" fill="var(--txt-3,#888)" font-size="12">参评企业</text>' +
-      '<text x="100" y="120" text-anchor="middle" fill="var(--dh-red-2,#dc2626)" font-size="26" font-weight="800">' + (a + b + c) + '</text></svg>' +
+      '<text x="100" y="120" text-anchor="middle" fill="var(--dh-red-2,#dc2626)" font-size="26" font-weight="800">' + (a + b + c + d) + '</text></svg>' +
       '<div style="flex:1;min-width:240px">' +
-      '<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px">A类（≥85）重点对接 · B类（75-84）跟踪 · C类（60-74）观察 · 待分析需补全评分维度</div>' +
+      '<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px">A类（≥85）重点对接 · B类（75-84）跟踪 · C类（60-74）观察 · D类（&lt;60）谨慎 · 资料不全显示待核实</div>' +
       bars +
-      '<div style="margin-top:10px;font-size:13px;color:var(--txt-2)">平均分 <b style="color:var(--dh-red-2)">' + avg + '</b> · 待分析 <b>' + p + '</b> 家</div>' +
+      '<div style="margin-top:10px;font-size:13px;color:var(--txt-2)">正式评分平均分 <b style="color:var(--dh-red-2)">' + avg + '</b> · 待核实 <b>' + p + '</b> 家</div>' +
       '</div></div>';
   }
 

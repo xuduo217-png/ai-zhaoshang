@@ -243,7 +243,7 @@ const RESOURCES = {
   scoreWeights: {
     label: '招商评分权重',
     isSingle: true,
-    seed: [{ id: 1, 合同到期: 30, 项目金额: 20, 续标: 15, 外地企业: 15, 成长性: 10, 产业匹配度: 10 }],
+    seed: [{ id: 1, 技术产品: 20, 财务能力: 20, 团队股权: 15, 市场情况: 15, 合规风险: 15, 融资需求: 7, 异地拓产: 8 }],
   },
   signalWeights: {
     label: '机会信号权重',
@@ -437,18 +437,40 @@ const RESOURCES = {
 };
 
 /* ---------- 引擎计算 ---------- */
-const SCORE_DIM = { '合同到期': 'contractExpire', '项目金额': 'projectAmount', '续标': 'renewal', '外地企业': 'outofTown', '成长性': 'growth', '产业匹配度': 'industryMatch' };
-function levelOf(s) { return s >= 85 ? 'A类' : s >= 78 ? 'B类' : 'C类'; }
+const SCORE_STANDARD = [
+  { name: '技术产品', scoreKey: 'technologyScore', evidenceKey: 'technologyEvidence', weight: 20, criteria: '量产产品30分；技术不可替代性25分；发明专利实际应用25分；高企、专精特新等资质20分' },
+  { name: '财务能力', scoreKey: 'financeScore', evidenceKey: 'financeEvidence', weight: 20, criteria: '主营收入质量25分；营收持续增长20分；现金流及研发资金支撑30分；负债、逾期和民间借贷风险25分' },
+  { name: '团队股权', scoreKey: 'teamEquityScore', evidenceKey: 'teamEquityEvidence', weight: 15, criteria: '股权结构清晰35分；无代持风险25分；核心团队稳定性及科创履历40分' },
+  { name: '市场情况', scoreKey: 'marketScore', evidenceKey: 'marketEvidence', weight: 15, criteria: '客户质量30分；订单及收入确定性30分；行业赛道空间25分；竞争地位和客户集中风险15分' },
+  { name: '合规风险', scoreKey: 'complianceScore', evidenceKey: 'complianceEvidence', weight: 15, criteria: '工商司法合规25分；知识产权合规25分；劳动用工合规20分；无重大处罚记录30分；分数越高表示风险越低' },
+  { name: '融资需求', scoreKey: 'financingScore', evidenceKey: 'financingEvidence', weight: 7, criteria: '融资需求明确20分；近期机构对接20分；知名机构投资30分；融资估值合理30分' },
+  { name: '异地拓产', scoreKey: 'expansionScore', evidenceKey: 'expansionEvidence', weight: 8, criteria: '招聘规模增长30分；异地招聘信息25分；招聘岗位与扩产匹配30分；异地设点或扩产计划15分' },
+];
+function scoreWeights() {
+  const saved = loadRes('scoreWeights')[0] || {};
+  return Object.fromEntries(SCORE_STANDARD.map((dim) => [dim.name, Number.isFinite(Number(saved[dim.name])) ? Number(saved[dim.name]) : dim.weight]));
+}
+function levelOf(s) { return s >= 85 ? 'A类' : s >= 75 ? 'B类' : s >= 60 ? 'C类' : 'D类'; }
 function computeScores() {
   const companies = loadRes('companies');
-  const w = loadRes('scoreWeights')[0] || {};
+  const w = scoreWeights();
   const scores = companies.map((c) => {
-    let s = 0;
-    for (const [k, key] of Object.entries(SCORE_DIM)) s += (Number(c[key]) || 0) * ((Number(w[k]) || 0) / 100);
-    const hasData = Object.values(SCORE_DIM).some((key) => Number(c[key]) > 0);
-    if (!hasData) return { id: c.id, companyId: c.id, company: c.name, score: null, level: '待分析', modelVer: 'v2.3', ruleVer: 'r1.6', time: now() };
-    s = Math.round(s);
-    return { id: c.id, companyId: c.id, company: c.name, score: s, level: levelOf(s), modelVer: 'v2.3', ruleVer: 'r1.6', time: now() };
+    let weighted = 0; let availableWeight = 0;
+    const dimensions = SCORE_STANDARD.map((dim) => {
+      const raw = c[dim.scoreKey];
+      const value = raw === '' || raw === null || raw === undefined ? null : Number(raw);
+      const evidence = String(c[dim.evidenceKey] || '').trim();
+      const verified = Number.isFinite(value) && value >= 0 && value <= 100 && evidence.length > 0;
+      if (verified) { const weight = Math.max(0, Number(w[dim.name]) || 0); weighted += value * weight; availableWeight += weight; }
+      return { name: dim.name, score: verified ? value : null, weight: Math.max(0, Number(w[dim.name]) || 0), evidence: evidence || '', status: verified ? '已核实' : '待核实' };
+    });
+    const verifiedCount = dimensions.filter((dim) => dim.status === '已核实').length;
+    const coverage = Math.round(verifiedCount / SCORE_STANDARD.length * 100);
+    const provisionalScore = availableWeight ? Math.round(weighted / availableWeight) : null;
+    const complete = verifiedCount === SCORE_STANDARD.length && availableWeight > 0;
+    const score = complete ? provisionalScore : null;
+    const missing = dimensions.filter((dim) => dim.status !== '已核实').map((dim) => dim.name);
+    return { id: c.id, companyId: c.id, company: c.name, score, provisionalScore, coverage, verifiedCount, dimensions, missing, level: complete ? levelOf(score) : '待核实', modelVer: '尽调评分 v1.0', ruleVer: 'r2.0', time: now() };
   });
   scores.sort((a, b) => (a.score == null ? 1 : b.score == null ? -1 : b.score - a.score));
   saveRes('scores', scores);
@@ -548,7 +570,7 @@ function externalQuery(source, q) {
   });
 }
 
-/* ---------- 企业评分维度补全（打通工商源 + 规则，消除"待分析"） ---------- */
+/* ---------- 企业基础字段补全（正式尽调评分必须由证据支持，不自动编造分值） ---------- */
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (h % 1000) / 1000; }
 async function enrichCompany(c) {
   const source = serviceKey('天眼查') ? '天眼查' : (serviceKey('企查查') ? '企查查' : null);
@@ -565,7 +587,7 @@ async function enrichCompany(c) {
       live = true; // 已尝试真实工商源（是否命中字段另说）
     } catch (e) { live = false; }
   }
-  // 规则补全 6 个评分维度（0-100），基于企业属性 + 名字稳定扰动
+  // 仅补全机会发现所需的基础推断字段；不写入七维正式尽调评分
   const h = hashStr(c.name + (c.region || ''));
   const local = /成都|四川|蓉|川|绵阳|德阳|宜宾|泸州|南充/.test(c.region || '');
   c.outofTown = local ? Math.round(28 + h * 22) : Math.round(78 + h * 22);
@@ -757,13 +779,20 @@ const HEADER_ALIAS = {
   registerCapital: ['注册资本', '注册资本(万)', '注册资金', '资本', '注册资本万元'],
   employees: ['员工数', '员工人数', '人数', '从业人数', '职工', '员工总数'],
   foundedYear: ['成立年份', '成立时间', '成立年', '注册年份', '创办年份', '成立日期'],
+  technologyScore: ['技术产品评分', '技术评分'], technologyEvidence: ['技术产品依据', '技术评分依据'],
+  financeScore: ['财务能力评分', '财务评分'], financeEvidence: ['财务能力依据', '财务评分依据'],
+  teamEquityScore: ['团队股权评分', '股权团队评分'], teamEquityEvidence: ['团队股权依据', '股权团队依据'],
+  marketScore: ['市场情况评分', '市场评分'], marketEvidence: ['市场情况依据', '市场评分依据'],
+  complianceScore: ['合规风险评分', '合规评分'], complianceEvidence: ['合规风险依据', '合规评分依据'],
+  financingScore: ['融资需求评分', '融资评分'], financingEvidence: ['融资需求依据', '融资评分依据'],
+  expansionScore: ['异地拓产评分', '拓产评分'], expansionEvidence: ['异地拓产依据', '拓产评分依据'],
 };
 function mapCompanyRow(row) {
   const get = (aliases) => { for (const a of aliases) { if (row[a] != null && String(row[a]).trim() !== '') return String(row[a]).trim(); } return ''; };
   const name = get(HEADER_ALIAS.name);
   if (!name) return null;
   const num = (v) => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
-  return {
+  const result = {
     name,
     region: get(HEADER_ALIAS.region),
     industry: get(HEADER_ALIAS.industry),
@@ -771,6 +800,13 @@ function mapCompanyRow(row) {
     employees: num(get(HEADER_ALIAS.employees)),
     foundedYear: num(get(HEADER_ALIAS.foundedYear)),
   };
+  for (const dim of SCORE_STANDARD) {
+    const scoreText = get(HEADER_ALIAS[dim.scoreKey] || []);
+    const evidence = get(HEADER_ALIAS[dim.evidenceKey] || []);
+    if (scoreText !== '') result[dim.scoreKey] = num(scoreText);
+    if (evidence !== '') result[dim.evidenceKey] = evidence.slice(0, 2000);
+  }
+  return result;
 }
 
 /* ---------- 工具 ---------- */
@@ -1103,18 +1139,53 @@ const server = http.createServer(async (req, res) => {
         { name: '数据处理', status: '功能可用', detail: '企业 ' + companies.length + ' 家' },
         { name: '知识管理', status: '功能可用', detail: '待审核 ' + pending + ' 条' },
         { name: '企业画像', status: '功能可用', detail: '标签 ' + loadRes('profileTags').length + ' 维' },
-        { name: '招商价值评分', status: '功能可用', detail: '已评分 ' + scores.length + ' 家' },
+        { name: '招商价值评分', status: '功能可用', detail: '正式评分 ' + scores.filter((item) => item.score != null).length + ' 家，待核实 ' + scores.filter((item) => item.score == null).length + ' 家' },
         { name: '招商机会发现', status: '功能可用', detail: '信号 ' + signals.length + ' 条' },
         { name: '前台智能匹配', status: '功能可用', detail: '访客空间 ' + portalSessionCount + ' 个' },
       ],
     });
   }
 
+  /* 七维企业尽调评分标准与人工核验 */
+  if (p === '/api/score-standard' && method === 'GET') {
+    const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
+    const weights = scoreWeights();
+    return send(res, 200, { data: SCORE_STANDARD.map((dim) => ({ ...dim, weight: weights[dim.name] })) });
+  }
+  const assessmentMatch = p.match(/^\/api\/companies\/(\d+)\/assessment$/);
+  if (assessmentMatch && method === 'PUT') {
+    const user = currentUser(req); if (!user) return send(res, 401, { error: '未登录或账号已停用' });
+    if (!canWrite(user, 'companies')) return send(res, 403, { error: '无权修改企业评分' });
+    const companies = loadRes('companies');
+    const company = companies.find((item) => item.id === Number(assessmentMatch[1]));
+    if (!company) return send(res, 404, { error: '企业不存在' });
+    const body = await readBody(req);
+    for (const dim of SCORE_STANDARD) {
+      if (Object.prototype.hasOwnProperty.call(body, dim.scoreKey)) {
+        const raw = body[dim.scoreKey];
+        if (raw === '' || raw === null) company[dim.scoreKey] = null;
+        else {
+          const scoreValue = Number(raw);
+          if (!Number.isFinite(scoreValue) || scoreValue < 0 || scoreValue > 100) return send(res, 400, { error: dim.name + '评分必须在 0-100 之间' });
+          company[dim.scoreKey] = Math.round(scoreValue * 10) / 10;
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(body, dim.evidenceKey)) company[dim.evidenceKey] = String(body[dim.evidenceKey] || '').trim().slice(0, 2000);
+    }
+    company.assessmentUpdatedAt = now();
+    company.assessmentUpdatedBy = user.username;
+    saveRes('companies', companies);
+    const scores = computeScores();
+    const score = scores.find((item) => item.companyId === company.id);
+    logAudit('data', user.username + ' → 更新企业尽调评分（' + company.name + '，资料完整度' + score.coverage + '%）', '评分更新');
+    return send(res, 200, { data: score, company });
+  }
+
   /* 引擎端点 */
   if (p === '/api/engine/score/recompute' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const scores = computeScores();
-    logAudit('data', scores.length + '家企业 → 招商评分重算完成（权重 r1.6）', '评分更新');
+    logAudit('data', scores.length + '家企业 → 七维尽调评分重算完成（规则 r2.0）', '评分更新');
     return send(res, 200, { data: scores });
   }
   if (p === '/api/engine/signal/scan' && method === 'POST') {
@@ -1170,9 +1241,10 @@ const server = http.createServer(async (req, res) => {
     const type = u.searchParams.get('type') || '企业信息';
     let aoa;
     if (type === '企业信息') {
-      aoa = [['企业名称', '所在地', '行业', '注册资本(万)', '员工数', '成立年份'],
-        ['示例科技有限责任公司', '成都', '电子信息', '5000', '320', '2015'],
-        ['示例新能源有限公司', '宜宾', '新能源', '120000', '2100', '2018']];
+      const assessmentHeaders = SCORE_STANDARD.flatMap((dim) => [dim.name + '评分', dim.name + '依据']);
+      aoa = [['企业名称', '所在地', '行业', '注册资本(万)', '员工数', '成立年份', ...assessmentHeaders],
+        ['示例科技有限责任公司', '成都', '电子信息', '5000', '320', '2015', ...SCORE_STANDARD.flatMap(() => ['', '待企业提供或人工核验'])],
+        ['示例新能源有限公司', '宜宾', '新能源', '120000', '2100', '2018', ...SCORE_STANDARD.flatMap(() => ['', '待企业提供或人工核验'])]];
     } else if (type === '招商案例') {
       aoa = [['标题', '类型', '内容', '时间'], ['示例招商案例', '成功', '某新能源企业落地，投资额20亿', '2026-08-01']];
     } else {
@@ -1218,8 +1290,8 @@ const server = http.createServer(async (req, res) => {
     computeSignals();
     const scores = loadRes('scores');
     const newScores = scores.filter((s) => newIds.includes(s.id)).map((s) => ({
-      company: s.company, score: s.score, level: s.level,
-      source: s.score == null ? '待分析' : (liveCount ? '工商源' : '本地规则'),
+      company: s.company, score: s.score, level: s.level, coverage: s.coverage,
+      source: s.score == null ? '待补充尽调证据' : '七维证据已核实',
     }));
     const up = loadRes('excelUploads');
     up.push({ id: nextId(up), filename: b.filename || '未命名.xlsx', type: b.type || '企业信息', uploader: uname, total: rows.length, success, fail, time: now(), status: fail === rows.length ? '失败' : '成功' });
@@ -1436,13 +1508,20 @@ const server = http.createServer(async (req, res) => {
       delete b.id;
       delete b.passwordHash;
       delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
+      if (name === 'scoreWeights') {
+        const allowed = SCORE_STANDARD.map((dim) => dim.name);
+        const values = allowed.map((key) => Number(b[key]));
+        if (values.some((value) => !Number.isFinite(value) || value < 0 || value > 40)) return send(res, 400, { error: '每项评分权重必须在 0-40 之间' });
+        if (values.reduce((sum, value) => sum + value, 0) !== 100) return send(res, 400, { error: '七项评分权重合计必须为 100' });
+        Object.keys(b).forEach((key) => { if (!allowed.includes(key)) delete b[key]; });
+      }
       if (name === 'users') {
         if (!b.password || String(b.password).length < 12) return send(res, 400, { error: '新用户密码至少需要 12 位' });
         b.passwordHash = hashPassword(b.password); delete b.password;
       }
       const data = loadRes(name);
       if (RESOURCES[name].isSingle) {
-        if (data[0]) { data[0] = { ...data[0], ...b, id: data[0].id }; }
+        if (data[0]) { data[0] = name === 'scoreWeights' ? { id: data[0].id, ...b } : { ...data[0], ...b, id: data[0].id }; }
         else { data[0] = { id: 1, ...b }; }
         saveRes(name, data);
         return send(res, 200, { data: data[0] });
@@ -1458,13 +1537,20 @@ const server = http.createServer(async (req, res) => {
       delete b.id;
       delete b.passwordHash;
       delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
+      if (name === 'scoreWeights') {
+        const allowed = SCORE_STANDARD.map((dim) => dim.name);
+        const values = allowed.map((key) => Number(b[key]));
+        if (values.some((value) => !Number.isFinite(value) || value < 0 || value > 40)) return send(res, 400, { error: '每项评分权重必须在 0-40 之间' });
+        if (values.reduce((sum, value) => sum + value, 0) !== 100) return send(res, 400, { error: '七项评分权重合计必须为 100' });
+        Object.keys(b).forEach((key) => { if (!allowed.includes(key)) delete b[key]; });
+      }
       if (name === 'users' && Object.prototype.hasOwnProperty.call(b, 'password')) {
         if (String(b.password).length < 12) return send(res, 400, { error: '密码至少需要 12 位' });
         b.passwordHash = hashPassword(b.password); delete b.password;
       }
       const data = loadRes(name);
       if (RESOURCES[name].isSingle) {
-        if (data[0]) data[0] = { ...data[0], ...b, id: data[0].id }; else data[0] = { id: 1, ...b };
+        if (data[0]) data[0] = name === 'scoreWeights' ? { id: data[0].id, ...b } : { ...data[0], ...b, id: data[0].id }; else data[0] = { id: 1, ...b };
         saveRes(name, data);
         auditCrud(user, '编辑', name, data[0]);
         return send(res, 200, { data: data[0] });
@@ -1512,8 +1598,8 @@ function auditCrud(user, action, name, item, old) {
   logAudit('op', user + ' → ' + action + label + '「' + nameField + '」' + extra, label);
 }
 
-/* 启动引导：确保评分/信号已计算 */
-try { if (!fs.existsSync(fileOf('scores')) || loadRes('scores').length === 0) computeScores(); } catch (e) {}
+/* 启动引导：始终按当前评分规则刷新结果，避免旧版本分数继续展示 */
+try { computeScores(); } catch (e) {}
 try { if (!fs.existsSync(fileOf('signals')) || loadRes('signals').length === 0) computeSignals(); } catch (e) {}
 
 /* 示例企业种子（四川招商典型，去重追加，经 enrichCompany 补全维度 + 重算评分/信号） */

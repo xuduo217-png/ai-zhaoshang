@@ -609,29 +609,28 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
 
       <!-- ===== 招商价值评分 ===== -->
       <div class="page" id="page-engine-score">
-        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 招商价值评分智能体 · 评分模型 · 规则 r1.6</div>
-        <div class="section-title"><h3>6维评分权重配置</h3><span class="tag">后台可配·无需改代码</span><div class="line"></div><button class="btn btn-green btn-sm" onclick="showToast('权重配置已保存，将应用于新评分')">保存配置</button></div>
+        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 企业投资价值与落地风险尽调 · 规则 r2.0</div>
+        <div class="section-title"><h3>7维尽调评分标准</h3><span class="tag">有证据才计分</span><div class="line"></div></div>
+        <div id="scoreStandardGrid" class="grid-4" style="margin-bottom:18px"></div>
+        <div class="section-title"><h3>评分权重配置</h3><span class="tag">总权重 100</span><div class="line"></div><button class="btn btn-green btn-sm">保存配置</button></div>
         <div class="card" style="margin-bottom:18px">
-          <div class="weight-row"><span class="wr-name">合同到期</span><input type="range" class="wr-slider" min="0" max="100" value="30" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:30%;background:#dc2626"></i></div><span class="wr-val">30</span></div>
-          <div class="weight-row"><span class="wr-name">项目金额</span><input type="range" class="wr-slider" min="0" max="100" value="20" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:20%;background:#1e40af"></i></div><span class="wr-val">20</span></div>
-          <div class="weight-row"><span class="wr-name">续标</span><input type="range" class="wr-slider" min="0" max="100" value="15" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:15%;background:#06b6d4"></i></div><span class="wr-val">15</span></div>
-          <div class="weight-row"><span class="wr-name">外地企业</span><input type="range" class="wr-slider" min="0" max="100" value="15" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:15%;background:#8b5cf6"></i></div><span class="wr-val">15</span></div>
-          <div class="weight-row"><span class="wr-name">成长性</span><input type="range" class="wr-slider" min="0" max="100" value="10" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:10%;background:#10b981"></i></div><span class="wr-val">10</span></div>
-          <div class="weight-row"><span class="wr-name">产业匹配度</span><input type="range" class="wr-slider" min="0" max="100" value="10" oninput="this.nextElement.firstElementChild.style.width=this.value+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:10%;background:#f59e0b"></i></div><span class="wr-val">10</span></div>
+          <div class="weight-row"><span class="wr-name">技术产品</span><input type="range" class="wr-slider" min="0" max="40" value="20" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#7561f5"></i></div><span class="wr-val">20</span></div>
+          <div class="weight-row"><span class="wr-name">财务能力</span><input type="range" class="wr-slider" min="0" max="40" value="20" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#1e40af"></i></div><span class="wr-val">20</span></div>
+          <div class="weight-row"><span class="wr-name">团队股权</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#06b6d4"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">市场情况</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#8b5cf6"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">合规风险</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#10b981"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">融资需求</span><input type="range" class="wr-slider" min="0" max="40" value="7" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:17.5%;background:#f59e0b"></i></div><span class="wr-val">7</span></div>
+          <div class="weight-row"><span class="wr-name">异地拓产</span><input type="range" class="wr-slider" min="0" max="40" value="8" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:20%;background:#dc2626"></i></div><span class="wr-val">8</span></div>
         </div>
         <div class="section-title"><h3>评分阈值与晋级</h3><div class="line"></div></div>
-        <div class="grid-3">
+        <div class="grid-4">
           <div class="card"><div class="card-title" style="margin-bottom:10px">A类重点对象</div><div style="font-size:28px;font-weight:800;color:var(--dh-red-2)">≥85</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">自动标记 · 主要领导对接</div></div>
           <div class="card"><div class="card-title" style="margin-bottom:10px">B类跟踪对象</div><div style="font-size:28px;font-weight:800;color:var(--dh-gold)">75-84</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">专员跟踪 · 定期回访</div></div>
           <div class="card"><div class="card-title" style="margin-bottom:10px">C类观察对象</div><div style="font-size:28px;font-weight:800;color:var(--txt-2)">60-74</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">纳入观察池</div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:10px">D类谨慎对象</div><div style="font-size:28px;font-weight:800;color:var(--dh-red-2)">&lt;60</div><div style="font-size:11px;color:var(--txt-3);margin-top:4px">风险复核 · 谨慎推进</div></div>
         </div>
-        <div class="section-title"><h3>评分历史留痕</h3><span class="tag">模型版本+规则版本</span><div class="line"></div></div>
-        <div class="table-wrap"><table><thead><tr><th>企业</th><th>综合分</th><th>模型版本</th><th>规则版本</th><th>评分时间</th><th>是否重点</th></tr></thead><tbody>
-          <tr><td>四川长虹电子控股集团</td><td style="color:var(--dh-red-2);font-weight:700">87</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
-          <tr><td>宜宾五粮液股份</td><td style="color:var(--dh-red-2);font-weight:700">91</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
-          <tr><td>通威股份</td><td style="color:var(--dh-red-2);font-weight:700">89</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>A类</span></td></tr>
-          <tr><td>攀钢集团</td><td style="color:var(--dh-gold);font-weight:700">83</td><td>v2.3</td><td>r1.6</td><td>2026-08-08 15:42</td><td><span class="status-badge sb-aging"><span class="sb-dot"></span>B类</span></td></tr>
-        </tbody></table></div>
+        <div class="section-title"><h3>企业尽调评分</h3><span class="tag">评分+证据+资料完整度</span><div class="line"></div></div>
+        <div class="table-wrap"><table><thead><tr><th>企业</th><th>正式总分</th><th>资料完整度</th><th>待核实项</th><th>规则版本</th><th>评分时间</th><th>等级</th><th>操作</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <!-- ===== 招商机会发现 ===== -->

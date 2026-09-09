@@ -193,3 +193,15 @@ tr:hover td{background:#f0f4ff}
 #loginMask .logo-text .lt1{font-size:23px;font-weight:600;color:#202638}
 #loginMask .logo-text .lt2{font-size:13px;font-weight:400;color:#75839b}
 @media(max-width:900px){.topbar{height:60px}.msg-panel{top:60px}}
+
+/* Typography: bold Heiti headings, lighter compact interface copy. */
+:root{--font-title:"Heiti SC","SimHei","PingFang SC","Microsoft YaHei",sans-serif;--font-copy:"PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,Arial,sans-serif}
+body{font-family:var(--font-copy);font-size:13px;font-weight:400}
+.page-title,.logo-text .lt1,#loginMask .logo-text .lt1,.section-title h3,.modal-head{font-family:var(--font-title);font-weight:700}
+.nav-item,.nav-item.active{font-size:13px;font-weight:400}
+.card-title{font-size:13px;font-weight:500}
+.breadcrumb,.nav-label,.logo-text .lt2,.user-info .ur,.stat-card .ds-lbl,.stat-card .ds-sub{font-size:12px;font-weight:400}
+td,.review-item,.log-line,.weight-row{font-family:var(--font-copy);font-size:13px;font-weight:400}
+.form-row label{font-size:12px!important;font-weight:400!important}
+.form-row input,.form-row select,.form-row textarea{font-family:var(--font-copy);font-size:13px!important;font-weight:400}
+@media(pointer:coarse){.form-row input,.form-row select,.form-row textarea{font-size:16px!important}}

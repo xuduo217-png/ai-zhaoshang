@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js portal-service.js ./
+COPY server.js portal-service.js qcc-client.js ./
 COPY public ./public
 RUN mkdir -p /app/data && chown -R node:node /app
 

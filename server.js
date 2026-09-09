@@ -9,6 +9,9 @@ const crypto = require('crypto');
 const { URL } = require('url');
 const https = require('https');
 const { clientIp, matchResources, createPortalService } = require('./portal-service');
+const { createQccClient } = require('./qcc-client');
+const qcc = createQccClient();
+const qccRequests = new Map();
 
 /* Excel 解析库（npm install xlsx 后可用；缺失时导入接口会提示） */
 let XLSX = null;
@@ -34,7 +37,7 @@ function now() { return new Date().toISOString().slice(0, 16).replace('T', ' ');
 function nowHMS() { return new Date().toISOString().slice(11, 19); }
 function fileOf(name) { return path.join(DATA, name + '.json'); }
 function loadRes(name) {
-  if (name === 'apiSources') return [{ id: 2, name: '企查查 API', status: '待接入客户 API', todayCalls: 0, remain: null, content: '等待客户提供企查查接口凭据及文档', usage: 0 }];
+  if (name === 'apiSources') return [{ id: 2, name: '企查查 API', status: qcc.configured ? '已配置 MCP' : '待接入客户 API', todayCalls: 0, remain: null, content: '企业基础、风险、知识产权、经营、董监高；按需查询，可能消耗企查查积分', usage: 0 }];
   const f = fileOf(name);
   if (!fs.existsSync(f)) { const seed = (RESOURCES[name] && RESOURCES[name].seed) || []; fs.writeFileSync(f, JSON.stringify(seed, null, 2)); return seed.slice(); }
   try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return []; }
@@ -544,12 +547,13 @@ function makeToken() { return crypto.randomBytes(16).toString('hex'); }
 loadTokens();
 
 function serviceKey(source) {
-  const envMap = { 企查查: 'QCC_API_KEY', DeepSeek: 'DEEPSEEK_API_KEY' };
+  const envMap = { DeepSeek: 'DEEPSEEK_API_KEY' };
   return process.env[envMap[source]] || '';
 }
 
 /* ---------- 企业 API：等待客户提供企查查文档与凭据 ---------- */
 function externalQuery(source, q) {
+  if (qcc.configured) return qcc.call('company', 'get_company_by_query', { searchKey: q });
   return { mode: 'unavailable', source, query: q, result: null, note: '企查查待接入客户 API，请提供接口凭据及文档' };
 }
 
@@ -1199,13 +1203,40 @@ const server = http.createServer(async (req, res) => {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
     if (!['企查查', 'DeepSeek'].includes(b.source)) return send(res, 400, { error: '不支持该数据源' });
-    const configured = b.source === 'DeepSeek' && !!serviceKey(b.source);
+    const configured = b.source === '企查查' ? qcc.configured : !!serviceKey(b.source);
     return send(res, 200, { source: b.source, configured });
+  }
+  if (p === '/api/external/qcc/tools' && method === 'POST') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '请先登录后台' });
+    if (user.role === '只读用户') return send(res, 403, { error: '当前账号无权使用付费查询' });
+    const b = await readBody(req);
+    const catalog = await qcc.tools(b.group || 'company');
+    return send(res, 200, { group: b.group || 'company', groups: qcc.groups, tools: catalog.tools.map(t => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })) });
+  }
+  if (p === '/api/external/qcc/query' && method === 'POST') {
+    const user = currentUser(req);
+    if (!user) return send(res, 401, { error: '请先登录后台' });
+    if (user.role === '只读用户') return send(res, 403, { error: '当前账号无权使用付费查询' });
+    const b = await readBody(req);
+    if (b.confirmCost !== true) return send(res, 400, { error: '请确认本次查询可能消耗企查查积分' });
+    const recent = (qccRequests.get(user.username) || []).filter(time => Date.now() - time < 60000);
+    if (recent.length >= 6) return send(res, 429, { error: '每个账号每分钟最多发起 6 次查询，请稍后再试' });
+    recent.push(Date.now()); qccRequests.set(user.username, recent);
+    try {
+      const result = await qcc.call(b.group, b.tool, b.arguments);
+      logAudit('api', user.username + ' → 企查查查询成功：' + b.group + '/' + b.tool, '企查查 MCP');
+      return send(res, 200, result);
+    } catch (error) {
+      logAudit('api', user.username + ' → 企查查查询失败', '企查查 MCP');
+      throw error;
+    }
   }
   if (p === '/api/external/company' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
     if (b.source && b.source !== '企查查') return send(res, 400, { error: '企业数据仅支持企查查' });
+    if (qcc.configured) return send(res, 400, { error: '请使用后台企查查按需查询入口并确认积分消耗' });
     const r = await externalQuery('企查查', b.name || '');
     return send(res, 200, r);
   }

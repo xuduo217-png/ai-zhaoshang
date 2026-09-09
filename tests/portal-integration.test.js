@@ -8,9 +8,9 @@ const {spawn}=require('node:child_process');
 const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
-  for(const file of ['server.js','portal-service.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
+  for(const file of ['server.js','portal-service.js','qcc-client.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
-  const child=spawn(process.execPath,['server.js'],{cwd:dir,env:{...process.env,NODE_PATH:path.join(__dirname,'..','node_modules'),PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'test',DEEPSEEK_API_KEY:'',INITIAL_ADMIN_PASSWORD:'TestOnly-Portal123!'},stdio:['ignore','pipe','pipe']});
+  const child=spawn(process.execPath,['server.js'],{cwd:dir,env:{...process.env,NODE_PATH:path.join(__dirname,'..','node_modules'),PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'test',DEEPSEEK_API_KEY:'',QCC_MCP_TOKEN:'',INITIAL_ADMIN_PASSWORD:'TestOnly-Portal123!'},stdio:['ignore','pipe','pipe']});
   t.after(async()=>{if(child.exitCode===null){const done=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await done;}fs.rmSync(dir,{recursive:true,force:true});});
   await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('startup timeout')),10000);child.once('error',reject);child.stdout.on('data',chunk=>{if(String(chunk).includes('已启动')){clearTimeout(timer);resolve();}});child.once('exit',code=>{clearTimeout(timer);reject(new Error('server exited '+code));});});
   const base='http://127.0.0.1:'+port;
@@ -58,6 +58,9 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     const exported=await call('/api/leads/export',{authorization:token,raw:true});assert.equal(exported.status,200);assert.match(exported.headers['content-type'],/spreadsheet/);assert.ok(exported.text.length>100);
   });
   await t.test('seven-dimension due diligence scoring requires evidence before issuing a formal score',async()=>{
+    const anonymous=await call('/api/external/qcc/query',{method:'POST',body:{}});assert.equal(anonymous.status,401);
+    const unconfirmed=await call('/api/external/qcc/query',{method:'POST',authorization:token,body:{group:'company',tool:'get_company_by_query',arguments:{searchKey:'测试'}}});assert.equal(unconfirmed.status,400);
+    const unknownGroup=await call('/api/external/qcc/tools',{method:'POST',authorization:token,body:{group:'evil'}});assert.equal(unknownGroup.status,400);
     const sources=await call('/api/apiSources',{authorization:token});
     assert.deepEqual(sources.body.data.map(item=>item.name),['企查查 API']);
     assert.equal(sources.body.data[0].status,'待接入客户 API');

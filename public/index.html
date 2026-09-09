@@ -393,7 +393,7 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
         <div class="grid-3" style="margin-bottom:18px">
           <div class="card"><div class="card-head"><div class="card-title">企查查 API</div><span class="status-badge">待接入客户 API</span></div><p>等待客户提供接口凭据及文档。</p></div>
         </div>
-        <div class="section-title"><h3>企业工商变更同步</h3><span class="tag">每日自动</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('已触发工商变更同步任务')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>立即同步</button></div>
+        <div class="section-title"><h3>企业工商变更</h3><span class="tag">按需查询</span><div class="line"></div><button id="qccChangesBtn" class="btn btn-blue btn-sm">按需查询变更</button></div>
         <div class="table-wrap"><table><thead><tr><th>企业名称</th><th>变更类型</th><th>变更内容</th><th>同步时间</th><th>状态</th></tr></thead><tbody>
           <tr><td>四川长虹电子控股集团</td><td>注册资本变更</td><td>90亿 → 100亿元</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已同步</span></td></tr>
           <tr><td>通威股份有限公司</td><td>股东变更</td><td>新增股东：某产业基金</td><td>2026-08-08 06:00</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>已同步</span></td></tr>
@@ -1005,7 +1005,7 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
     <div class="modal-foot"><button class="btn btn-ghost" onclick="ZS.close()">取消</button><button class="btn btn-blue" onclick="ZS.save()">保存</button></div>
   </div>
 </div>
-<script src="app.js?v=2.9"></script>
+<script src="app.js?v=2.10-qcc"></script>
 <script>
 /* 备用：即使 app.js 加载异常，登录/获取也能直接调用后端 */
 async function doLoginStandalone() {

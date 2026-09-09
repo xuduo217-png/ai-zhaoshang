@@ -133,8 +133,8 @@
   });
   function bindNav() { qa('.nav-item').forEach((it) => it.addEventListener('click', () => setTimeout(renderCurrent, 0))); }
   function setupAcceptanceActions() {
-    const syncBtn=qa('#page-data-api button').find(button=>/立即同步/.test(button.textContent));
-    if(syncBtn){syncBtn.onclick=null;syncBtn.disabled=true;syncBtn.title='等待客户提供正式工商 API 后启用';syncBtn.textContent='待接入客户 API';}
+    const syncBtn=el('qccChangesBtn');
+    if(syncBtn){syncBtn.onclick=()=>el('qccQueryPanel')?.scrollIntoView({behavior:'smooth'});}
     for(const pageId of ['page-push-config','page-workmgr-config']) qa('#'+pageId+' button').filter(button=>/保存配置/.test(button.textContent)).forEach(button=>{button.onclick=null;button.addEventListener('click',()=>showToast('该页配置通过每行“编辑”保存，当前数据已持久化'));});
   }
   function renderCurrent() {
@@ -336,10 +336,52 @@
         btn.disabled = false; btn.textContent = '导入公开企业测试数据';
       };
     }
-    const syncBtn = Array.from(page.querySelectorAll('button')).find((b) => /立即同步/.test(b.textContent));
-    if (syncBtn) syncBtn.onclick = async () => { await apiPost('/audit/log', { kind: 'api', text: '企业工商变更同步任务已触发', tag: '外部API' }); showToast('已触发工商变更同步任务'); };
+    const syncBtn = el('qccChangesBtn');
+    if (syncBtn) { syncBtn.textContent='按需查询变更'; syncBtn.onclick = () => { el('qccQueryPanel')?.scrollIntoView({behavior:'smooth'}); showToast('请选择企业基础服务中的工商变更工具；不会自动批量调用'); }; }
     const syncBody=page.querySelector('.section-title + .table-wrap tbody');
-    if(syncBody) syncBody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt-3);padding:24px">待客户提供正式工商 API 后生成同步记录</td></tr>';
+    if(syncBody) syncBody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt-3);padding:24px">未启用自动批量同步；请使用企查查按需查询。</td></tr>';
+    renderQccQuery(page);
+  }
+
+  function renderQccQuery(page) {
+    if (el('qccQueryPanel')) return;
+    const panel=document.createElement('section'); panel.id='qccQueryPanel';panel.className='card';panel.style.margin='16px 0';
+    panel.innerHTML='<h3>企查查 · 按需查询</h3><p style="color:var(--txt-3)">查询可能消耗企查查积分，不自动批量调用。先用企业检索确认主体，再用企业全称或统一社会信用代码查询其他维度。结果不自动计入尽调评分。</p><label>服务 <select data-qcc-group><option value="company">企业基础</option><option value="risk">企业风险</option><option value="ipr">知识产权</option><option value="operation">经营信息</option><option value="executive">董监高</option></select></label> <button class="btn btn-ghost btn-sm" data-qcc-load>连接并加载工具</button><form data-qcc-form hidden><p><label>查询工具 <select data-qcc-tool style="max-width:100%"></select></label></p><p data-qcc-description style="white-space:pre-wrap;font-size:12px;color:var(--txt-3)"></p><div data-qcc-fields style="display:flex;flex-wrap:wrap;gap:12px"></div><p><label><input type="checkbox" data-qcc-confirm required> 我确认本次查询可能消耗企查查积分</label></p><button class="btn btn-blue" type="submit">查询企查查</button></form><p data-qcc-status role="status" aria-live="polite"></p><pre data-qcc-result style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:13px/1.7 inherit"></pre>';
+    page.insertBefore(panel,page.firstChild.nextSibling);
+    const group=panel.querySelector('[data-qcc-group]'), load=panel.querySelector('[data-qcc-load]'),form=panel.querySelector('form'),select=panel.querySelector('[data-qcc-tool]'),fields=panel.querySelector('[data-qcc-fields]'),status=panel.querySelector('[data-qcc-status]'),output=panel.querySelector('[data-qcc-result]');
+    let catalog=[], generation=0;
+    const showFields=()=>{
+      const tool=catalog.find(t=>t.name===select.value);fields.replaceChildren();
+      panel.querySelector('[data-qcc-description]').textContent=tool?.description||'';
+      for(const [key,schema] of Object.entries(tool?.inputSchema?.properties||{})){
+        const label=document.createElement('label');label.style.display='grid';label.style.gap='5px';label.textContent=schema.description||key;
+        const input=document.createElement(schema.enum?'select':'input'); input.name=key;
+        if(schema.enum) for(const value of schema.enum){const option=document.createElement('option');option.value=value;option.textContent=value;input.append(option);}
+        else {input.type=['integer','number'].includes(schema.type)?'number':schema.type==='boolean'?'checkbox':'text';input.maxLength=schema.type==='array'?2000:200;if(schema.type==='number')input.step='any';if(schema.type==='array')input.placeholder='JSON 数组，例如 ["选项一"]';}
+        input.required=schema.type!=='boolean'&&(tool.inputSchema.required||[]).includes(key);label.append(input);fields.append(label);
+      }
+      panel.querySelector('[data-qcc-confirm]').checked=false;output.textContent='';
+    };
+    group.onchange=()=>{generation++;catalog=[];form.hidden=true;output.textContent='';status.textContent='请重新加载所选服务工具';};
+    select.onchange=showFields;
+    load.onclick=async()=>{
+      const current=++generation;load.disabled=true;form.hidden=true;status.textContent='正在连接企查查…';output.textContent='';
+      try{const result=await apiPost('/external/qcc/tools',{group:group.value});if(current!==generation)return;if(result.error)throw new Error(result.error);catalog=result.tools||[];select.replaceChildren();
+        for(const tool of catalog){const option=document.createElement('option');option.value=tool.name;option.textContent=(tool.description||tool.name).split(/[。\r\n]/)[0].slice(0,55)+' · '+tool.name;select.append(option);}
+        if(catalog.some(t=>t.name==='get_company_by_query'))select.value='get_company_by_query';
+        form.hidden=!catalog.length;showFields();status.textContent='服务已连接，可用查询工具 '+catalog.length+' 个（不代表每项数据均已授权）';
+      }catch(error){status.textContent=error.message;}finally{load.disabled=false;}
+    };
+    form.onsubmit=async event=>{
+      event.preventDefault();const tool=catalog.find(t=>t.name===select.value);if(!tool)return;
+      const args={};try{for(const input of fields.querySelectorAll('input,select')){const type=tool.inputSchema.properties[input.name].type;if(input.value!==''||type==='boolean')args[input.name]=type==='boolean'?input.checked:type==='array'?JSON.parse(input.value):['number','integer'].includes(type)?Number(input.value):input.value.trim();}}catch{status.textContent='数组参数需要填写有效的 JSON 数组';return;}
+      const submit=form.querySelector('[type=submit]');submit.disabled=true;load.disabled=true;group.disabled=true;select.disabled=true;output.textContent='';status.textContent='正在查询，请勿重复提交…';
+      try{const result=await apiPost('/external/qcc/query',{group:group.value,tool:tool.name,arguments:args,confirmCost:panel.querySelector('[data-qcc-confirm]').checked});if(result.error)throw new Error(result.error);
+        status.textContent='来源：企查查 · '+result.tool+' · '+result.queriedAt;
+        const parts=(result.result.content||[]).filter(item=>item.type==='text').map(item=>{try{return JSON.stringify(JSON.parse(item.text),null,2);}catch{return item.text;}});
+        output.textContent=result.note+'\n\n'+(parts.length?parts.join('\n\n'):JSON.stringify(result.result,null,2));
+      }catch(error){status.textContent=error.message;}finally{submit.disabled=false;load.disabled=false;group.disabled=false;select.disabled=false;panel.querySelector('[data-qcc-confirm]').checked=false;}
+    };
   }
 
   /* ---------- Excel 数据上传（真实解析导入） ---------- */

@@ -34,6 +34,7 @@ function now() { return new Date().toISOString().slice(0, 16).replace('T', ' ');
 function nowHMS() { return new Date().toISOString().slice(11, 19); }
 function fileOf(name) { return path.join(DATA, name + '.json'); }
 function loadRes(name) {
+  if (name === 'apiSources') return [{ id: 2, name: '企查查 API', status: '待接入客户 API', todayCalls: 0, remain: null, content: '等待客户提供企查查接口凭据及文档', usage: 0 }];
   const f = fileOf(name);
   if (!fs.existsSync(f)) { const seed = (RESOURCES[name] && RESOURCES[name].seed) || []; fs.writeFileSync(f, JSON.stringify(seed, null, 2)); return seed.slice(); }
   try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return []; }
@@ -81,9 +82,7 @@ const RESOURCES = {
       { key: 'usage', label: '额度使用%', type: 'number' },
     ],
     seed: [
-      { id: 1, name: '天眼查 API', status: '已连接', todayCalls: 1286, remain: 8720, content: '工商、股东、对外投资、风险信息', usage: 62 },
-      { id: 2, name: '企查查 API', status: '已连接', todayCalls: 892, remain: 15360, content: '企业关系图谱、司法风险', usage: 38 },
-      { id: 3, name: '爱企查 API', status: '额度预警', todayCalls: 568, remain: 1236, content: '企业基础信息补充', usage: 92 },
+      { id: 2, name: '企查查 API', status: '待接入客户 API', todayCalls: 0, remain: null, content: '等待客户提供企查查接口凭据及文档', usage: 0 },
     ],
   },
   dsTasks: {
@@ -348,7 +347,6 @@ const RESOURCES = {
       { id: 1, time: '15:42:18', text: '系统管理员 → 修改评分权重配置（合同到期 28→30）', tag: '规则配置' },
       { id: 2, time: '14:20:05', text: '招商专员 → 上传Excel（2026年8月新增企业.xlsx，236行）', tag: '数据上传' },
       { id: 3, time: '13:15:30', text: '系统管理员 → 审核通过知识（钠离子电池产业链图谱更新）', tag: '知识审核' },
-      { id: 4, time: '11:08:00', text: '系统 → 爱企查API额度预警（剩余1,236次）', tag: '系统告警' },
       { id: 5, time: '10:30:12', text: '招商主管 → 导出报告（新能源产业链分析报告.pdf）', tag: '报告导出' },
       { id: 6, time: '09:15:00', text: '系统管理员 → 新增用户账户（viewer）', tag: '用户管理' },
     ],
@@ -546,34 +544,19 @@ function makeToken() { return crypto.randomBytes(16).toString('hex'); }
 loadTokens();
 
 function serviceKey(source) {
-  const envMap = { 天眼查: 'TIANYANCHA_API_KEY', 企查查: 'QCC_API_KEY', DeepSeek: 'DEEPSEEK_API_KEY' };
+  const envMap = { 企查查: 'QCC_API_KEY', DeepSeek: 'DEEPSEEK_API_KEY' };
   return process.env[envMap[source]] || '';
 }
 
-/* ---------- 外部 API 适配器（填 key 即真，无网/无key 回退 mock） ---------- */
+/* ---------- 企业 API：等待客户提供企查查文档与凭据 ---------- */
 function externalQuery(source, q) {
-  const key = serviceKey(source);
-  const hasKey = !!key;
-  if (!hasKey) {
-    // 本地 mock：从 companies 命中则返回，否则构造通用占位
-    const hit = loadRes('companies').find((c) => c.name.indexOf(q) >= 0);
-    return { mode: 'mock', source, query: q, result: hit ? { name: hit.name, industry: hit.industry, region: hit.region, scoreHint: '本地画像可用' } : { name: q, note: '未配置真实Key，返回演示数据' } };
-  }
-  // 已配置真实 Key：尝试真实请求（沙箱无外网会超时回退）
-  return new Promise((resolve) => {
-    const url = source === '天眼查' ? 'https://open.api.tianyancha.com/services/open/2.0/baseinfo/normalOne'
-      : source === '企查查' ? 'https://api.qcc.com/api/user/GetBasic' : 'https://api.deepseek.com/v1/chat/completions';
-    const req = https.request(url, { method: 'GET', timeout: 2500, headers: { 'Authorization': 'Bearer ' + key } }, (r) => { let d = ''; r.on('data', (c) => (d += c)); r.on('end', () => resolve({ mode: 'live', source, query: q, httpStatus: r.statusCode, result: d.slice(0, 200) })); });
-    req.on('timeout', () => { req.destroy(); resolve({ mode: 'mock', source, query: q, note: '真实请求超时，已回退演示数据' }); });
-    req.on('error', () => resolve({ mode: 'mock', source, query: q, note: '网络不可达，已回退演示数据' }));
-    req.end();
-  });
+  return { mode: 'unavailable', source, query: q, result: null, note: '企查查待接入客户 API，请提供接口凭据及文档' };
 }
 
 /* ---------- 企业基础字段补全（正式尽调评分必须由证据支持，不自动编造分值） ---------- */
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (h % 1000) / 1000; }
 async function enrichCompany(c) {
-  const source = serviceKey('天眼查') ? '天眼查' : (serviceKey('企查查') ? '企查查' : null);
+  const source = null; // 企查查正式适配完成后启用。
   let live = false;
   if (source) {
     try {
@@ -1215,14 +1198,15 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/external/test' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
-    const configured = !!serviceKey(b.source);
+    if (!['企查查', 'DeepSeek'].includes(b.source)) return send(res, 400, { error: '不支持该数据源' });
+    const configured = b.source === 'DeepSeek' && !!serviceKey(b.source);
     return send(res, 200, { source: b.source, configured });
   }
   if (p === '/api/external/company' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const b = await readBody(req);
-    const r = await externalQuery(b.source || '天眼查', b.name || '');
-    if (r.mode === 'mock') logAudit('api', '外部API查询（' + (b.source || '天眼查') + '·' + (b.name || '') + '）→ 演示数据', '外部API');
+    if (b.source && b.source !== '企查查') return send(res, 400, { error: '企业数据仅支持企查查' });
+    const r = await externalQuery('企查查', b.name || '');
     return send(res, 200, r);
   }
   if (p === '/api/external/company/import-test' && method === 'POST') {

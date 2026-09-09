@@ -58,6 +58,15 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     const exported=await call('/api/leads/export',{authorization:token,raw:true});assert.equal(exported.status,200);assert.match(exported.headers['content-type'],/spreadsheet/);assert.ok(exported.text.length>100);
   });
   await t.test('seven-dimension due diligence scoring requires evidence before issuing a formal score',async()=>{
+    const sources=await call('/api/apiSources',{authorization:token});
+    assert.deepEqual(sources.body.data.map(item=>item.name),['企查查 API']);
+    assert.equal(sources.body.data[0].status,'待接入客户 API');
+    for(const source of ['天眼查','爱企查']) {
+      const removed=await call('/api/external/test',{method:'POST',authorization:token,body:{source}});
+      assert.equal(removed.status,400);
+    }
+    const pending=await call('/api/external/company',{method:'POST',authorization:token,body:{name:'测试企业'}});
+    assert.equal(pending.body.mode,'unavailable');assert.equal(pending.body.result,null);
     const standard=await call('/api/score-standard',{authorization:token});assert.equal(standard.status,200);assert.equal(standard.body.data.length,7);assert.equal(standard.body.data.reduce((sum,item)=>sum+item.weight,0),100);
     const invalidWeights=await call('/api/scoreWeights',{method:'PUT',authorization:token,body:{技术产品:10,财务能力:10,团队股权:10,市场情况:10,合规风险:10,融资需求:10,异地拓产:10}});assert.equal(invalidWeights.status,400);
     const validWeights=await call('/api/scoreWeights',{method:'PUT',authorization:token,body:{技术产品:20,财务能力:20,团队股权:15,市场情况:15,合规风险:15,融资需求:7,异地拓产:8}});assert.equal(validWeights.status,200);

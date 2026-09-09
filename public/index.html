@@ -384,7 +384,6 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
             <div class="tl-item"><div class="tl-dot green"></div><div class="tl-date">2026-08-08 15:42</div><div class="tl-title">企业画像智能体完成 186 家企业画像更新</div><div class="tl-desc">模型版本 v2.3，处理耗时 8 分钟，平均置信度 92%</div></div>
             <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-date">2026-08-08 14:30</div><div class="tl-title">DeepSeek 资讯获取任务完成</div><div class="tl-desc">获取新闻 286 条 / 投融资 42 条 / 招投标 168 条 / 政策 12 条，Token消耗 0.86M</div></div>
             <div class="tl-item"><div class="tl-dot gold"></div><div class="tl-date">2026-08-08 13:15</div><div class="tl-title">招商规则配置已更新</div><div class="tl-desc">融资信号权重调整为 25，评分权重合同到期调整为 30，操作人：系统管理员</div></div>
-            <div class="tl-item"><div class="tl-dot red"></div><div class="tl-date">2026-08-08 11:08</div><div class="tl-title">爱企查API额度预警</div><div class="tl-desc">剩余调用额度 1,236 次（低于预警阈值 2,000），建议尽快补充额度</div></div>
           </div>
         </div>
       </div>
@@ -392,9 +391,7 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
       <!-- ===== 企业API对接 ===== -->
       <div class="page" id="page-data-api">
         <div class="grid-3" style="margin-bottom:18px">
-          <div class="card"><div class="card-head"><div class="card-title">天眼查 API</div><span class="status-badge sb-success"><span class="sb-dot"></span>已连接</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">1,286 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">8,720 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">工商、股东、对外投资、风险信息</span></div></div><div style="margin-top:12px"><div class="progress-bar"><i style="width:62%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">额度使用 62%</div></div></div>
-          <div class="card"><div class="card-head"><div class="card-title">企查查 API</div><span class="status-badge sb-success"><span class="sb-dot"></span>已连接</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">892 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">15,360 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">企业关系图谱、司法风险</span></div></div><div style="margin-top:12px"><div class="progress-bar green"><i style="width:38%"></i></div><div style="font-size:11px;color:var(--txt-3);margin-top:5px">额度使用 38%</div></div></div>
-          <div class="card"><div class="card-head"><div class="card-title">爱企查 API</div><span class="status-badge sb-fail"><span class="sb-dot"></span>额度预警</span></div><div class="field-list"><div class="field"><span class="fk">今日调用</span><span class="fv">568 次</span></div><div class="field"><span class="fk">剩余额度</span><span class="fv"><span class="hl">1,236 次</span></span></div><div class="field"><span class="fk">获取内容</span><span class="fv">企业基础信息补充</span></div></div><div style="margin-top:12px"><div class="progress-bar gold"><i style="width:92%"></i></div><div style="font-size:11px;color:var(--dh-gold);margin-top:5px">额度使用 92% · 低于预警阈值</div></div></div>
+          <div class="card"><div class="card-head"><div class="card-title">企查查 API</div><span class="status-badge">待接入客户 API</span></div><p>等待客户提供接口凭据及文档。</p></div>
         </div>
         <div class="section-title"><h3>企业工商变更同步</h3><span class="tag">每日自动</span><div class="line"></div><button class="btn btn-blue btn-sm" onclick="showToast('已触发工商变更同步任务')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>立即同步</button></div>
         <div class="table-wrap"><table><thead><tr><th>企业名称</th><th>变更类型</th><th>变更内容</th><th>同步时间</th><th>状态</th></tr></thead><tbody>
@@ -515,18 +512,14 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
         </div>
         <div class="section-title"><h3>API调用记录</h3><div class="line"></div><button class="btn btn-ghost btn-sm" onclick="showToast('日志导出中...')">导出Excel</button></div>
         <div class="table-wrap"><table><thead><tr><th>时间</th><th>API来源</th><th>数据类型</th><th>数据量</th><th>耗时</th><th>状态</th><th>详情</th></tr></thead><tbody>
-          <tr><td>15:42:18</td><td>天眼查</td><td>企业工商</td><td>1条</td><td>236ms</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
           <tr><td>15:42:05</td><td>DeepSeek</td><td>新闻摘要</td><td>12条</td><td>3.2s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
           <tr><td>15:41:52</td><td>企查查</td><td>股东信息</td><td>1条</td><td>512ms</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
-          <tr><td>15:41:30</td><td>爱企查</td><td>基础信息</td><td>1条</td><td>-</td><td><span class="status-badge sb-fail"><span class="sb-dot"></span>失败</span></td><td><button class="btn btn-red btn-sm">重试</button></td></tr>
           <tr><td>15:40:18</td><td>DeepSeek</td><td>招投标摘要</td><td>8条</td><td>2.8s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
           <tr><td>15:39:42</td><td>Excel上传</td><td>企业信息</td><td>236行</td><td>5.6s</td><td><span class="status-badge sb-success"><span class="sb-dot"></span>成功</span></td><td><button class="btn btn-ghost btn-sm">查看</button></td></tr>
         </tbody></table></div>
         <div class="section-title"><h3>异常告警</h3><div class="line"></div></div>
         <div class="card">
-          <div class="log-line warn"><span class="lt">15:41:30</span><span class="lm">爱企查API调用失败：额度不足（剩余1,236次），已自动重试2次</span><button class="btn btn-gold btn-sm">处理</button></div>
           <div class="log-line fail"><span class="lt">14:20:15</span><span class="lm">Excel上传 4行数据校验失败：统一信用代码格式错误，已退回修正</span><button class="btn btn-red btn-sm">查看</button></div>
-          <div class="log-line warn"><span class="lt">11:08:00</span><span class="lm">爱企查API额度低于预警阈值（2,000次），当前剩余 1,236 次</span><button class="btn btn-gold btn-sm">充值</button></div>
           <div class="log-line success"><span class="lt">06:00:00</span><span class="lm">每日工商变更同步任务完成，处理 186 家企业，成功 184 / 失败 2</span></div>
         </div>
       </div>
@@ -765,7 +758,6 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
             <div class="log-line success"><span class="lt">15:42:18</span><span class="lm">系统管理员 → 修改评分权重配置（合同到期 28→30）</span><span class="status-badge sb-normal">规则配置</span></div>
             <div class="log-line success"><span class="lt">14:20:05</span><span class="lm">招商专员 → 上传Excel（2026年8月新增企业.xlsx，236行）</span><span class="status-badge sb-normal">数据上传</span></div>
             <div class="log-line success"><span class="lt">13:15:30</span><span class="lm">系统管理员 → 审核通过知识（钠离子电池产业链图谱更新）</span><span class="status-badge sb-normal">知识审核</span></div>
-            <div class="log-line warn"><span class="lt">11:08:00</span><span class="lm">系统 → 爱企查API额度预警（剩余1,236次）</span><span class="status-badge sb-aging">系统告警</span></div>
             <div class="log-line success"><span class="lt">10:30:12</span><span class="lm">招商主管 → 导出报告（新能源产业链分析报告.pdf）</span><span class="status-badge sb-normal">报告导出</span></div>
             <div class="log-line success"><span class="lt">09:15:00</span><span class="lm">系统管理员 → 新增用户账户（viewer）</span><span class="status-badge sb-normal">用户管理</span></div>
           </div>
@@ -800,8 +792,7 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
               <div class="field"><span class="fk">平台名称</span><span class="fv">大合产业发展集团 · AI招商智能体平台</span></div>
               <div class="field"><span class="fk">平台域名</span><span class="fv">ai.dahe.cn</span></div>
               <div class="field"><span class="fk">DeepSeek Key</span><span class="fv">sk-****************************a8f3</span></div>
-              <div class="field"><span class="fk">天眼查 Key</span><span class="fv">tyc-****************************9e2c</span></div>
-              <div class="field"><span class="fk">企查查 Key</span><span class="fv">qcc-****************************7b4d</span></div>
+              <div class="field"><span class="fk">企查查 Key</span><span class="fv">待客户提供</span></div>
             </div>
             <button class="btn btn-blue btn-sm" style="margin-top:12px" onclick="showToast('参数已保存')">保存</button>
           </div>

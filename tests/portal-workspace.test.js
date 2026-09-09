@@ -17,6 +17,18 @@ function element() {
   };
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
+test('approved layout shows six primary scenarios and preserves two report tools under More',async()=>{
+  const app=await setup();
+  try {
+    assert.equal((app.el('toolGrid').innerHTML.match(/<button /g)||[]).length,6);
+    assert.match(app.el('toolGrid').innerHTML,/data-extra="chain"/);
+    assert.match(app.el('toolGrid').innerHTML,/data-extra="brief"/);
+    assert.equal((app.el('moreToolGrid').innerHTML.match(/<button /g)||[]).length,2);
+    assert.match(app.el('moreToolGrid').innerHTML,/data-extra="plan"/);
+    assert.match(app.el('moreToolGrid').innerHTML,/data-extra="assessment"/);
+    assert.match(html,/<details class="context-more">/);
+  } finally { app.close(); }
+});
 async function setup(matchResponse = {ok:true,json:async()=>({need:{summary:'新能源资源匹配'},matched:projects})}, loadResponse) {
   const elements = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],element()]));
   const calls = [], timers = new Set();

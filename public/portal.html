@@ -7,13 +7,15 @@
   <title>招商智能体 · 智能招商工作台</title>
   <link rel="stylesheet" href="portal-workspace.css?v=20260907-1">
   <link rel="stylesheet" href="portal-tools.css?v=20260905-2">
-  <link rel="stylesheet" href="portal-approved.css?v=20260909-1">
-  <script src="portal-tools.js?v=20260905-2" defer></script>
-  <script src="portal-workspace.js?v=20260905-2" defer></script>
+  <link rel="stylesheet" href="portal-approved.css?v=20260909-3">
+  <script src="portal-tools.js?v=20260909-3" defer></script>
+  <script src="portal-workspace.js?v=20260909-3" defer></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
-    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/><path d="m20 2 .5 1.5L22 4l-1.5.5L20 6l-.5-1.5L18 4l1.5-.5Z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M9.9 15.5a2 2 0 0 0-1.4-1.4l-5.1-1.3a.8.8 0 0 1 0-1.6l5.1-1.3a2 2 0 0 0 1.4-1.4l1.3-5.1a.8.8 0 0 1 1.6 0l1.3 5.1a2 2 0 0 0 1.4 1.4l5.1 1.3a.8.8 0 0 1 0 1.6l-5.1 1.3a2 2 0 0 0-1.4 1.4l-1.3 5.1a.8.8 0 0 1-1.6 0Z"/><path d="M20 2v4m-2-2h4"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M8 12h8 M8 16h8"/></symbol>
+    <symbol id="i-add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-4-4v8"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h12M4 18h16"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
@@ -35,7 +37,7 @@
   <div class="app-shell">
     <aside class="sidebar" id="sidebar" aria-label="主导航">
       <div class="brand-row"><span class="brand-symbol"><svg class="icon"><use href="#i-spark"/></svg></span><span class="brand-name">招商智能体</span><button class="icon-btn mobile-only" data-action="close-panels" aria-label="关闭导航"><svg class="icon"><use href="#i-close"/></svg></button></div>
-      <button class="new-chat" data-action="new"><svg class="icon"><use href="#i-plus"/></svg>开启智能分析</button>
+      <button class="new-chat" data-action="new"><svg class="icon"><use href="#i-add"/></svg>开启智能分析</button>
       <p class="section-label">招商工具箱</p>
       <nav class="nav-items">
         <button class="nav-item active" data-view="chat" aria-current="page"><span class="nav-icon"><svg class="icon"><use href="#i-spark"/></svg></span>智能招商分析</button>
@@ -59,12 +61,10 @@
         <div class="panel-heading"><h2><svg class="icon"><use href="#i-db"/></svg>当前任务资料</h2><button class="icon-btn context-close" data-action="close-panels" aria-label="关闭任务资料"><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="context-content">
           <div class="source-cards"><button class="source-card" data-extra="upload"><span class="source-icon blue"><svg class="icon"><use href="#i-upload"/></svg></span>添加资料<small>文档 / 表格 / PDF</small></button><button class="source-card connected-card" data-view="全部"><span class="selected-mark"><svg class="icon"><use href="#i-check"/></svg></span><span class="source-icon orange"><svg class="icon"><use href="#i-db"/></svg></span>招商资源库<small id="sourceCount">正在加载</small></button></div>
-          <div id="selectedDocuments" class="context-section"><p class="muted">尚未选择个人资料</p></div>
           <div class="source-status"><span>数据来源</span><span class="source-check"><svg class="icon"><use href="#i-check"/></svg>已发布资源</span></div>
           <div class="context-section"><div class="context-label"><strong>产业方向</strong><span>点击带入需求</span></div><div class="industry-chips" id="industryChips"></div></div>
           <div class="context-section"><div class="context-label"><strong>资源概况</strong><button class="text-btn" data-action="reload">刷新</button></div><div id="resourceStats" class="resource-stats"><p class="muted">正在读取资源库…</p></div></div>
-          <div class="context-section current-need"><div class="context-label"><strong>本次需求</strong></div><p id="currentNeed">描述您的产业方向、意向地区与投资诉求，开始一次资源匹配。</p></div>
-          <div class="data-note"><span class="note-dot"></span><p>当前包含联调示例资源，项目及政策信息请以主管部门确认结果为准。外部实时数据尚未接入。</p></div>
+          <details class="context-more"><summary>资料管理与说明</summary><div id="selectedDocuments" class="context-section"><p class="muted">尚未选择个人资料</p></div><div class="context-section current-need"><div class="context-label"><strong>本次需求</strong></div><p id="currentNeed">描述您的产业方向、意向地区与投资诉求，开始一次资源匹配。</p></div><div class="data-note"><span class="note-dot"></span><p>当前包含联调示例资源，项目及政策信息请以主管部门确认结果为准。前台企业查询为公开样本；企查查实时查询在后台按需使用。</p></div></details>
         </div>
       </aside>
       <section class="panel conversation-panel" aria-label="智能招商分析">
@@ -82,8 +82,8 @@
       </section>
       <aside class="panel tools-panel" id="toolsPanel" aria-label="智能分析工具">
         <div class="panel-heading"><h2><svg class="icon"><use href="#i-spark"/></svg>智能分析</h2><button class="icon-btn tools-close" data-action="close-panels" aria-label="关闭智能分析工具"><svg class="icon"><use href="#i-close"/></svg></button></div>
-        <div class="tools-content"><div class="tool-grid" id="toolGrid"></div><p class="tool-hint">选择一个场景，补充需求后发送</p></div>
-        <div class="output-area" id="outputArea"><div class="output-empty"><svg class="icon"><use href="#i-spark"/></svg><h3>让招商思路，在这里成形</h3><p>匹配完成后，在这里查看需求摘要与推荐资源。</p></div></div>
+        <div class="tools-content"><div class="tool-grid" id="toolGrid"></div><details class="tools-more"><summary>更多功能（2）</summary><div class="tool-grid" id="moreToolGrid"></div></details></div>
+        <div class="output-area" id="outputArea"><div class="output-empty"><svg class="icon"><use href="#i-spark"/></svg><h3>选择一个分析场景</h3><p>匹配结果与建议将在这里形成</p></div></div>
         <div class="tools-footer"><svg class="icon"><use href="#i-book"/></svg>分析仅供参考，投资决策请核实</div>
       </aside>
     </main>

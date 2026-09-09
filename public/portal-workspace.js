@@ -25,10 +25,10 @@
     { name:'招商项目查询', icon:'search', category:'招商项目', prompt:'请查询四川电子信息产业相关的招商项目。' },
     { name:'产业园区匹配', icon:'building', category:'投资载体', prompt:'我们计划在宜宾建设动力电池产线，请推荐适合的产业园区。' },
     { name:'优惠政策查询', icon:'book', tone:'orange', category:'优惠政策', prompt:'请查询成都智能制造企业可享受的优惠政策。' },
-    { name:'产业链资料梳理', icon:'grid', report:'chain' },
+    { name:'产业链梳理', icon:'grid', report:'chain' },
     { name:'企业招商方案', icon:'building', tone:'blue', report:'plan' },
     { name:'投资研判清单', icon:'chart', tone:'yellow', report:'assessment' },
-    { name:'参阅材料整理', icon:'book', report:'brief' }
+    { name:'参阅材料', icon:'file', report:'brief' }
   ];
   function toast(message) {
     $('toast').textContent = message;
@@ -214,7 +214,7 @@
     syncInput();
     $('requestError').hidden = true;
     $('currentNeed').textContent = '描述您的产业方向、意向地区与投资诉求，开始一次资源匹配。';
-    $('outputArea').innerHTML = '<div class="output-empty">' + icon('spark') + '<h3>让招商思路，在这里成形</h3><p>匹配完成后，在这里查看需求摘要与推荐资源。</p></div>';
+    $('outputArea').innerHTML = '<div class="output-empty">' + icon('spark') + '<h3>选择一个分析场景</h3><p>匹配结果与建议将在这里形成</p></div>';
     showView('chat');
     $('needInput').focus();
   }
@@ -259,8 +259,13 @@
   $('resourceSearch').addEventListener('input', renderProjects);
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closePanels(); });
   window.addEventListener('resize', closePanels);
-  $('industryChips').innerHTML = ['人工智能','新能源','电子信息','智能制造','生物医药'].map(name => '<button class="industry-chip" data-industry="' + name + '">' + name + '</button>').join('');
-  $('toolGrid').innerHTML = tools.map((tool,index) => '<button class="tool-card ' + (tool.tone || '') + '" ' + (tool.report ? 'data-extra="'+tool.report+'"' : 'data-tool="' + index + '"') + '>' + icon(tool.icon) + '<span>' + tool.name + '</span>' + (tool.report ? '<small>资料版</small>' : '<svg class="icon tool-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>') + '</button>').join('');
+  $('industryChips').innerHTML = ['人工智能','新能源','电子信息','智能制造'].map(name => '<button class="industry-chip" data-industry="' + name + '">' + name + '</button>').join('');
+  function toolButton(index) {
+    const tool=tools[index];
+    return '<button class="tool-card '+(tool.tone||'')+'" '+(tool.report?'data-extra="'+tool.report+'" title="根据所选资料整理，非实时行业尽调"':'data-tool="'+index+'"')+'>'+icon(tool.icon)+'<span>'+tool.name+'</span><svg class="icon tool-arrow" aria-hidden="true"><use href="#i-arrow"/></svg></button>';
+  }
+  $('toolGrid').innerHTML = [0,1,2,3,4,7].map(toolButton).join('');
+  $('moreToolGrid').innerHTML = [5,6].map(toolButton).join('');
   window.PortalWorkspace={closePanels};
   if(window.PortalExtras){
     const initialRun=state.run;

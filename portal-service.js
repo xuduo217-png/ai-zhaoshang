@@ -76,7 +76,7 @@ function matchResources(projects, message, rawNeed = {}, previous = {}, category
   const scope = [context.regions.join('/'),context.industries.join('/'),context.category === '全部' ? '' : context.category].filter(Boolean).join(' · ');
   return {need:{...context,summary:scope ? '当前筛选：'+scope : '未指定行业或地区，以下为已发布资源浏览推荐。'},matched,matchMode:constrained || context.keywords.length ? 'filtered' : 'browse'};
 }
-function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtures = []}) {
+function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtures = [],generateReport}) {
   const directory = path.join(dataDir,'portal-private');
   fs.mkdirSync(directory,{recursive:true,mode:0o700});
   const secretPath = path.join(directory,'.secret');
@@ -154,8 +154,14 @@ function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtu
     const method = req.method;
     if (p === '/api/portal/companies' && method === 'GET') {
       const q = (new URL(req.url,'http://localhost').searchParams.get('q') || '').trim().slice(0,80);
-      const rows = companyFixtures.filter(c => !q || [c.name,c.industry,c.region].join(' ').includes(q));
-      send(res,200,{mode:'public-test',notice:'历史公开测试样本，非实时工商查询。股东、司法风险等信息需接入正式授权接口。',data:rows}); return true;
+      const published = loadRes('companies').filter(c => c.published === '是').map(c => ({
+        id:c.id,name:c.name,creditCode:c.creditCode||'',industry:c.industry||'',region:c.region||'',
+        source:c.source||'人工录入',dataMode:c.dataMode||'manual',updatedAt:c.updatedAt||'',
+        note:'经管理员发布的基础资料；详细证据仅限后台授权查看。'
+      }));
+      const source = published.length ? published : companyFixtures;
+      const rows = source.filter(c => !q || [c.name,c.creditCode,c.industry,c.region].join(' ').includes(q));
+      send(res,200,{mode:published.length?'published':'public-test',notice:published.length?'已发布企业资料缓存；不触发付费查询，数据时间以最近更新为准。':'历史公开测试样本，非实时工商查询。股东、司法风险等信息需接入正式授权接口。',data:rows}); return true;
     }
     if (!allowed(clientIp(req),'workspace',120,60000)) fail('操作过于频繁，请稍后重试',429);
     const id = session(req,res);
@@ -164,6 +170,12 @@ function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtu
       const reportId = (new URL(req.url,'http://localhost').searchParams.get('id') || '').trim();
       const item = load(id).reports.find(report => report.id === reportId);
       if (!item) fail('报告不存在或不可访问',404);
+      if (new URL(req.url,'http://localhost').searchParams.get('format') === 'html') {
+        const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Disposition':"attachment; filename*=UTF-8''"+encodeURIComponent(item.title+'.html'),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
+        res.end('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>'+escape(item.title)+'</title><style>body{max-width:900px;margin:40px auto;padding:24px;font:15px/1.8 sans-serif;color:#202536}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}@media print{body{margin:0;padding:0}pre{font-size:12pt}}</style><h1>'+escape(item.title)+'</h1><p>可通过浏览器“打印”保存为 PDF。</p><pre>'+escape(item.content)+'</pre></html>');
+        return true;
+      }
       const filename = encodeURIComponent(item.title+'.txt');
       res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','Content-Disposition':"attachment; filename*=UTF-8''"+filename,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
       res.end(item.content);
@@ -189,7 +201,15 @@ function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtu
       data.documents.splice(index,1);save(id,data);send(res,200,{ok:true});return true;
     }
     if (p === '/api/portal/reports' && method === 'POST') {
-      const item=report(data,body);data.reports.unshift(item);data.reports=data.reports.slice(0,20);save(id,data);send(res,201,item);return true;
+      if (body.ai === true && !allowed(clientIp(req),'ai-report',3,3600000)) fail('每小时最多生成 3 份 AI 报告，请稍后再试',429);
+      let item=report(data,body);
+      if (body.ai === true) {
+        if (!generateReport) fail('AI 报告服务未配置',503);
+        item=await generateReport(item);
+      }
+      const latest=load(id);
+      if (!latest.conversations.some(c=>c.id===body.conversationId)) fail('会话已删除，报告未保存',409);
+      latest.reports.unshift(item);latest.reports=latest.reports.slice(0,20);save(id,latest);send(res,201,item);return true;
     }
     if (p === '/api/portal/reports' && method === 'DELETE') {data.reports=data.reports.filter(r=>r.id!==body.id);save(id,data);send(res,200,{ok:true});return true;}
     send(res,405,{error:'不支持该操作'});return true;

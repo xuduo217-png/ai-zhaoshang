@@ -6,7 +6,7 @@
   let workspace={documents:[],reports:[],conversations:[]},active=null,ready=null,detail=null;
   const selected = new Set();
   async function api(path,method='GET',body) {
-    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path==='reports'&&body?.ai?60000:20000);
     try {
       const response=await fetch('api/portal/'+path,{method,credentials:'same-origin',headers:method==='GET'?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal});
       const data=await response.json();if(!response.ok)throw new Error(data.error||'操作失败，请稍后重试');return data;
@@ -36,22 +36,23 @@
   function reports() {
     modal('我的资料报告','<p class="result-note">资料整理版不调用大模型，不替代专业尽调或投资判断。</p><div class="document-list">'+(workspace.reports.length?workspace.reports.map(r=>'<article class="project-card"><h3>'+esc(r.title)+'</h3><p class="project-meta">'+esc(r.createdAt.slice(0,19))+'</p><div class="feature-actions"><button class="text-btn" data-report="'+r.id+'">打开</button><button class="text-btn" data-export="'+r.id+'">导出文本</button><button class="text-btn" data-delete-report="'+r.id+'">删除</button></div></article>').join(''):'<p class="empty-state">完成资源匹配后，可使用右侧工具生成资料稿。</p>')+'</div>');
   }
-  function openReport(r) {if(r)modal(r.title+'（资料版）','<pre class="report-content">'+esc(r.content)+'</pre><button class="primary-btn" data-export="'+r.id+'">导出文本</button>');}
+  function openReport(r) {if(r)modal(r.title+(r.mode==='ai-assisted'?'（AI 辅助分析）':'（资料版）'),'<pre class="report-content">'+esc(r.content)+'</pre><button class="primary-btn" data-export="'+r.id+'">导出文本</button> <button class="primary-btn" data-export="'+r.id+'" data-format="html">导出排版版（可打印 PDF）</button>');}
   async function generate(type) {
     if(!active?.result?.conversationId){modal('请先匹配需求','<p>请先输入需求并完成一次资源匹配，然后生成相应资料稿。</p>');return;}
     modal('正在整理资料','<p role="status">正在根据本次匹配与所选资料生成有来源的整理稿…</p>');
-    const r=await api('reports','POST',{type,conversationId:active.result.conversationId,documentIds:[...selected]});
+    const ai=window.confirm('是否使用 DeepSeek 生成分析报告？将发送本次匹配及所选资料摘录，可能产生 API 费用。取消则生成不调用 AI 的资料整理版。');
+    const r=await api('reports','POST',{type,ai,conversationId:active.result.conversationId,documentIds:[...selected]});
     workspace.reports=[r,...workspace.reports].slice(0,20);openReport(r);
   }
-  function exportReport(id) {
+  function exportReport(id,format) {
     const report=workspace.reports.find(r=>r.id===id);if(!report)return;
-    const a=document.createElement('a');a.href='api/portal/reports/export?id='+encodeURIComponent(report.id);a.download=report.title+'.txt';document.body.appendChild(a);a.click();a.remove();
+    const a=document.createElement('a');a.href='api/portal/reports/export?id='+encodeURIComponent(report.id)+(format==='html'?'&format=html':'');a.download=report.title+(format==='html'?'.html':'.txt');document.body.appendChild(a);a.click();a.remove();
   }
   async function companies(query='') {
     const result=await api('companies?q='+encodeURIComponent(query));
-    modal('企业资料查询（公开样本）','<p class="result-note">'+esc(result.notice)+'</p><form data-feature-form="companies" class="company-search"><label class="field-label">企业名称、地区或产业<input name="query" maxlength="80" value="'+esc(query)+'" placeholder="例如：长虹、成都、新能源"></label><button class="primary-btn">查询</button></form><div class="document-list">'+(result.data.length?result.data.map(c=>{
+    modal(result.mode==='published'?'企业资料查询（已发布资料）':'企业资料查询（公开样本）','<p class="result-note">'+esc(result.notice)+'</p><form data-feature-form="companies" class="company-search"><label class="field-label">企业名称、信用代码、地区或产业<input name="query" maxlength="80" value="'+esc(query)+'" placeholder="例如：长虹、成都、新能源"></label><button class="primary-btn">查询</button></form><div class="document-list">'+(result.data.length?result.data.map(c=>{
       let link='';try{const u=new URL(c.sourceUrl);if(['http:','https:'].includes(u.protocol))link='<a href="'+esc(u.href)+'" target="_blank" rel="noopener noreferrer">查看公开来源</a>';}catch(_){}
-      return '<article class="project-card"><h3>'+esc(c.name)+'</h3><p>'+esc([c.region,c.industry].join(' · '))+'</p><p class="project-description">法定代表人：'+esc(c.legalPerson||'未提供')+'<br>成立日期：'+esc(c.foundedDate||'未提供')+'<br>注册资本（万元）：'+esc(c.registerCapital??'未提供')+'</p><p class="result-note">来源：'+esc(c.dataSource)+'；历史样本，未经实时更新。</p>'+link+'</article>';}).join(''):'<p class="empty-state">样本库无该企业；这不代表企业不存在，实时工商查询需配置授权接口。</p>')+'</div>');
+      return '<article class="project-card"><h3>'+esc(c.name)+'</h3><p>'+esc([c.region,c.industry].join(' · '))+'</p><p class="project-description">信用代码：'+esc(c.creditCode||'未提供')+'<br>法定代表人：'+esc(c.legalPerson||'未提供')+'<br>成立日期：'+esc(c.foundedDate||'未提供')+'</p><p class="result-note">来源：'+esc(c.source||c.dataSource||'未提供')+'；'+(result.mode==='published'?'最近更新：'+esc(c.updatedAt||'未提供'):'历史样本，未经实时更新。')+'</p>'+link+'</article>';}).join(''):'<p class="empty-state">已发布资料中无该企业；不代表企业不存在。可由管理员进行授权查询并发布基础资料。</p>')+'</div>');
   }
   function inquire(project=detail) {
     const matched=project?[project]:(active?.result?.matched||[]).filter(Boolean);
@@ -72,7 +73,7 @@
       if(action==='knowledge')knowledge();else if(action==='upload')upload();else if(action==='companies')await companies();else if(action==='reports')reports();else if(action==='inquire')inquire();
       else if(['chain','plan','assessment','brief'].includes(action))await generate(action);
       else if(b.dataset.report)openReport(workspace.reports.find(r=>r.id===b.dataset.report));
-      else if(b.dataset.export)exportReport(b.dataset.export);
+      else if(b.dataset.export)exportReport(b.dataset.export,b.dataset.format);
       else if(b.dataset.readDocument){const d=workspace.documents.find(d=>d.id===b.dataset.readDocument);if(d)modal(d.name,'<pre class="report-content">'+esc(d.content)+'</pre><button class="primary-btn" data-extra="knowledge">返回知识库</button>');}
       else if(b.dataset.deleteDocument&&window.confirm('确定删除这份私有资料？此操作无法撤销。')){await api('documents','DELETE',{id:b.dataset.deleteDocument});workspace.documents=workspace.documents.filter(d=>d.id!==b.dataset.deleteDocument);selected.delete(b.dataset.deleteDocument);selectedLabel();knowledge();}
       else if(b.dataset.deleteReport&&window.confirm('确定删除这份报告？此操作无法撤销。')){await api('reports','DELETE',{id:b.dataset.deleteReport});workspace.reports=workspace.reports.filter(r=>r.id!==b.dataset.deleteReport);reports();}

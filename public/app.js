@@ -218,6 +218,11 @@
     box.innerHTML = '<div class="section-title"><h3>测试采集结果</h3><span class="tag">公开公告 · 最多保留500条</span><div class="line"></div><button type="button" class="btn btn-red btn-sm" id="collectBidsBtn">立即采集</button></div>' +
       '<div class="table-wrap"><table><thead><tr><th>日期</th><th>类型</th><th>公告标题</th><th>匹配关键词</th><th>来源</th><th>链接</th></tr></thead><tbody>' +
       (rows.length ? rows.slice(0, 100).map((b) => '<tr><td>' + fmt(b.date) + '</td><td>' + fmt(b.noticeType) + '</td><td>' + fmt(b.title) + '</td><td>' + fmt(b.matchedKeywords) + '</td><td>' + fmt(b.source) + '</td><td><a href="' + encodeURI(String(b.url || '')) + '" target="_blank" rel="noopener noreferrer">查看原文</a></td></tr>').join('') : '<tr><td colspan="6" style="text-align:center;color:var(--txt-3);padding:24px">暂无数据，点击“立即采集”获取公开测试公告</td></tr>') + '</tbody></table></div>';
+    const schedule=await apiGet('/bids/schedule');
+    const scheduling=document.createElement('div');scheduling.className='section-title';
+    scheduling.innerHTML='<span>自动采集：'+(schedule.data?.on?'已开启':'关闭')+' · '+fmt(schedule.state?.status||'未执行')+' · 最近尝试 '+fmt(schedule.state?.lastAttempt||'无')+'</span><button type="button" class="btn btn-ghost btn-sm" id="bidScheduleToggle">'+(schedule.data?.on?'关闭自动采集':'开启每日采集')+'</button>';
+    box.prepend(scheduling);
+    el('bidScheduleToggle').onclick=async()=>{const on=!schedule.data?.on;if(on&&!window.confirm('开启后每天采集无需登录的公开公告，不调用付费 API。来源可能限流或变更，可随时关闭。'))return;const r=await apiPut('/bids/schedule',{on,intervalHours:24});if(r.error)return showToast(r.error);renderBidConfig();};
     el('collectBidsBtn').onclick = async () => {
       const btn = el('collectBidsBtn'); btn.disabled = true; btn.textContent = '采集中…';
       try {
@@ -377,7 +382,8 @@
       const args={};try{for(const input of fields.querySelectorAll('input,select')){const type=tool.inputSchema.properties[input.name].type;if(input.value!==''||type==='boolean')args[input.name]=type==='boolean'?input.checked:type==='array'?JSON.parse(input.value):['number','integer'].includes(type)?Number(input.value):input.value.trim();}}catch{status.textContent='数组参数需要填写有效的 JSON 数组';return;}
       const submit=form.querySelector('[type=submit]');submit.disabled=true;load.disabled=true;group.disabled=true;select.disabled=true;output.textContent='';status.textContent='正在查询，请勿重复提交…';
       try{const result=await apiPost('/external/qcc/query',{group:group.value,tool:tool.name,arguments:args,confirmCost:panel.querySelector('[data-qcc-confirm]').checked});if(result.error)throw new Error(result.error);
-        status.textContent='来源：企查查 · '+result.tool+' · '+result.queriedAt;
+        status.textContent='来源：企查查 · '+result.tool+' · '+result.queriedAt+(result.saved?' · 查询快照已保存':'');
+        if(result.companyId){const view=document.createElement('button');view.type='button';view.className='btn btn-ghost btn-sm';view.textContent='查看企业档案与证据';view.onclick=()=>ZS.viewCompanyEvidence(result.companyId);status.append(view);}
         const parts=(result.result.content||[]).filter(item=>item.type==='text').map(item=>{try{return JSON.stringify(JSON.parse(item.text),null,2);}catch{return item.text;}});
         output.textContent=result.note+'\n\n'+(parts.length?parts.join('\n\n'):JSON.stringify(result.result,null,2));
       }catch(error){status.textContent=error.message;}finally{submit.disabled=false;load.disabled=false;group.disabled=false;select.disabled=false;panel.querySelector('[data-qcc-confirm]').checked=false;}
@@ -508,10 +514,17 @@
     const page = el('page-engine-profile');
     const { data } = await apiGet('/profileTags');
     const tb = page.querySelector('table tbody'); if (!tb) return;
+    const headers=page.querySelectorAll('table th');if(headers[3])headers[3].textContent='资料覆盖企业';if(headers[4])headers[4].textContent='评测状态';
     const stColor = { '正常': 'sb-success', '优化中': 'sb-running', '待复核': 'sb-aging' };
     tb.innerHTML = data.map((t) => '<tr><td>' + fmt(t.dim) + '</td><td>' + fmt(t.method) + '</td><td>' + fmt(t.basis) + '</td><td>' + fmt(t.count) + '</td><td>' + fmt(t.accuracy) + '</td><td><span class="status-badge ' + (stColor[t.status] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(t.status) + '</span></td></tr>').join('');
     const btn = Array.from(page.querySelectorAll('button')).find((b) => /批量生成/.test(b.textContent));
-    if (btn) btn.onclick = async () => { const r = await apiPost('/engine/profile/build'); if (r.data) { showToast('画像批量生成任务已启动'); renderEngineProfile(); } };
+    if (btn) btn.onclick = async () => { const r = await apiPost('/engine/profile/build'); if (r.data) { showToast('已保存 ' + r.generated + ' 家企业的资料画像'); renderEngineProfile(); } };
+    const badge=page.querySelector('.ai-badge');if(badge)badge.textContent='企业画像 · 现有资料与企查查证据整理，缺失项待核实';
+    const heading=[...page.querySelectorAll('h3')].find(h=>/标签冲突校验|企业档案与证据/.test(h.textContent));
+    if(heading){heading.textContent='企业档案与证据';const card=heading.parentElement.nextElementSibling;
+      const companies=(await apiGet('/companies')).data||[];
+      if(card)card.innerHTML=companies.length?companies.map(c=>'<div class="log-line"><span class="lm">'+fmt(c.name)+' · '+fmt(c.dataMode==='public-test'?'测试样本':c.source||'人工录入')+'</span><button class="btn btn-ghost btn-sm" onclick="ZS.viewCompanyEvidence('+c.id+')">查看档案</button></div>').join(''):'<p>暂无企业，请先导入资料或使用企查查精确查询。</p>';
+    }
   }
 
   /* ---------- 引擎：招商评分 ---------- */
@@ -546,6 +559,18 @@
     }).join('');
     renderScoreDist(data);
   }
+  window.ZS.viewCompanyEvidence = async function (companyId) {
+    const r = await apiGet('/companies/' + companyId + '/evidence');
+    if (r.error) return showToast(r.error);
+    showResultModal('企业档案 · ' + r.company, '<p>企查查原始资料仅供核验；无记录不等于无风险，不能自动证明专利实际应用或无股权代持。</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + escapeHtml(JSON.stringify(r.profile, null, 2)) + '</pre>' + (r.data || []).map(s => '<details><summary>' + fmt(s.group + '/' + s.tool + ' · ' + s.queriedAt) + '</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + escapeHtml(JSON.stringify(s.result,null,2)) + '</pre></details>').join('') + '<button class="btn btn-blue" onclick="ZS.editAssessment(' + companyId + ')">核验并录入七维评分</button><button class="btn btn-ghost" onclick="ZS.recordCompanyEvent(' + companyId + ')">录入已核实机会</button>');
+    const publish=document.createElement('button');publish.className='btn btn-ghost';publish.textContent=r.published?'撤回前台基础资料':'发布基础资料到前台';
+    publish.onclick=async()=>{const result=await apiPut('/companies/'+companyId,{published:r.published?'否':'是'});if(result.error)return showToast(result.error);showToast('已更新，仅公开名称、信用代码、地区及行业');ZS.viewCompanyEvidence(companyId);};
+    el('zsResultBody').append(publish);
+  };
+  window.ZS.recordCompanyEvent = function (companyId) {
+    showResultModal('录入已核实机会', '<div class="form-row"><label>信号类型</label><select id="companyEventType">' + ['融资','扩产','迁址','投资','合作','招聘','中标','获奖'].map(s=>'<option>'+s+'</option>').join('') + '</select></div><div class="form-row"><label>发生日期</label><input id="companyEventDate" type="date"></div><div class="form-row"><label>证据来源（公告链接或核验材料名称）</label><input id="companyEventSource" maxlength="500"></div><div class="form-row"><label>已核实的事实摘要</label><textarea id="companyEventSummary" maxlength="2000"></textarea></div><button class="btn btn-blue" id="companyEventSave">确认事实并保存</button>');
+    el('companyEventSave').onclick=async()=>{const r=await apiPost('/companies/'+companyId+'/events',{type:el('companyEventType').value,date:el('companyEventDate').value,source:el('companyEventSource').value,summary:el('companyEventSummary').value});if(r.error)return showToast(r.error);showToast('已保存并更新机会信号');ZS.viewCompanyEvidence(companyId);};
+  };
   window.ZS.editAssessment = async function (companyId) {
     const companyResult = await apiGet('/companies/' + companyId);
     const company = companyResult.data;
@@ -766,19 +791,19 @@
     const tb = page.querySelector('table tbody'); if (!tb) return;
     const roleColor = { '主模型': 'sb-success', '备模型': 'sb-normal', '运行中': 'sb-success' };
     tb.innerHTML = data.map((m) => '<tr><td>' + fmt(m.name) + '</td><td>' + fmt(m.type) + '</td><td>' + fmt(m.version) + '</td><td><span class="status-badge ' + (roleColor[m.role] || 'sb-normal') + '"><span class="sb-dot"></span>' + fmt(m.role) + '</span></td><td>' + fmt(m.accuracy) + '</td><td>' + fmt(m.samples) + '</td><td>' + (m.role === '备模型' ? '<button class="btn btn-blue btn-sm" onclick="ZS.switchModel(' + m.id + ')">切换为主</button> ' : '') + '<button class="btn btn-ghost btn-sm" onclick="ZS.compareRecords(\'models\','+m.id+')">版本对比</button></td></tr>').join('');
-    const trainBtn = Array.from(page.querySelectorAll('button')).find((b) => /发起训练任务/.test(b.textContent));
+    const trainBtn = Array.from(page.querySelectorAll('button')).find((b) => /发起训练任务|更新数据统计/.test(b.textContent));
+    if (trainBtn) trainBtn.textContent = '更新数据统计（非模型训练）';
     if (trainBtn) trainBtn.onclick = async () => {
-      showToast('正在基于现有企业/信号数据校准模型…');
+      showToast('正在统计资料覆盖情况…');
       const primary = data.find((x) => x.role === '主模型') || data[0];
       const r = await apiPost('/models/calibrate', { id: primary.id });
-      if (r.data) { showToast('校准完成：覆盖' + r.metrics.coverage + ' / 命中' + r.metrics.hitRate + ' / 样本' + r.metrics.samples); renderModel(); } else showToast('校准失败');
+      if (r.data) { showToast('统计完成：覆盖' + r.metrics.coverage + ' / 推荐比例' + r.metrics.recommendationRate + ' / 企业' + r.metrics.samples); renderModel(); } else showToast(r.error || '统计失败');
     };
   }
   window.ZS.switchModel = async function (id) {
-    const { data } = await apiGet('/models');
-    const target = data.find((x) => x.id === id); if (!target) return;
-    for (const m of data) { if (m.name === target.name) { await apiPut('/models/' + m.id, { role: m.id === id ? '主模型' : '备模型' }); } }
-    showToast('已切换 ' + target.name + ' 为主模型'); renderModel();
+    const result=await apiPost('/models/select',{id});
+    if(result.error)return showToast(result.error);
+    showToast('执行模型已切换为 '+result.data.version);renderModel();
   };
   window.ZS.compareRecords=async function(resource,id){
     const {data}=await apiGet('/'+resource),current=data.find(item=>item.id===id);if(!current)return showToast('记录不存在');
@@ -797,12 +822,12 @@
   }
   async function bindToggles(pageId, resName) {
     const page = el(pageId);
-    const cfg = (await apiGet('/' + resName))[0] || { items: [] };
+    const cfg = (await apiGet('/' + resName)).data || { items: [] };
     const toggles = page.querySelectorAll('.toggle');
     toggles.forEach((tg, i) => {
       const it = cfg.items[i]; if (!it) return;
       tg.classList.toggle('on', !!it.on);
-      tg.onclick = () => { it.on = !it.on; tg.classList.toggle('on', it.on); apiPut('/' + resName, cfg); };
+      tg.onclick = async () => { const before=it.on;it.on=!before;const r=await apiPut('/'+resName,cfg);if(r.error){it.on=before;showToast(r.error);}tg.classList.toggle('on',!!it.on); };
     });
   }
 
@@ -813,17 +838,25 @@
     const apis = (await apiGet('/auditApi')).data || [];
     const opColor = { '系统告警': 'warn', '报告导出': 'success' };
     const opBox = el('log-op');
-    if (opBox) opBox.innerHTML = '<div class="card">' + ops.map((l) => '<div class="log-line ' + (opColor[l.tag] || 'success') + '"><span class="lt">' + l.time + '</span><span class="lm">' + l.text + '</span><span class="status-badge sb-normal">' + l.tag + '</span></div>').join('') + '</div>';
+    if (opBox) opBox.innerHTML = '<div class="card">' + ops.map((l) => '<div class="log-line ' + (opColor[l.tag] || 'success') + '"><span class="lt">' + fmt(l.time) + '</span><span class="lm">' + fmt(l.text) + '</span><span class="status-badge sb-normal">' + fmt(l.tag) + '</span></div>').join('') + '</div>';
     const dtBox = el('log-data');
-    if (dtBox) dtBox.innerHTML = '<div class="card">' + dts.map((l) => '<div class="log-line success"><span class="lt">' + l.time + '</span><span class="lm">' + l.text + '</span><span class="status-badge sb-' + (l.tag === '评分更新' ? 'success' : l.tag === '画像更新' ? 'aging' : 'new') + '">' + l.tag + '</span></div>').join('') + '</div>';
+    if (dtBox) dtBox.innerHTML = '<div class="card">' + dts.map((l) => '<div class="log-line success"><span class="lt">' + fmt(l.time) + '</span><span class="lm">' + fmt(l.text) + '</span><span class="status-badge sb-' + (l.tag === '评分更新' ? 'success' : l.tag === '画像更新' ? 'aging' : 'new') + '">' + fmt(l.tag) + '</span></div>').join('') + '</div>';
     const aiBox = el('log-ai');
-    if (aiBox) { const tb = aiBox.querySelector('tbody'); if (tb) tb.innerHTML = apis.map((l) => '<tr><td>' + l.time + '</td><td>' + fmt(l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.outTok) + '</td><td>' + fmt(l.cost) + '</td><td>' + fmt(l.money) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : l.status === '缓存' ? 'normal' : 'fail') + '"><span class="sb-dot"></span>' + l.status + '</span></td></tr>').join(''); }
+    if (aiBox) { const tb = aiBox.querySelector('tbody'); if (tb) tb.innerHTML = apis.map((l) => '<tr><td>' + fmt(l.time) + '</td><td>' + fmt(l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.outTok) + '</td><td>' + fmt(l.cost) + '</td><td>' + fmt(l.money) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : l.status === '缓存' ? 'normal' : 'fail') + '"><span class="sb-dot"></span>' + fmt(l.status) + '</span></td></tr>').join(''); }
     qa('#page-audit button').filter(button=>/导出Excel/.test(button.textContent)).forEach(button=>{button.onclick=()=>downloadAuthenticated('/audit/export','审计与调用日志.xlsx');});
   }
 
   /* ---------- 数据校验与缓存 ---------- */
   async function renderDataCache() {
     await bindToggles('page-data-cache', 'cacheConfig');
+    const page=el('page-data-cache'), result=await apiGet('/data/quality'), data=result.data;
+    if(!data)return showToast(result.error||'数据校验加载失败');
+    const cards=page.querySelectorAll('.stat-card');
+    [['当前企业资料',data.companies,'存量记录，非今日新增'],['缺少企业名称',data.unnamed,'需补充或修正'],['疑似重复企业',data.duplicate,'按信用代码或名称比较'],['资料待补充',data.pending,'七维证据存在缺失']].forEach(([title,value,note],i)=>{if(cards[i]){cards[i].querySelector('.ds-lbl').textContent=title;cards[i].querySelector('.ds-num').textContent=value;cards[i].querySelector('.ds-sub').textContent=note;}});
+    const panels=page.querySelectorAll('.grid-2 .card');
+    if(panels[0])panels[0].innerHTML='<div class="card-head"><div class="card-title">当前资料校验</div></div><p>企业名称缺失：'+data.unnamed+' 条</p><p>信用代码格式异常：'+data.badCodes+' 条</p><p>疑似重复：'+data.duplicate+' 条</p><p>财务、股权等事实仍需依据原始材料核验。</p>';
+    if(panels[1])panels[1].innerHTML='<div class="card-head"><div class="card-title">资料时效状态</div></div>'+data.aging.map(r=>'<p>'+fmt(r.name)+'：共 '+r.total+' 条 / 待更新 '+r.expired+' 条 / 无日期 '+r.undated+' 条'+(r.on?'':'（老化规则关闭）')+'</p>').join('');
+    if(panels[2])panels[2].innerHTML='<div class="card-head"><div class="card-title">实际缓存统计</div></div><p>AI 命中：'+data.cache.modelHits+' 次</p><p>企查查命中：'+data.cache.qccHits+' 次</p><p>'+fmt(data.note)+'</p>';
   }
 
   /* ---------- 接入记录与监控 ---------- */
@@ -832,7 +865,7 @@
     const { data } = await apiGet('/auditApi');
     const tb = page.querySelector('table tbody'); if (!tb) return;
     window.__dataLogs=data;
-    tb.innerHTML = data.map((l) => '<tr><td>' + l.time + '</td><td>' + fmt(l.scene === '外部API' ? l.text.split('→')[0].replace('外部API查询（', '').replace('）', '') : l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.cost) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : 'fail') + '"><span class="sb-dot"></span>' + l.status + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="ZS.viewDataLog(' + l.id + ')">查看</button></td></tr>').join('');
+    tb.innerHTML = data.map((l) => '<tr><td>' + fmt(l.time) + '</td><td>' + fmt(l.scene === '外部API' ? l.text.split('→')[0].replace('外部API查询（', '').replace('）', '') : l.scene) + '</td><td>' + fmt(l.model) + '</td><td>' + fmt(l.inTok) + '</td><td>' + fmt(l.cost) + '</td><td><span class="status-badge sb-' + (l.status === '成功' ? 'success' : 'fail') + '"><span class="sb-dot"></span>' + fmt(l.status) + '</span></td><td><button class="btn btn-ghost btn-sm" onclick="ZS.viewDataLog(' + l.id + ')">查看</button></td></tr>').join('');
     qa('#page-data-log button').filter(button=>/导出Excel/.test(button.textContent)).forEach(button=>{button.onclick=()=>downloadAuthenticated('/audit/export','接入记录.xlsx');});
     page.querySelectorAll('.log-line button').forEach(button=>{button.disabled=true;button.title='该提示为历史示例，不能执行真实外部服务操作';});
   }

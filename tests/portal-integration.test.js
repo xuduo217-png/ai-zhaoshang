@@ -9,6 +9,16 @@ const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
   for(const file of ['server.js','portal-service.js','qcc-client.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
+  // Provider simulator exists only in the isolated test directory. No paid requests.
+  fs.appendFileSync(path.join(dir,'qcc-client.js'), `
+    const originalFactory = module.exports.createQccClient;
+    module.exports.createQccClient = () => {
+      const client = originalFactory();
+      return {...client, call: async (group,tool,args) => {
+        if (args?.searchKey !== '隔离企查查测试公司') return client.call(group,tool,args);
+        return {mode:'live',source:'企查查',group,tool,queriedAt:new Date().toISOString(),note:'模拟提供商，仅回归测试',result:{content:[{type:'text',text:JSON.stringify({'匹配结果':'唯一精确匹配','企业信息':{'企业名称':'隔离企查查测试公司','统一社会信用代码':'91320594088140947F'}})}]}};
+      }};
+    };`);
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
   const child=spawn(process.execPath,['server.js'],{cwd:dir,env:{...process.env,NODE_PATH:path.join(__dirname,'..','node_modules'),PORT:String(port),HOST:'127.0.0.1',NODE_ENV:'test',DEEPSEEK_API_KEY:'',QCC_MCP_TOKEN:'',INITIAL_ADMIN_PASSWORD:'TestOnly-Portal123!'},stdio:['ignore','pipe','pipe']});
   t.after(async()=>{if(child.exitCode===null){const done=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await done;}fs.rmSync(dir,{recursive:true,force:true});});
@@ -39,6 +49,8 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     const report=await call('/api/portal/reports',{method:'POST',cookie:a.cookie,body:{type:'plan',conversationId:conv,documentIds:[document]}});assert.equal(report.status,201);assert.match(report.body.content,/自动化测试/);
     const exported=await call('/api/portal/reports/export?id='+encodeURIComponent(report.body.id),{cookie:a.cookie,raw:true});assert.equal(exported.status,200);assert.match(exported.text,/企业招商对接方案/);assert.match(exported.headers['content-disposition'],/attachment/);
     const privateExport=await call('/api/portal/reports/export?id='+encodeURIComponent(report.body.id),{cookie:b.cookie,raw:true});assert.equal(privateExport.status,404);
+    const print=await call('/api/portal/reports/export?id='+encodeURIComponent(report.body.id)+'&format=html',{cookie:a.cookie,raw:true});assert.equal(print.status,200);assert.match(print.headers['content-type'],/text\/html/);assert.match(print.text,/打印/);
+    const ai=await call('/api/portal/reports',{method:'POST',cookie:a.cookie,body:{type:'plan',conversationId:conv,ai:true}});assert.equal(ai.status,503);assert.match(ai.body.error,/DeepSeek/);
     const denied=await call('/api/portal/reports',{method:'POST',cookie:b.cookie,body:{type:'plan',conversationId:conv}});assert.equal(denied.status,400);
     const restored=await call('/api/portal/workspace',{cookie:a.cookie});assert.ok(restored.body.conversations.some(c=>c.id===conv));assert.equal(restored.body.reports.length,1);
   });
@@ -50,6 +62,34 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     const leads=JSON.parse(fs.readFileSync(path.join(dir,'data','leads.json'),'utf8'));assert.ok(leads.some(l=>l.id===created.body.id&&l.name===body.name&&l.matchedProjects===body.matchedProjects[0]));
     const messages=JSON.parse(fs.readFileSync(path.join(dir,'data','messages.json'),'utf8'));assert.ok(messages.some(m=>m.title.includes(body.name)));
     const duplicate=await call('/api/portal/inquire',{method:'POST',body:{...body,consent:true}});assert.equal(duplicate.status,409);
+  });
+  await t.test('custom writes enforce roles and disabled sessions cannot be reused',async()=>{
+    const created=await call('/api/users',{method:'POST',authorization:token,body:{username:'readonly-test',password:'Readonly-Test123!',role:'只读用户',status:'启用'}});
+    assert.equal(created.status,201);
+    const login=await call('/api/login',{method:'POST',body:{username:'readonly-test',password:'Readonly-Test123!'}});
+    assert.equal(login.status,200);
+    const viewer=login.body.token;
+    for(const endpoint of ['/api/models/calibrate','/api/engine/profile/build','/api/news/fetch','/api/audit/log']) {
+      const denied=await call(endpoint,{method:'POST',authorization:viewer,body:{id:1}});assert.equal(denied.status,403,endpoint);
+    }
+    assert.equal((await call('/api/companies',{authorization:viewer})).status,200);
+    assert.equal((await call('/api/users/'+created.body.data.id,{method:'PUT',authorization:token,body:{status:'停用'}})).status,200);
+    assert.equal((await call('/api/engine/profile/build',{method:'POST',authorization:viewer,body:{}})).status,401);
+    assert.equal((await call('/api/me',{authorization:viewer})).status,401);
+    await call('/api/users/'+created.body.data.id,{method:'PUT',authorization:token,body:{status:'启用'}});
+    assert.equal((await call('/api/me',{authorization:viewer})).status,401);
+  });
+  await t.test('profiles persist evidence and heuristic company metrics cannot invent signals',async()=>{
+    const response=await call('/api/engine/profile/build',{method:'POST',authorization:token,body:{}});
+    assert.equal(response.status,200);assert.ok(response.body.generated>0);
+    const rows=(await call('/api/companies',{authorization:token})).body.data;
+    assert.equal(rows[0].profile.dimensions.length,7);
+    assert.ok(response.body.data.every(t=>t.accuracy==='未评测'));
+    const scanned=await call('/api/engine/signal/scan',{method:'POST',authorization:token,body:{}});
+    assert.equal(scanned.status,200);assert.equal(scanned.body.data.length,0);
+    const bad=await call('/api/companies/1/events',{method:'POST',authorization:token,body:{type:'融资',summary:'未经核实'}});assert.equal(bad.status,400);
+    const event=await call('/api/companies/1/events',{method:'POST',authorization:token,body:{type:'融资',summary:'测试事件，非真实企业事实',source:'隔离回归测试材料',date:'2025-01-01'}});assert.equal(event.status,201);
+    const signals=(await call('/api/engine/signal/scan',{method:'POST',authorization:token,body:{}})).body.data;assert.equal(signals.length,1);assert.match(signals[0].reason,/隔离回归测试材料/);
   });
   await t.test('lead workflow assigns, records, reminds and exports without third-party services',async()=>{
     const followed=await call('/api/leads/'+leadId+'/followups',{method:'POST',authorization:token,body:{assignee:'admin',priority:'高',stage:'方案沟通',status:'已联系',nextFollowAt:'2026-09-10T09:00',note:'已电话沟通，等待企业资料。'}});assert.equal(followed.status,201);assert.equal(followed.body.lead.assignee,'admin');assert.equal(followed.body.lead.status,'已联系');
@@ -90,6 +130,26 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     fs.mkdirSync(path.join(dir,'public'),{recursive:true});fs.writeFileSync(path.join(dir,'public','portal.html'),'ok');
     const response=await fetch(base+'/portal.html');assert.equal(response.status,200);
     const csp=response.headers.get('content-security-policy');assert.match(csp,/script-src 'self'/);assert.match(csp,/connect-src 'self'/);assert.match(csp,/frame-ancestors 'none'/);
+  });
+  await t.test('collection scheduling is opt-in and validates frequency without running a collector',async()=>{
+    const state=await call('/api/bids/schedule',{authorization:token});assert.equal(state.body.data.on,false);
+    assert.equal((await call('/api/bids/schedule',{method:'PUT',authorization:token,body:{on:true,intervalHours:0}})).status,400);
+    const off=await call('/api/bids/schedule',{method:'PUT',authorization:token,body:{on:false,intervalHours:24}});assert.equal(off.status,200);assert.equal(off.body.data.on,false);
+    assert.equal((await call('/api/models/select',{method:'POST',authorization:token,body:{id:2}})).status,400);
+    const stats=await call('/api/models/calibrate',{method:'POST',authorization:token,body:{id:1}});assert.equal(stats.status,200);assert.match(stats.body.metrics.note,/不是模型训练/);assert.equal(stats.body.metrics.hitRate,undefined);
+    const before=(await call('/api/knowledge',{authorization:token})).body.data.length;
+    assert.equal((await call('/api/knowledge/generate',{method:'POST',authorization:token,body:{topic:'测试'}})).status,503);
+    assert.equal((await call('/api/knowledge',{authorization:token})).body.data.length,before);
+  });
+  await t.test('QCC query saves an exact private company, reuses snapshots and publishes only allowed fields',async()=>{
+    const body={group:'company',tool:'get_company_by_query',arguments:{searchKey:'隔离企查查测试公司'},confirmCost:true};
+    const query=await call('/api/external/qcc/query',{method:'POST',authorization:token,body});assert.equal(query.status,200);assert.ok(query.body.companyId);assert.ok(query.body.snapshotId);
+    const duplicate=await call('/api/external/qcc/query',{method:'POST',authorization:token,body});assert.equal(duplicate.body.mode,'cache');assert.equal(duplicate.body.companyId,query.body.companyId);
+    const evidence=await call('/api/companies/'+query.body.companyId+'/evidence',{authorization:token});assert.equal(evidence.body.data.length,1);assert.equal(evidence.body.profile.snapshotIds[0],query.body.snapshotId);
+    assert.equal((await call('/api/companies/'+query.body.companyId+'/evidence')).status,401);
+    const before=await call('/api/portal/companies?q='+encodeURIComponent('隔离企查查测试公司'));assert.equal(before.body.data.length,0);
+    await call('/api/companies/'+query.body.companyId,{method:'PUT',authorization:token,body:{published:'是',financeEvidence:'private financial notes'}});
+    const published=await call('/api/portal/companies?q='+encodeURIComponent('隔离企查查测试公司'));assert.equal(published.body.mode,'published');assert.equal(published.body.data.length,1);assert.equal(published.body.data[0].financeEvidence,undefined);assert.equal(published.body.data[0].qccSnapshotIds,undefined);
   });
   await t.test('different real visitor addresses do not share the match limit',async()=>{
     for(let i=0;i<12;i++){const r=await call('/api/portal/match',{method:'POST',cookie:a.cookie,ip:'203.0.113.40',body:{message:'资源'}});assert.equal(r.status,200);}

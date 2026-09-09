@@ -108,4 +108,16 @@ function createQccClient({ token = process.env.QCC_MCP_TOKEN || '', fetchImpl = 
   }
   return { configured: !!token, groups: GROUPS, tools, call };
 }
-module.exports = { createQccClient };
+function resolvedCompany(response) {
+  if (response.group !== 'company' || response.tool !== 'get_company_by_query') return null;
+  for (const block of response.result?.content || []) {
+    if (block.type !== 'text') continue;
+    let parsed; try { parsed = JSON.parse(block.text); } catch { continue; }
+    if (!parsed || typeof parsed !== 'object' || parsed['匹配结果'] !== '唯一精确匹配') continue;
+    const entity = parsed['企业信息'];
+    const name = entity?.['企业名称'], creditCode = entity?.['统一社会信用代码'];
+    if (typeof name === 'string' && name.trim() && name.length <= 200 && typeof creditCode === 'string' && /^[0-9A-Z]{18}$/.test(creditCode)) return { name:name.trim(), creditCode };
+  }
+  return null;
+}
+module.exports = { createQccClient, resolvedCompany };

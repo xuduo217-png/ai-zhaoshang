@@ -1,6 +1,15 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createQccClient } = require('../qcc-client');
+const { createQccClient, resolvedCompany } = require('../qcc-client');
+test('only explicit exact QCC identities can create company records',()=>{
+  const wrap=data=>({group:'company',tool:'get_company_by_query',result:{content:[{type:'text',text:JSON.stringify(data)}]}});
+  const entity={'企业名称':'测试科技有限公司','统一社会信用代码':'91320594088140947F'};
+  assert.deepEqual(resolvedCompany(wrap({'匹配结果':'唯一精确匹配','企业信息':entity})),{name:entity['企业名称'],creditCode:entity['统一社会信用代码']});
+  assert.equal(resolvedCompany(wrap({'匹配结果':'多个候选','企业信息':entity})),null);
+  assert.equal(resolvedCompany(wrap(null)),null);
+  assert.equal(resolvedCompany(wrap({'匹配结果':'唯一精确匹配','企业信息':{...entity,'统一社会信用代码':'bad'}})),null);
+  assert.equal(resolvedCompany({group:'risk',tool:'get_company_by_query',result:wrap({'匹配结果':'唯一精确匹配','企业信息':entity}).result}),null);
+});
 function fixture({ sse=false, error=false }={}) {
   const calls=[];
   const fetchImpl=async (url,options)=>{

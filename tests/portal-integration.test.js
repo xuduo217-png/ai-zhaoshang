@@ -8,7 +8,7 @@ const {spawn}=require('node:child_process');
 const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
-  for(const file of ['server.js','portal-service.js','qcc-client.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
+  for(const file of ['server.js','portal-service.js','qcc-client.js','company-evidence.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
   // Provider simulator exists only in the isolated test directory. No paid requests.
   fs.appendFileSync(path.join(dir,'qcc-client.js'), `
     const originalFactory = module.exports.createQccClient;
@@ -150,6 +150,14 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     const before=await call('/api/portal/companies?q='+encodeURIComponent('隔离企查查测试公司'));assert.equal(before.body.data.length,0);
     await call('/api/companies/'+query.body.companyId,{method:'PUT',authorization:token,body:{published:'是',financeEvidence:'private financial notes'}});
     const published=await call('/api/portal/companies?q='+encodeURIComponent('隔离企查查测试公司'));assert.equal(published.body.mode,'published');assert.equal(published.body.data.length,1);assert.equal(published.body.data[0].financeEvidence,undefined);assert.equal(published.body.data[0].qccSnapshotIds,undefined);
+    assert.equal(evidence.body.profile.publicFacts[0].source,'企查查');
+    const match=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'分析隔离企查查测试公司在成都的新能源需求'}});
+    const reportBody={type:'assessment',conversationId:match.body.conversationId};
+    const privateReport=await call('/api/portal/reports',{method:'POST',cookie:a.cookie,body:reportBody});
+    assert.doesNotMatch(JSON.stringify(privateReport.body),/91320594088140947F/);
+    await call('/api/companies/'+query.body.companyId,{method:'PUT',authorization:token,body:{publicEvidenceApproved:true}});
+    const publicReport=await call('/api/portal/reports',{method:'POST',cookie:a.cookie,body:reportBody});
+    assert.equal(publicReport.status,201);assert.match(JSON.stringify(publicReport.body),/91320594088140947F/);assert.doesNotMatch(JSON.stringify(publicReport.body),/private financial notes/);
   });
   await t.test('different real visitor addresses do not share the match limit',async()=>{
     for(let i=0;i<12;i++){const r=await call('/api/portal/match',{method:'POST',cookie:a.cookie,ip:'203.0.113.40',body:{message:'资源'}});assert.equal(r.status,200);}

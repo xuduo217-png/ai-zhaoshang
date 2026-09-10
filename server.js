@@ -10,6 +10,7 @@ const { URL } = require('url');
 const https = require('https');
 const { clientIp, matchResources, createPortalService } = require('./portal-service');
 const { createQccClient, resolvedCompany } = require('./qcc-client');
+const { publicEvidence } = require('./company-evidence');
 const qcc = createQccClient();
 const qccRequests = new Map();
 const runtimeCacheStats = { modelHits:0, qccHits:0 };
@@ -562,10 +563,13 @@ async function enrichCompany(c) {
 }
 
 function buildCompanyProfile(c) {
+  const facts=publicEvidence(c,loadRes('qccSnapshots'));
   return {
     generatedAt: now(), source: c.source || c.dataMode || '人工录入',
     basic: { name: c.name, creditCode: c.creditCode || '', industry: c.industry || '', region: c.region || '' },
-    dimensions: SCORE_STANDARD.map(dim => ({ name: dim.name, evidence: String(c[dim.evidenceKey] || ''), status: c[dim.evidenceKey] ? '已录入，待复核' : '待补充' })),
+    publicFacts:facts,
+    publicCoverage:Math.round(SCORE_STANDARD.filter(dim=>facts.some(f=>f.dimension===dim.name)).length/7*100),
+    dimensions: SCORE_STANDARD.map(dim => ({ name: dim.name, evidence: String(c[dim.evidenceKey] || ''), publicFacts:facts.filter(f=>f.dimension===dim.name), status: c[dim.evidenceKey] ? '已录入，待复核' : facts.some(f=>f.dimension===dim.name)?'有公开资料，待复核':'暂无公开资料' })),
     snapshotIds: Array.isArray(c.qccSnapshotIds) ? c.qccSnapshotIds : [],
     note: '仅整理现有资料；资料缺失不等于无风险，未自动推断财务、融资或扩产事实。'
   };
@@ -584,6 +588,10 @@ function activeDeepseekModel() {
   const selected = loadRes('models').find(m => m.type === '大语言模型' && ['主模型','运行中'].includes(m.role));
   const version = selected?.version;
   return ['deepseek-chat','deepseek-reasoner'].includes(version) ? version : 'deepseek-chat';
+}
+function modelStatus(row) {
+  if(row.type==='大语言模型') return {...row,version:activeDeepseekModel(),accuracy:'未评测',samples:'—'};
+  return {...row,role:row.type==='向量化'?'未启用':'本地规则',accuracy:'未评测',samples:'—',note:row.type==='向量化'?'未接入向量检索运行服务':'规则整理与人工证据评分，不是训练模型'};
 }
 function configuredPrompt(name, fallback) {
   return String(loadRes('prompts').find(p => p.name === name)?.content || fallback).slice(0, 6000);
@@ -1304,10 +1312,10 @@ const server = http.createServer(async (req, res) => {
       }
       if (company) {
         company.qccSnapshotIds = [snapshot.id, ...(company.qccSnapshotIds || [])].slice(0, 100);
-        company.profile = buildCompanyProfile(company);
         company.updatedAt = result.queriedAt;
         snapshot.companyId = company.id;
         saveRes('qccSnapshots', snapshots.slice(0, 500));
+        company.profile = buildCompanyProfile(company);
         saveRes('companies', companies);
       }
       logAudit('api', user.username + ' → 企查查查询成功：' + b.group + '/' + b.tool, '企查查 MCP');
@@ -1322,7 +1330,7 @@ const server = http.createServer(async (req, res) => {
     const company = loadRes('companies').find(c => c.id === Number(evidenceRoute[1]));
     if (!company) return send(res, 404, { error: '企业不存在' });
     const data = loadRes('qccSnapshots').filter(s => s.companyId === company.id);
-    return send(res, 200, { company: company.name, published:company.published==='是', events:company.signalEvidence||[], data, profile: company.profile || buildCompanyProfile(company) });
+    return send(res, 200, { company: company.name, published:company.published==='是', publicEvidenceApproved:company.publicEvidenceApproved===true, events:company.signalEvidence||[], data, profile: buildCompanyProfile(company) });
   }
   const eventRoute = p.match(/^\/api\/companies\/(\d+)\/events$/);
   if (eventRoute && method === 'POST') {
@@ -1648,6 +1656,7 @@ const server = http.createServer(async (req, res) => {
 
     if (method === 'GET' && !id) {
       const data = loadRes(name);
+      if (name === 'models') return send(res,200,{data:data.map(modelStatus)});
       if (name === 'users') return send(res, 200, { data: data.map(safeUser) });
       if (RESOURCES[name].isSingle) return send(res, 200, { data: data[0] || {} });
       return send(res, 200, { data });
@@ -1655,7 +1664,7 @@ const server = http.createServer(async (req, res) => {
     if (method === 'GET' && id) {
       const data = loadRes(name);
       const item = data.find((x) => x.id === id);
-      return item ? send(res, 200, { data: name === 'users' ? safeUser(item) : item }) : send(res, 404, { error: '未找到' });
+      return item ? send(res, 200, { data: name === 'users' ? safeUser(item) : name==='models'?modelStatus(item):item }) : send(res, 404, { error: '未找到' });
     }
     if (method === 'POST') {
       if (!canWrite(userRecord, name)) return send(res, 403, { error: '无权修改该资源' });

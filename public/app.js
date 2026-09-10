@@ -566,6 +566,9 @@
     const publish=document.createElement('button');publish.className='btn btn-ghost';publish.textContent=r.published?'撤回前台基础资料':'发布基础资料到前台';
     publish.onclick=async()=>{const result=await apiPut('/companies/'+companyId,{published:r.published?'否':'是'});if(result.error)return showToast(result.error);showToast('已更新，仅公开名称、信用代码、地区及行业');ZS.viewCompanyEvidence(companyId);};
     el('zsResultBody').append(publish);
+    const evidencePublish=document.createElement('button');evidencePublish.className='btn btn-ghost';evidencePublish.textContent=r.publicEvidenceApproved?'停止报告引用公开字段':'允许报告引用公开字段';
+    evidencePublish.onclick=async()=>{if(!r.publicEvidenceApproved&&!confirm('仅将档案中已整理的企查查公开字段用于前台报告，可能发送给 DeepSeek；原始快照和人工内部材料不会公开。是否确认？'))return;const result=await apiPut('/companies/'+companyId,{publicEvidenceApproved:!r.publicEvidenceApproved});if(result.error)return showToast(result.error);showToast('已更新引用权限；企业基础资料也须发布后才会生效');ZS.viewCompanyEvidence(companyId);};
+    el('zsResultBody').append(evidencePublish);
   };
   window.ZS.recordCompanyEvent = function (companyId) {
     showResultModal('录入已核实机会', '<div class="form-row"><label>信号类型</label><select id="companyEventType">' + ['融资','扩产','迁址','投资','合作','招聘','中标','获奖'].map(s=>'<option>'+s+'</option>').join('') + '</select></div><div class="form-row"><label>发生日期</label><input id="companyEventDate" type="date"></div><div class="form-row"><label>证据来源（公告链接或核验材料名称）</label><input id="companyEventSource" maxlength="500"></div><div class="form-row"><label>已核实的事实摘要</label><textarea id="companyEventSummary" maxlength="2000"></textarea></div><button class="btn btn-blue" id="companyEventSave">确认事实并保存</button>');

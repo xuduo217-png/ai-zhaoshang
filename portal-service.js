@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const net = require('net');
+const { evidenceReport } = require('./company-evidence');
 let XLSX, mammoth, pdfParse;
 try { XLSX = require('xlsx'); } catch (_) {}
 try { mammoth = require('mammoth'); } catch (_) {}
@@ -143,6 +144,7 @@ function createPortalService({dataDir,loadRes,send,readBody,allowed,companyFixtu
     } else if (body.type === 'plan') lines.push('## 对接步骤','1. 核实企业投资主体、产品、预算和意向地区。','2. 联系项目方确认厂房、土地、能耗、环保与产业准入条件。','3. 比较可匹配资源，记录补贴适用条件与兑现要求。','4. 提交对接意向，由招商专员跟进；未确认前不承诺政策。');
     else if (body.type === 'assessment') lines.push('## 必要核查项','- 主体资质、股权与司法风险：待核实。','- 市场需求、客户订单及竞争格局：待核实。','- 投资额、资金来源、现金流及回收期：待提供。','- 用地、能耗、环评及政策兑现条件：待主管部门确认。','## 当前结论','现有资料不足以给出投资可行性或收益判断，请在尽调后由专业人员作出决策。');
     else lines.push('## 汇报要点','- 已梳理需求与可匹配资源，详见上文。','- 请补充项目方联系人、更新时间与公开来源链接。','- 待核实材料不得作为确定事实对外发布。');
+    lines.push('',evidenceReport(loadRes('companies'),loadRes('qccSnapshots'),conversation.turns.map(t=>t.message).join('\n')));
     lines.push('','## 用户提供的资料摘录');
     if (!docs.length) lines.push('未选择个人资料。');
     docs.forEach(d => lines.push('### '+d.name,'来源：当前访客上传，未独立核验。',d.content.slice(0,2000),d.content.length>2000?'（仅展示前 2000 字）':'',''));

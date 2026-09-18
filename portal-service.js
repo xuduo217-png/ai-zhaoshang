@@ -68,8 +68,8 @@ function matchResources(projects, message, rawNeed = {}, previous = {}, category
   if (/不限行业|所有行业/.test(message)) context.industries = [];
   const published = projects.filter(p => p && p.published !== '否' && p.status !== '已满');
   let rows = published.filter(p => context.category === '全部' || p.category === context.category);
-  if (context.regions.length) rows = rows.filter(p => context.regions.some(r => String(p.region || '').includes(r) || (p.region === '全省' && ['四川','成都','绵阳','德阳','宜宾','眉山','泸州','南充','攀枝花'].includes(r)) || (r === '四川' && ['成都','绵阳','德阳','宜宾','眉山','泸州','南充','攀枝花'].some(c => String(p.region).includes(c)))));
-  if (context.industries.length) rows = rows.filter(p => context.industries.some(k => [p.industry,p.title,p.highlights,p.policy].join(' ').includes(k)) || /全部行业|全部制造业/.test(p.industry || ''));
+  if (context.regions.length) rows = rows.filter(p => (p.category === '优惠政策' && p.regionScope === '全国') || context.regions.some(r => String(p.region || '').includes(r) || (p.region === '全省' && ['四川','成都','绵阳','德阳','宜宾','眉山','泸州','南充','攀枝花'].includes(r)) || (r === '四川' && ['成都','绵阳','德阳','宜宾','眉山','泸州','南充','攀枝花'].some(c => String(p.region).includes(c)))));
+  if (context.industries.length) rows = rows.filter(p => (p.category === '优惠政策' && p.industryScope === '跨行业（须核验条件）') || context.industries.some(k => [p.industry,p.title,p.highlights,p.policy].join(' ').includes(k)) || /全部行业|全部制造业/.test(p.industry || ''));
   const ranked = rows.map(p => ({project:p,score:context.keywords.reduce((score,k) => score + Number([p.title,p.highlights,p.policy].join(' ').includes(k)),0)})).sort((a,b) => b.score-a.score);
   const constrained = context.industries.length || context.regions.length || context.category !== '全部';
   const selected = !constrained && context.keywords.length ? ranked.filter(p => p.score > 0) : ranked;

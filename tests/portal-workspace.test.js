@@ -33,7 +33,7 @@ async function setup(matchResponse = {ok:true,json:async()=>({need:{summary:'新
   const elements = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],element()]));
   const calls = [], timers = new Set();
   const document = {getElementById(id){assert.ok(elements.has(id),'HTML must contain '+id);return elements.get(id);},querySelectorAll(){return [];},querySelector(){return null;},addEventListener(){}};
-  const context = {document,window:{addEventListener(){}},AbortController,console,
+  const context = {document,window:{addEventListener(){}},AbortController,console,URL,
     setTimeout(fn,ms){const t=setTimeout(fn,ms);t.unref();timers.add(t);return t;},clearTimeout(t){clearTimeout(t);timers.delete(t);},
     fetch:async(url,options)=>{calls.push({url,options});if(url.endsWith('/projects'))return loadResponse||{ok:true,json:async()=>({data:projects})};return typeof matchResponse==='function'?matchResponse(options):matchResponse;}
   };
@@ -91,6 +91,16 @@ test('malicious user and API text is escaped in cards, summaries and history',as
 test('resource details keep stable references after resource reload',async()=>{
   const h=await setup();h.api.showView('全部');const key=Number(h.el('projectGrid').innerHTML.match(/data-project="(\d+)"/)[1]);
   h.api.state.projects=[];h.api.showDetail(key);assert.equal(h.el('detailTitle').textContent,projects[0].title);assert.equal(h.el('projectDialog').open,true);h.close();
+});
+test('official policy details show provenance and only safe government links',async()=>{
+  for (const url of ['https://fgk.chinatax.gov.cn/zcfgk/test','javascript:alert(1)','https://gov.cn.evil.example/']) {
+    const p={...projects[0],category:'优惠政策',sourceUrl:url,documentNo:'测试文号',validity:'2027-12-31',verifiedAt:'2026-09-18'};
+    const h=await setup(undefined,{ok:true,json:async()=>({data:[p]})});
+    h.api.showView('全部');const key=Number(h.el('projectGrid').innerHTML.match(/data-project="(\d+)"/)[1]);h.api.showDetail(key);
+    assert.match(h.el('detailContent').innerHTML,/测试文号/);
+    assert.equal(h.el('detailContent').innerHTML.includes('查看政府官方原文'),url.startsWith('https://fgk.chinatax.gov.cn/'));
+    h.close();
+  }
 });
 test('new analysis aborts an in-flight request and ignores its late result',async()=>{
   let resolve;

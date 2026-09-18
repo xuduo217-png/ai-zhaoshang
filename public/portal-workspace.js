@@ -224,7 +224,9 @@
     state.detail = p;
     window.PortalExtras?.detail(p);
     $('detailTitle').textContent = p.title;
-    $('detailContent').innerHTML = '<dl>' + [['类型',p.category],['地区',p.region],['产业',p.industry],['规模',p.scale],['状态',p.status],['亮点',p.highlights],['政策',p.policy]].filter(row => row[1]).map(([label,value]) => '<dt>' + label + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl><p class="result-note">当前资源包含联调示例，请核实项目与政策信息。</p>';
+    let sourceLink = '';
+    try { const url = new URL(p.sourceUrl); if (url.protocol === 'https:' && /(^|\.)gov\.cn$/.test(url.hostname)) sourceLink = '<p><a href="' + esc(url.href) + '" target="_blank" rel="noopener noreferrer">查看政府官方原文 ↗</a></p>'; } catch (_) {}
+    $('detailContent').innerHTML = '<dl>' + [['类型',p.category],['地区',p.region],['产业',p.industry],['优惠标准/规模',p.scale],['状态',p.status],['适用条件',p.highlights],['政策说明',p.policy],['官方来源',p.source],['发文机关',p.issuer],['文号',p.documentNo],['成文日期',p.issuedAt],['执行期限',p.validity],['最近核验',p.verifiedAt]].filter(row => row[1]).map(([label,value]) => '<dt>' + label + '</dt><dd>' + esc(value) + '</dd>').join('') + sourceLink + '<p class="result-note">' + (sourceLink ? '政策摘要仅供检索参考，具体资格与办理要求以官方原文及主管部门最新规定为准。' : '当前资源包含联调示例，请核实项目与政策信息。') + '</p>';
     $('projectDialog').showModal();
   }
   document.addEventListener('click', event => {

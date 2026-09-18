@@ -413,6 +413,7 @@ const RESOURCES = {
       { id: 4, category: '招商项目', title: '集成电路先进封测产线', region: '成都高新西区', industry: '电子信息/集成电路', scale: '一期投资 20 亿元', highlights: '面向车规级与 AI 芯片封测，配套本地晶圆制造与设计企业，人才储备充足。', policy: '流片与封测按营收 3% 补贴，高端人才个税奖励最高 40%。', status: '即将开放' },
       { id: 5, category: '优惠政策', title: '制造业高质量发展专项资金', region: '全省', industry: '全部制造业', scale: '单企业最高奖补 5000 万元', highlights: '电子信息、新能源等战略性新兴产业设备更新、技术改选、智改数转均可申报。', policy: '2026 年申报截止 09-30，采用"免申即享+项目库"双通道。', status: '招商中', published: '否', verificationStatus: '未核实预置资料' },
       { id: 6, category: '优惠政策', title: '总部经济落户奖励', region: '成都/宜宾', industry: '全部行业', scale: '落户奖励最高 1000 万元', highlights: '对世界 500 强、央企区域总部、专精特新"小巨人"总部迁入给予阶梯奖励与办公用房补贴。', policy: '按实缴注册资本与年度经济贡献分档奖励，前两年地方贡献全额返还。', status: '招商中', published: '否', verificationStatus: '未核实预置资料' },
+      ...require('./official-policies.json'),
     ],
   },
   leads: {

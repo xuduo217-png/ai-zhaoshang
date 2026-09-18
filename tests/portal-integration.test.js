@@ -8,7 +8,7 @@ const {spawn}=require('node:child_process');
 const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
-  for(const file of ['server.js','portal-service.js','qcc-client.js','company-evidence.js','scoring-standard.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
+  for(const file of ['server.js','portal-service.js','qcc-client.js','company-evidence.js','scoring-standard.js','official-policies.json'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
   // Provider simulator exists only in the isolated test directory. No paid requests.
   fs.appendFileSync(path.join(dir,'qcc-client.js'), `
     const originalFactory = module.exports.createQccClient;
@@ -33,7 +33,7 @@ test('portal HTTP integration uses isolated data, no live model and no productio
   let conv,document,token,leadId;
   await t.test('browse returns concrete resources and category filter is enforced',async()=>{
     const generic=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'请推荐招商资源'}});assert.equal(generic.status,200);assert.ok(generic.body.matched.length&&generic.body.matched.every(p=>p?.title));
-    const filtered=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'成都智能制造',category:'优惠政策'}});assert.equal(filtered.status,200);assert.equal(filtered.body.matched.length,0,'未核实的预置政策不应公开');assert.ok(filtered.body.matched.every(p=>p.category==='优惠政策'));conv=filtered.body.conversationId;
+    const filtered=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'成都智能制造',category:'优惠政策'}});assert.equal(filtered.status,200);assert.equal(filtered.body.matched.length,2);assert.ok(filtered.body.matched.every(p=>p.sourceUrl?.startsWith('https://fgk.chinatax.gov.cn/') && p.id!==5 && p.id!==6));assert.ok(filtered.body.matched.every(p=>p.category==='优惠政策'));conv=filtered.body.conversationId;
     const follow=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'改到宜宾',conversationId:conv,category:'优惠政策'}});assert.equal(follow.status,200);assert.deepEqual(follow.body.need.industries,['智能制造']);assert.deepEqual(follow.body.need.regions,['宜宾']);
   });
   await t.test('private documents persist, affect selected context, and are isolated',async()=>{

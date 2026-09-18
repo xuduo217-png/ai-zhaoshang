@@ -248,7 +248,7 @@ const RESOURCES = {
   scoreWeights: {
     label: '招商评分权重',
     isSingle: true,
-    seed: [{ id: 1, 技术产品: 20, 财务能力: 20, 团队股权: 15, 市场情况: 15, 合规风险: 15, 融资需求: 7, 异地拓产: 8 }],
+    seed: [{ id: 1, 技术产品: 15, 财务能力: 10, 团队股权: 10, 市场情况: 15, 合规风险: 15, 融资需求: 20, 异地拓产: 15 }],
   },
   signalWeights: {
     label: '机会信号权重',
@@ -411,8 +411,8 @@ const RESOURCES = {
       { id: 2, category: '投资载体', title: '宜宾动力电池产业生态园', region: '宜宾三江新区', industry: '新能源/锂电', scale: '规划面积 30 平方公里', highlights: '全球最大动力电池生产基地之一，上游材料—电芯—Pack—回收全链条集聚，宁德时代、时代长安配套。', policy: '落地即享绿电指标，用工补贴每人每年 6000 元，能耗指标优先保障。', status: '招商中' },
       { id: 3, category: '招商项目', title: '新能源电池关键材料生产基地', region: '成都/眉山', industry: '新能源/新材料', scale: '总投资约 50 亿元', highlights: '正极材料、隔膜、电解液三大环节招商，对接本地电芯龙头形成闭环，物流半径小于 200 公里。', policy: '按固定资产投资 12% 给予奖补，重大项一事一议，配套产业基金 30 亿。', status: '招商中' },
       { id: 4, category: '招商项目', title: '集成电路先进封测产线', region: '成都高新西区', industry: '电子信息/集成电路', scale: '一期投资 20 亿元', highlights: '面向车规级与 AI 芯片封测，配套本地晶圆制造与设计企业，人才储备充足。', policy: '流片与封测按营收 3% 补贴，高端人才个税奖励最高 40%。', status: '即将开放' },
-      { id: 5, category: '优惠政策', title: '制造业高质量发展专项资金', region: '全省', industry: '全部制造业', scale: '单企业最高奖补 5000 万元', highlights: '电子信息、新能源等战略性新兴产业设备更新、技术改选、智改数转均可申报。', policy: '2026 年申报截止 09-30，采用"免申即享+项目库"双通道。', status: '招商中' },
-      { id: 6, category: '优惠政策', title: '总部经济落户奖励', region: '成都/宜宾', industry: '全部行业', scale: '落户奖励最高 1000 万元', highlights: '对世界 500 强、央企区域总部、专精特新"小巨人"总部迁入给予阶梯奖励与办公用房补贴。', policy: '按实缴注册资本与年度经济贡献分档奖励，前两年地方贡献全额返还。', status: '招商中' },
+      { id: 5, category: '优惠政策', title: '制造业高质量发展专项资金', region: '全省', industry: '全部制造业', scale: '单企业最高奖补 5000 万元', highlights: '电子信息、新能源等战略性新兴产业设备更新、技术改选、智改数转均可申报。', policy: '2026 年申报截止 09-30，采用"免申即享+项目库"双通道。', status: '招商中', published: '否', verificationStatus: '未核实预置资料' },
+      { id: 6, category: '优惠政策', title: '总部经济落户奖励', region: '成都/宜宾', industry: '全部行业', scale: '落户奖励最高 1000 万元', highlights: '对世界 500 强、央企区域总部、专精特新"小巨人"总部迁入给予阶梯奖励与办公用房补贴。', policy: '按实缴注册资本与年度经济贡献分档奖励，前两年地方贡献全额返还。', status: '招商中', published: '否', verificationStatus: '未核实预置资料' },
     ],
   },
   leads: {
@@ -441,18 +441,9 @@ const RESOURCES = {
 };
 
 /* ---------- 引擎计算 ---------- */
-const SCORE_STANDARD = [
-  { name: '技术产品', scoreKey: 'technologyScore', evidenceKey: 'technologyEvidence', weight: 20, criteria: '量产产品30分；技术不可替代性25分；发明专利实际应用25分；高企、专精特新等资质20分' },
-  { name: '财务能力', scoreKey: 'financeScore', evidenceKey: 'financeEvidence', weight: 20, criteria: '主营收入质量25分；营收持续增长20分；现金流及研发资金支撑30分；负债、逾期和民间借贷风险25分' },
-  { name: '团队股权', scoreKey: 'teamEquityScore', evidenceKey: 'teamEquityEvidence', weight: 15, criteria: '股权结构清晰35分；无代持风险25分；核心团队稳定性及科创履历40分' },
-  { name: '市场情况', scoreKey: 'marketScore', evidenceKey: 'marketEvidence', weight: 15, criteria: '客户质量30分；订单及收入确定性30分；行业赛道空间25分；竞争地位和客户集中风险15分' },
-  { name: '合规风险', scoreKey: 'complianceScore', evidenceKey: 'complianceEvidence', weight: 15, criteria: '工商司法合规25分；知识产权合规25分；劳动用工合规20分；无重大处罚记录30分；分数越高表示风险越低' },
-  { name: '融资需求', scoreKey: 'financingScore', evidenceKey: 'financingEvidence', weight: 7, criteria: '融资需求明确20分；近期机构对接20分；知名机构投资30分；融资估值合理30分' },
-  { name: '异地拓产', scoreKey: 'expansionScore', evidenceKey: 'expansionEvidence', weight: 8, criteria: '招聘规模增长30分；异地招聘信息25分；招聘岗位与扩产匹配30分；异地设点或扩产计划15分' },
-];
+const { SCORE_STANDARD, RULE_VERSION, assess, validateDetails } = require('./scoring-standard');
 function scoreWeights() {
-  const saved = loadRes('scoreWeights')[0] || {};
-  return Object.fromEntries(SCORE_STANDARD.map((dim) => [dim.name, Number.isFinite(Number(saved[dim.name])) ? Number(saved[dim.name]) : dim.weight]));
+  return Object.fromEntries(SCORE_STANDARD.map((dim) => [dim.name, dim.weight]));
 }
 function levelOf(s) { return s >= 85 ? 'A类' : s >= 75 ? 'B类' : s >= 60 ? 'C类' : 'D类'; }
 function computeScores() {
@@ -461,20 +452,20 @@ function computeScores() {
   const scores = companies.map((c) => {
     let weighted = 0; let availableWeight = 0;
     const dimensions = SCORE_STANDARD.map((dim) => {
-      const raw = c[dim.scoreKey];
-      const value = raw === '' || raw === null || raw === undefined ? null : Number(raw);
       const evidence = String(c[dim.evidenceKey] || '').trim();
-      const verified = Number.isFinite(value) && value >= 0 && value <= 100 && evidence.length > 0;
+      const points = c.assessmentRuleVersion === RULE_VERSION ? assess(dim, c.assessmentDetails, evidence) : null;
+      const value = points == null ? null : points / dim.weight * 100;
+      const verified = points != null;
       if (verified) { const weight = Math.max(0, Number(w[dim.name]) || 0); weighted += value * weight; availableWeight += weight; }
-      return { name: dim.name, score: verified ? value : null, weight: Math.max(0, Number(w[dim.name]) || 0), evidence: evidence || '', status: verified ? '已核实' : '待核实' };
+      return { name: dim.name, points, score: verified ? value : null, weight: Math.max(0, Number(w[dim.name]) || 0), evidence: evidence || '', status: verified ? '已核实' : '待核实' };
     });
     const verifiedCount = dimensions.filter((dim) => dim.status === '已核实').length;
     const coverage = Math.round(verifiedCount / SCORE_STANDARD.length * 100);
-    const provisionalScore = availableWeight ? Math.round(weighted / availableWeight) : null;
+    const provisionalScore = availableWeight ? Math.round(weighted / 10) / 10 : null;
     const complete = verifiedCount === SCORE_STANDARD.length && availableWeight > 0;
     const score = complete ? provisionalScore : null;
     const missing = dimensions.filter((dim) => dim.status !== '已核实').map((dim) => dim.name);
-    return { id: c.id, companyId: c.id, company: c.name, score, provisionalScore, coverage, verifiedCount, dimensions, missing, level: complete ? levelOf(score) : '待核实', modelVer: '尽调评分 v1.0', ruleVer: 'r2.0', time: now() };
+    return { id: c.id, companyId: c.id, company: c.name, score, provisionalScore, coverage, verifiedCount, dimensions, missing, level: complete ? levelOf(score) : '待核实', modelVer: '客户评分标准 v3.0', ruleVer: RULE_VERSION, time: now() };
   });
   scores.sort((a, b) => (a.score == null ? 1 : b.score == null ? -1 : b.score - a.score));
   saveRes('scores', scores);
@@ -1208,6 +1199,9 @@ const server = http.createServer(async (req, res) => {
     const company = companies.find((item) => item.id === Number(assessmentMatch[1]));
     if (!company) return send(res, 404, { error: '企业不存在' });
     const body = await readBody(req);
+    if (!validateDetails(body.assessmentDetails)) return send(res, 400, { error: '请使用新版评分表，检查各项得分及风险条数' });
+    company.assessmentDetails = { ...body.assessmentDetails };
+    company.assessmentRuleVersion = RULE_VERSION;
     for (const dim of SCORE_STANDARD) {
       if (Object.prototype.hasOwnProperty.call(body, dim.scoreKey)) {
         const raw = body[dim.scoreKey];
@@ -1234,7 +1228,7 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/engine/score/recompute' && method === 'POST') {
     const uname = authUser(req); if (!uname) return send(res, 401, { error: '未登录' });
     const scores = computeScores();
-    logAudit('data', scores.length + '家企业 → 七维尽调评分重算完成（规则 r2.0）', '评分更新');
+    logAudit('data', scores.length + '家企业 → 七维尽调评分重算完成（规则 ' + RULE_VERSION + '）', '评分更新');
     return send(res, 200, { data: scores });
   }
   if (p === '/api/engine/signal/scan' && method === 'POST') {
@@ -1672,8 +1666,9 @@ const server = http.createServer(async (req, res) => {
       delete b.id;
       delete b.passwordHash;
       delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
-      if (name === 'companies') for (const key of ['qccSnapshotIds','profile','signalEvidence','dataMode','source']) delete b[key];
+      if (name === 'companies') for (const key of ['qccSnapshotIds','profile','signalEvidence','dataMode','source','assessmentDetails','assessmentRuleVersion']) delete b[key];
       if (name === 'scoreWeights') {
+        if (SCORE_STANDARD.some(dim => Number(b[dim.name]) !== dim.weight)) return send(res, 400, { error: '请使用客户确认的 r3.0 固定分值' });
         const allowed = SCORE_STANDARD.map((dim) => dim.name);
         const values = allowed.map((key) => Number(b[key]));
         if (values.some((value) => !Number.isFinite(value) || value < 0 || value > 40)) return send(res, 400, { error: '每项评分权重必须在 0-40 之间' });
@@ -1702,8 +1697,9 @@ const server = http.createServer(async (req, res) => {
       delete b.id;
       delete b.passwordHash;
       delete b.deepseekKey; delete b.tianyanchaKey; delete b.qccKey;
-      if (name === 'companies') for (const key of ['qccSnapshotIds','profile','signalEvidence','dataMode','source']) delete b[key];
+      if (name === 'companies') for (const key of ['qccSnapshotIds','profile','signalEvidence','dataMode','source','assessmentDetails','assessmentRuleVersion']) delete b[key];
       if (name === 'scoreWeights') {
+        if (SCORE_STANDARD.some(dim => Number(b[dim.name]) !== dim.weight)) return send(res, 400, { error: '请使用客户确认的 r3.0 固定分值' });
         const allowed = SCORE_STANDARD.map((dim) => dim.name);
         const values = allowed.map((key) => Number(b[key]));
         if (values.some((value) => !Number.isFinite(value) || value < 0 || value > 40)) return send(res, 400, { error: '每项评分权重必须在 0-40 之间' });

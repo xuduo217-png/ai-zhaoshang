@@ -602,18 +602,18 @@ sb-fail{background:rgba(220,38,38,.12);color:var(--dh-red-2)}
 
       <!-- ===== 招商价值评分 ===== -->
       <div class="page" id="page-engine-score">
-        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 企业投资价值与落地风险尽调 · 规则 r2.0</div>
+        <div class="ai-badge" style="margin-bottom:18px"><span class="dot"></span> 企业投资价值与落地风险尽调 · 客户规则 r3.0</div>
         <div class="section-title"><h3>7维尽调评分标准</h3><span class="tag">有证据才计分</span><div class="line"></div></div>
         <div id="scoreStandardGrid" class="grid-4" style="margin-bottom:18px"></div>
-        <div class="section-title"><h3>评分权重配置</h3><span class="tag">总权重 100</span><div class="line"></div><button class="btn btn-green btn-sm">保存配置</button></div>
+        <div class="section-title"><h3>客户确认的板块分值</h3><span class="tag">总分 100 · 固定标准</span><div class="line"></div><button hidden class="btn btn-green btn-sm">保存配置</button></div>
         <div class="card" style="margin-bottom:18px">
-          <div class="weight-row"><span class="wr-name">技术产品</span><input type="range" class="wr-slider" min="0" max="40" value="20" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#7561f5"></i></div><span class="wr-val">20</span></div>
-          <div class="weight-row"><span class="wr-name">财务能力</span><input type="range" class="wr-slider" min="0" max="40" value="20" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#1e40af"></i></div><span class="wr-val">20</span></div>
-          <div class="weight-row"><span class="wr-name">团队股权</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#06b6d4"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">技术产品</span><input type="range" class="wr-slider" min="0" max="40" value="15" disabled oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#7561f5"></i></div><span class="wr-val">15</span></div>
+          <div class="weight-row"><span class="wr-name">财务能力</span><input type="range" class="wr-slider" min="0" max="40" value="10" disabled oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:25%;background:#1e40af"></i></div><span class="wr-val">10</span></div>
+          <div class="weight-row"><span class="wr-name">团队股权</span><input type="range" class="wr-slider" min="0" max="40" value="10" disabled oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:25%;background:#06b6d4"></i></div><span class="wr-val">10</span></div>
           <div class="weight-row"><span class="wr-name">市场情况</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#8b5cf6"></i></div><span class="wr-val">15</span></div>
           <div class="weight-row"><span class="wr-name">合规风险</span><input type="range" class="wr-slider" min="0" max="40" value="15" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#10b981"></i></div><span class="wr-val">15</span></div>
-          <div class="weight-row"><span class="wr-name">融资需求</span><input type="range" class="wr-slider" min="0" max="40" value="7" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:17.5%;background:#f59e0b"></i></div><span class="wr-val">7</span></div>
-          <div class="weight-row"><span class="wr-name">异地拓产</span><input type="range" class="wr-slider" min="0" max="40" value="8" oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:20%;background:#dc2626"></i></div><span class="wr-val">8</span></div>
+          <div class="weight-row"><span class="wr-name">融资需求</span><input type="range" class="wr-slider" min="0" max="40" value="20" disabled oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:50%;background:#f59e0b"></i></div><span class="wr-val">20</span></div>
+          <div class="weight-row"><span class="wr-name">异地拓产</span><input type="range" class="wr-slider" min="0" max="40" value="15" disabled oninput="this.nextElement.firstElementChild.style.width=(this.value/40*100)+'%';this.parentElement.querySelector('.wr-val').textContent=this.value"><div class="wr-bar"><i style="width:37.5%;background:#dc2626"></i></div><span class="wr-val">15</span></div>
         </div>
         <div class="section-title"><h3>评分阈值与晋级</h3><div class="line"></div></div>
         <div class="grid-4">
@@ -1005,7 +1005,7 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
     <div class="modal-foot"><button class="btn btn-ghost" onclick="ZS.close()">取消</button><button class="btn btn-blue" onclick="ZS.save()">保存</button></div>
   </div>
 </div>
-<script src="app.js?v=2.12-public-evidence"></script>
+<script src="app.js?v=3.0-customer-scoring"></script>
 <script>
 /* 备用：即使 app.js 加载异常，登录/获取也能直接调用后端 */
 async function doLoginStandalone() {

@@ -8,7 +8,7 @@ const {spawn}=require('node:child_process');
 const XLSX=require('xlsx');
 test('portal HTTP integration uses isolated data, no live model and no production writes',async t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'zs-http-test-'));
-  for(const file of ['server.js','portal-service.js','qcc-client.js','company-evidence.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
+  for(const file of ['server.js','portal-service.js','qcc-client.js','company-evidence.js','scoring-standard.js'])fs.copyFileSync(path.join(__dirname,'..',file),path.join(dir,file));
   // Provider simulator exists only in the isolated test directory. No paid requests.
   fs.appendFileSync(path.join(dir,'qcc-client.js'), `
     const originalFactory = module.exports.createQccClient;
@@ -33,7 +33,7 @@ test('portal HTTP integration uses isolated data, no live model and no productio
   let conv,document,token,leadId;
   await t.test('browse returns concrete resources and category filter is enforced',async()=>{
     const generic=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'请推荐招商资源'}});assert.equal(generic.status,200);assert.ok(generic.body.matched.length&&generic.body.matched.every(p=>p?.title));
-    const filtered=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'成都智能制造',category:'优惠政策'}});assert.equal(filtered.status,200);assert.ok(filtered.body.matched.length);assert.ok(filtered.body.matched.every(p=>p.category==='优惠政策'));conv=filtered.body.conversationId;
+    const filtered=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'成都智能制造',category:'优惠政策'}});assert.equal(filtered.status,200);assert.equal(filtered.body.matched.length,0,'未核实的预置政策不应公开');assert.ok(filtered.body.matched.every(p=>p.category==='优惠政策'));conv=filtered.body.conversationId;
     const follow=await call('/api/portal/match',{method:'POST',cookie:a.cookie,body:{message:'改到宜宾',conversationId:conv,category:'优惠政策'}});assert.equal(follow.status,200);assert.deepEqual(follow.body.need.industries,['智能制造']);assert.deepEqual(follow.body.need.regions,['宜宾']);
   });
   await t.test('private documents persist, affect selected context, and are isolated',async()=>{
@@ -112,9 +112,9 @@ test('portal HTTP integration uses isolated data, no live model and no productio
     assert.equal(pending.body.mode,'unavailable');assert.equal(pending.body.result,null);
     const standard=await call('/api/score-standard',{authorization:token});assert.equal(standard.status,200);assert.equal(standard.body.data.length,7);assert.equal(standard.body.data.reduce((sum,item)=>sum+item.weight,0),100);
     const invalidWeights=await call('/api/scoreWeights',{method:'PUT',authorization:token,body:{技术产品:10,财务能力:10,团队股权:10,市场情况:10,合规风险:10,融资需求:10,异地拓产:10}});assert.equal(invalidWeights.status,400);
-    const validWeights=await call('/api/scoreWeights',{method:'PUT',authorization:token,body:{技术产品:20,财务能力:20,团队股权:15,市场情况:15,合规风险:15,融资需求:7,异地拓产:8}});assert.equal(validWeights.status,200);
-    const incomplete=await call('/api/companies/1/assessment',{method:'PUT',authorization:token,body:{technologyScore:90,technologyEvidence:''}});assert.equal(incomplete.status,200);assert.equal(incomplete.body.data.score,null);assert.equal(incomplete.body.data.coverage,0);assert.ok(incomplete.body.data.missing.includes('技术产品'));
-    const assessed=await call('/api/companies/1/assessment',{method:'PUT',authorization:token,body:{technologyScore:90,technologyEvidence:'量产产品及专利核验资料',financeScore:80,financeEvidence:'近三年审计报告及现金流量表',teamEquityScore:70,teamEquityEvidence:'工商股权穿透及核心团队简历',marketScore:60,marketEvidence:'客户清单及在手订单',complianceScore:100,complianceEvidence:'工商司法及处罚记录核验',financingScore:50,financingEvidence:'融资记录与机构访谈',expansionScore:40,expansionEvidence:'异地招聘与扩产计划'}});assert.equal(assessed.status,200);assert.equal(assessed.body.data.coverage,100);assert.equal(assessed.body.data.score,75);assert.equal(assessed.body.data.level,'B类');assert.equal(assessed.body.data.missing.length,0);
+    const validWeights=await call('/api/scoreWeights',{method:'PUT',authorization:token,body:{技术产品:15,财务能力:10,团队股权:10,市场情况:15,合规风险:15,融资需求:20,异地拓产:15}});assert.equal(validWeights.status,200);
+    const incomplete=await call('/api/companies/1/assessment',{method:'PUT',authorization:token,body:{assessmentDetails:{production:5},technologyEvidence:''}});assert.equal(incomplete.status,200);assert.equal(incomplete.body.data.score,null);assert.equal(incomplete.body.data.coverage,0);assert.ok(incomplete.body.data.missing.includes('技术产品'));
+    const assessed=await call('/api/companies/1/assessment',{method:'PUT',authorization:token,body:{assessmentDetails:{financing:15,expansion:15,production:5,patent:5,certificate:5,customers:3,orders:3,industry:3,risks:1,finance:7,team:7},technologyScore:90,technologyEvidence:'量产产品及专利核验资料',financeScore:80,financeEvidence:'近三年审计报告及现金流量表',teamEquityScore:70,teamEquityEvidence:'工商股权穿透及核心团队简历',marketScore:60,marketEvidence:'客户清单及在手订单',complianceScore:100,complianceEvidence:'工商司法及处罚记录核验',financingScore:50,financingEvidence:'融资记录与机构访谈',expansionScore:40,expansionEvidence:'异地招聘与扩产计划'}});assert.equal(assessed.status,200);assert.equal(assessed.body.data.coverage,100);assert.equal(assessed.body.data.score,80);assert.equal(assessed.body.data.level,'B类');assert.equal(assessed.body.data.missing.length,0);
     const invalid=await call('/api/companies/1/assessment',{method:'PUT',authorization:token,body:{financeScore:101}});assert.equal(invalid.status,400);
   });
   await t.test('overview uses persisted counts and audit export is downloadable',async()=>{

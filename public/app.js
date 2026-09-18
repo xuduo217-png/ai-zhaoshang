@@ -534,9 +534,11 @@
     window.__scoreStandard = standardResult.data || [];
     const w = Object.fromEntries(window.__scoreStandard.map((dim) => [dim.name, dim.weight]));
     bindWeightRows(page, w);
+    page.querySelectorAll('.wr-slider').forEach(input => { input.disabled = true; });
     const grid = el('scoreStandardGrid');
     if (grid) grid.innerHTML = window.__scoreStandard.map((dim) => '<div class="card"><div class="card-title" style="margin-bottom:8px">' + fmt(dim.name) + ' <span style="color:var(--dh-purple);font-weight:700">' + fmt(dim.weight) + '%</span></div><div style="font-size:13px;line-height:1.65;color:var(--txt-2)">' + fmt(dim.criteria) + '</div></div>').join('');
     const saveBtn = Array.from(page.querySelectorAll('button')).find((b) => /保存配置/.test(b.textContent));
+    if (saveBtn) { saveBtn.hidden = true; }
     if (saveBtn) saveBtn.onclick = async () => {
       const body = {}; page.querySelectorAll('.weight-row').forEach((r) => { body[r.querySelector('.wr-name').textContent.trim()] = Number(r.querySelector('.wr-slider').value); });
       const total = Object.values(body).reduce((sum, value) => sum + value, 0);
@@ -579,12 +581,22 @@
     const company = companyResult.data;
     const standard = window.__scoreStandard || (await apiGet('/score-standard')).data || [];
     if (!company) return showToast('企业不存在');
-    const fields = standard.map((dim) => '<div style="padding:13px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><b style="color:var(--txt-0)">' + fmt(dim.name) + '</b><div style="font-size:12px;color:var(--txt-3);margin-top:3px">' + fmt(dim.criteria) + '</div></div><span class="tag">权重 ' + fmt(dim.weight) + '%</span></div><div class="grid-2" style="margin-top:10px"><div class="form-row"><label>评分（0-100）</label><input class="assessment-score" data-key="' + dim.scoreKey + '" type="number" min="0" max="100" step="0.1" value="' + escapeHtml(company[dim.scoreKey] == null ? '' : company[dim.scoreKey]) + '"></div><div class="form-row"><label>核验依据/资料来源</label><textarea class="assessment-evidence" data-key="' + dim.evidenceKey + '" rows="2" maxlength="2000" placeholder="填写财报、专利、合同、公开记录或人工核验结论">' + escapeHtml(company[dim.evidenceKey] || '') + '</textarea></div></div></div>').join('');
+    const details = company.assessmentRuleVersion === 'r3.0' ? company.assessmentDetails || {} : {};
+    const fields = standard.map((dim) => {
+      const inputs = dim.fields.map(f => {
+        const value = details[f.key];
+        const control = f.options
+          ? '<select class="assessment-detail" data-key="'+f.key+'"><option value="">待核实 / 规则未覆盖</option>'+f.options.map(o=>'<option value="'+o[0]+'" '+(value===o[0]?'selected':'')+'>'+escapeHtml(o[1])+'</option>').join('')+'</select>'
+          : '<input class="assessment-detail" data-key="'+f.key+'" type="number" min="0" max="'+f.max+'" step="'+(f.key==='risks'?'1':'0.1')+'" placeholder="待核实" value="'+escapeHtml(value == null ? '' : value)+'">';
+        return '<div class="form-row"><label>'+escapeHtml(f.label)+'</label>'+control+'</div>';
+      }).join('');
+      return '<div style="padding:13px 0;border-bottom:1px solid var(--border)"><b>'+fmt(dim.name)+'（'+dim.weight+'分）</b><p>'+fmt(dim.criteria)+'</p>'+inputs+'<div class="form-row"><label>核验依据、公开来源及评估理由（注明各小项）</label><textarea class="assessment-evidence" data-key="'+dim.evidenceKey+'" rows="3" maxlength="2000">'+escapeHtml(company[dim.evidenceKey]||'')+'</textarea></div></div>';
+    }).join('');
     showResultModal('企业尽调评分 · ' + company.name, '<div style="padding:10px 12px;border-radius:10px;background:#fefce8;color:#854d0e;font-size:13px">评分和核验依据必须同时填写才计入正式总分；缺少资料的板块会显示“待核实”。</div>' + fields + '<button class="btn btn-blue" style="width:100%;margin-top:16px" onclick="ZS.saveAssessment(' + companyId + ')">保存并重新计算</button>');
   };
   window.ZS.saveAssessment = async function (companyId) {
-    const body = {};
-    qa('#zsResultBody .assessment-score').forEach((input) => { body[input.dataset.key] = input.value; });
+    const body = { assessmentDetails: {} };
+    qa('#zsResultBody .assessment-detail').forEach((input) => { body.assessmentDetails[input.dataset.key] = input.value === '' ? null : Number(input.value); });
     qa('#zsResultBody .assessment-evidence').forEach((input) => { body[input.dataset.key] = input.value; });
     const result = await apiPut('/companies/' + companyId + '/assessment', body);
     if (!result.data) return showToast(result.error || '评分保存失败');
